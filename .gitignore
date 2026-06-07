@@ -43,3 +43,5 @@ next-env.d.ts
 
 /app/generated/prisma
 /public/uploads/
+perbaikan_alat.sql
+.env

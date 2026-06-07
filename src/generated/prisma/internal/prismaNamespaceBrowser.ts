@@ -17,8 +17,8 @@
 
 import * as runtime from "@prisma/client/runtime/index-browser"
 
-export type * from '../models'
-export type * from './prismaNamespace'
+export type * from '../models.ts'
+export type * from './prismaNamespace.ts'
 
 export const Decimal = runtime.Decimal
 
@@ -53,8 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Report: 'Report',
-  PasswordResetToken: 'PasswordResetToken',
-  RateLimitBucket: 'RateLimitBucket'
+  ReportApprovalHistory: 'ReportApprovalHistory',
+  PasswordResetToken: 'PasswordResetToken'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -78,10 +78,8 @@ export const UserScalarFieldEnum = {
   nama: 'nama',
   jabatan: 'jabatan',
   nip: 'nip',
-  activeNip: 'activeNip',
   passwordHash: 'passwordHash',
   role: 'role',
-  deletedAt: 'deletedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -115,6 +113,20 @@ export const ReportScalarFieldEnum = {
 export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]
 
 
+export const ReportApprovalHistoryScalarFieldEnum = {
+  id: 'id',
+  reportId: 'reportId',
+  adminId: 'adminId',
+  action: 'action',
+  fromStatus: 'fromStatus',
+  toStatus: 'toStatus',
+  note: 'note',
+  createdAt: 'createdAt'
+} as const
+
+export type ReportApprovalHistoryScalarFieldEnum = (typeof ReportApprovalHistoryScalarFieldEnum)[keyof typeof ReportApprovalHistoryScalarFieldEnum]
+
+
 export const PasswordResetTokenScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -125,16 +137,6 @@ export const PasswordResetTokenScalarFieldEnum = {
 } as const
 
 export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
-
-
-export const RateLimitBucketScalarFieldEnum = {
-  key: 'key',
-  count: 'count',
-  resetAt: 'resetAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type RateLimitBucketScalarFieldEnum = (typeof RateLimitBucketScalarFieldEnum)[keyof typeof RateLimitBucketScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -157,7 +159,6 @@ export const UserOrderByRelevanceFieldEnum = {
   nama: 'nama',
   jabatan: 'jabatan',
   nip: 'nip',
-  activeNip: 'activeNip',
   passwordHash: 'passwordHash'
 } as const
 
@@ -179,16 +180,16 @@ export const ReportOrderByRelevanceFieldEnum = {
 export type ReportOrderByRelevanceFieldEnum = (typeof ReportOrderByRelevanceFieldEnum)[keyof typeof ReportOrderByRelevanceFieldEnum]
 
 
+export const ReportApprovalHistoryOrderByRelevanceFieldEnum = {
+  note: 'note'
+} as const
+
+export type ReportApprovalHistoryOrderByRelevanceFieldEnum = (typeof ReportApprovalHistoryOrderByRelevanceFieldEnum)[keyof typeof ReportApprovalHistoryOrderByRelevanceFieldEnum]
+
+
 export const PasswordResetTokenOrderByRelevanceFieldEnum = {
   tokenHash: 'tokenHash'
 } as const
 
 export type PasswordResetTokenOrderByRelevanceFieldEnum = (typeof PasswordResetTokenOrderByRelevanceFieldEnum)[keyof typeof PasswordResetTokenOrderByRelevanceFieldEnum]
-
-
-export const RateLimitBucketOrderByRelevanceFieldEnum = {
-  key: 'key'
-} as const
-
-export type RateLimitBucketOrderByRelevanceFieldEnum = (typeof RateLimitBucketOrderByRelevanceFieldEnum)[keyof typeof RateLimitBucketOrderByRelevanceFieldEnum]
 

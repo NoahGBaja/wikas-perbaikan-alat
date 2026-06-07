@@ -1,6 +1,45 @@
-import "server-only";
+type RateLimitEntry = {
+  count: number;
+  resetAt: number;
+};
 
-import { prisma } from "@/src/lib/prisma";
+type RateLimitOptions = {
+  limit?: number;
+  windowMs?: number;
+};
+
+type RateLimitResult = {
+  allowed: boolean;
+  limited: boolean;
+  remaining: number;
+  resetAt: Date;
+};
+
+const buckets = new Map<string, RateLimitEntry>();
+
+const DEFAULT_LIMIT = 5;
+const DEFAULT_WINDOW_MS = 15 * 60 * 1000;
+
+function nowMs() {
+  return Date.now();
+}
+
+function resolveOptions(options?: RateLimitOptions) {
+  return {
+    limit: options?.limit ?? DEFAULT_LIMIT,
+    windowMs: options?.windowMs ?? DEFAULT_WINDOW_MS,
+  };
+}
+
+function cleanupExpiredBuckets() {
+  const now = nowMs();
+
+  for (const [key, value] of buckets.entries()) {
+    if (value.resetAt <= now) {
+      buckets.delete(key);
+    }
+  }
+}
 
 export function getClientIp(req: Request) {
   const forwardedFor = req.headers.get("x-forwarded-for");
@@ -16,91 +55,73 @@ export function getClientIp(req: Request) {
   );
 }
 
-export function isRateLimited(
+export async function checkRateLimitBucket(
   key: string,
-  options: { limit: number; windowMs: number }
-): Promise<boolean> {
-  return checkRateLimit(key, options).catch((error) => {
-    if (isMissingRateLimitTableError(error)) {
-      console.warn(
-        "RATE_LIMIT_TABLE_MISSING: login rate limiting skipped because RateLimitBucket table does not exist."
-      );
-      return false;
-    }
+  options?: RateLimitOptions
+): Promise<RateLimitResult> {
+  cleanupExpiredBuckets();
 
-    throw error;
-  });
-}
-
-function isMissingRateLimitTableError(error: unknown) {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: string }).code === "P2021"
-  );
-}
-
-async function pruneExpiredBuckets(now: Date) {
-  await prisma.rateLimitBucket.deleteMany({
-    where: {
-      resetAt: {
-        lte: now,
-      },
-    },
-  });
-}
-
-async function checkRateLimit(
-  key: string,
-  options: { limit: number; windowMs: number }
-) {
-  const now = new Date();
-  const resetAt = new Date(now.getTime() + options.windowMs);
-
-  if (Math.random() < 0.02) {
-    await pruneExpiredBuckets(now);
-  }
-
-  const current = await prisma.rateLimitBucket.findUnique({
-    where: { key },
-  });
+  const { limit, windowMs } = resolveOptions(options);
+  const now = nowMs();
+  const current = buckets.get(key);
 
   if (!current || current.resetAt <= now) {
-    await prisma.rateLimitBucket.upsert({
-      where: { key },
-      update: {
-        count: 1,
-        resetAt,
-      },
-      create: {
-        key,
-        count: 1,
-        resetAt,
-      },
+    buckets.set(key, {
+      count: 1,
+      resetAt: now + windowMs,
     });
 
-    return false;
+    return {
+      allowed: true,
+      limited: false,
+      remaining: Math.max(limit - 1, 0),
+      resetAt: new Date(now + windowMs),
+    };
   }
 
-  const updated = await prisma.rateLimitBucket.update({
-    where: { key },
-    data: {
-      count: {
-        increment: 1,
-      },
-    },
-  });
+  if (current.count >= limit) {
+    return {
+      allowed: false,
+      limited: true,
+      remaining: 0,
+      resetAt: new Date(current.resetAt),
+    };
+  }
 
-  return updated.count > options.limit;
+  current.count += 1;
+  buckets.set(key, current);
+
+  return {
+    allowed: true,
+    limited: false,
+    remaining: Math.max(limit - current.count, 0),
+    resetAt: new Date(current.resetAt),
+  };
+}
+
+export async function consumeRateLimitBucket(
+  key: string,
+  options?: RateLimitOptions
+) {
+  return checkRateLimitBucket(key, options);
+}
+
+export async function resetRateLimitBucket(key: string) {
+  buckets.delete(key);
+}
+
+export async function clearRateLimitBucket(key: string) {
+  buckets.delete(key);
+}
+
+export async function isRateLimited(
+  key: string,
+  options?: RateLimitOptions
+) {
+  const result = await checkRateLimitBucket(key, options);
+  return result.limited;
 }
 
 export async function clearRateLimit(key: string) {
-  await prisma.rateLimitBucket.delete({
-    where: { key },
-  }).catch((error: { code?: string }) => {
-    if (error.code !== "P2025" && error.code !== "P2021") {
-      throw error;
-    }
-  });
+  buckets.delete(key);
 }

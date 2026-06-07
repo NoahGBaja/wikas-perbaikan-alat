@@ -10,8 +10,24 @@ import {
   listUsersWithReportCountRaw,
 } from "@/src/lib/raw-data";
 import { validateMutationRequest } from "@/src/lib/request-security";
+import type { AppRole } from "@/src/lib/roles";
 
-async function requireAdmin() {
+const VALID_ROLES: AppRole[] = [
+  "SUPER_ADMIN",
+  "ADMIN_1",
+  "ADMIN_2",
+  "ADMIN_3",
+  "ADMIN_4",
+  "ADMIN_5",
+  "ADMIN_6",
+  "USER",
+];
+
+function isValidRole(role: unknown): role is AppRole {
+  return typeof role === "string" && VALID_ROLES.includes(role as AppRole);
+}
+
+async function requireSuperAdmin() {
   const authUser = await getApiSessionUser();
 
   if (!authUser) {
@@ -20,9 +36,12 @@ async function requireAdmin() {
     };
   }
 
-  if (authUser.role !== "ADMIN") {
+  if (authUser.role !== "SUPER_ADMIN") {
     return {
-      error: NextResponse.json({ message: "Forbidden" }, { status: 403 }),
+      error: NextResponse.json(
+        { message: "Hanya Super Admin yang boleh mengelola user." },
+        { status: 403 }
+      ),
     };
   }
 
@@ -31,7 +50,7 @@ async function requireAdmin() {
 
 export async function GET() {
   try {
-    const access = await requireAdmin();
+    const access = await requireSuperAdmin();
 
     if ("error" in access) {
       return access.error;
@@ -58,19 +77,20 @@ export async function POST(req: Request) {
       return requestError;
     }
 
-    const access = await requireAdmin();
+    const access = await requireSuperAdmin();
 
     if ("error" in access) {
       return access.error;
     }
 
     const body = await req.json();
+
     const nama = typeof body.nama === "string" ? body.nama.trim() : "";
     const jabatan =
       typeof body.jabatan === "string" ? body.jabatan.trim() : "";
     const nip = typeof body.nip === "string" ? body.nip.trim() : "";
-    const role = body.role === "ADMIN" ? "ADMIN" : "USER";
     const password = typeof body.password === "string" ? body.password : "";
+    const role = isValidRole(body.role) ? body.role : "USER";
 
     if (!nama || !nip || !password) {
       return NextResponse.json(
@@ -105,12 +125,12 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await hashPassword(password);
+
     const createdUser = await prisma.user.create({
       data: {
         nama,
         jabatan: jabatan || null,
         nip,
-        activeNip: nip,
         passwordHash,
         role,
       },

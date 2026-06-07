@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiSessionUser } from "@/src/lib/session";
 import { getMonthlyReportStats } from "@/src/lib/monthly-report-stats";
+import { isAdminRole } from "@/src/lib/roles";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,10 +11,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (authUser.role !== "ADMIN") {
+    if (!isAdminRole(authUser.role)) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
+
     const searchParams = request.nextUrl.searchParams;
+
     const stats = await getMonthlyReportStats({
       month: searchParams.get("month"),
       year: searchParams.get("year"),

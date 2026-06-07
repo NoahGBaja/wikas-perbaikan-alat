@@ -10,6 +10,7 @@ import {
 import { saveImageUpload, validateImageUpload } from "@/src/lib/uploads";
 import { listReportsRaw } from "@/src/lib/raw-data";
 import { validateMutationRequest } from "@/src/lib/request-security";
+import { isAdminRole } from "@/src/lib/roles";
 
 export async function POST(req: Request) {
   try {
@@ -26,7 +27,10 @@ export async function POST(req: Request) {
     }
 
     if (authUser.role !== "USER") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { message: "Hanya user yang boleh membuat laporan." },
+        { status: 403 }
+      );
     }
 
     const formData = await req.formData();
@@ -63,6 +67,7 @@ export async function POST(req: Request) {
         deskripsi: reportInput.deskripsi,
         severity: reportInput.severity as ValidSeverity,
         fotoUrl,
+        status: "MENUNGGU_ADMIN_1",
       },
       include: {
         user: {
@@ -73,11 +78,27 @@ export async function POST(req: Request) {
             nip: true,
           },
         },
+        histories: {
+          include: {
+            admin: {
+              select: {
+                id: true,
+                nama: true,
+                jabatan: true,
+                nip: true,
+                role: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
       },
     });
 
     return NextResponse.json({
-      message: "Laporan berhasil dikirim.",
+      message: "Laporan berhasil dikirim dan menunggu persetujuan Admin 1.",
       report,
     });
   } catch (error) {
@@ -99,7 +120,7 @@ export async function GET() {
     }
 
     const reports = await listReportsRaw(
-      authUser.role === "ADMIN" ? undefined : authUser.id
+      isAdminRole(authUser.role) ? undefined : authUser.id
     );
 
     return NextResponse.json({ reports });

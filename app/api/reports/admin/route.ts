@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getApiSessionUser } from "@/src/lib/session";
 import { listReportsRaw } from "@/src/lib/raw-data";
+import { isAdminRole } from "@/src/lib/roles";
 
 export async function GET() {
   try {
@@ -10,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (authUser.role !== "ADMIN") {
+    if (!isAdminRole(authUser.role)) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 

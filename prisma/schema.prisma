@@ -8,7 +8,13 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
+  SUPER_ADMIN
+  ADMIN_1
+  ADMIN_2
+  ADMIN_3
+  ADMIN_4
+  ADMIN_5
+  ADMIN_6
   USER
 }
 
@@ -25,75 +31,94 @@ enum ReportSeverity {
 }
 
 enum ReportStatus {
-  MENUNGGU
-  DISETUJUI
+  MENUNGGU_ADMIN_1
+  MENUNGGU_ADMIN_2
+  MENUNGGU_ADMIN_3
+  MENUNGGU_ADMIN_4
+  MENUNGGU_ADMIN_5
+  MENUNGGU_ADMIN_6
+  DISETUJUI_FINAL
   DITOLAK
-  DIPROSES
-  SELESAI
+}
+
+enum ReportDecisionAction {
+  ACC
+  TOLAK
 }
 
 model User {
   id           Int      @id @default(autoincrement())
   nama         String
   jabatan      String?
-  nip          String?
-  activeNip    String?  @unique
+  nip          String?  @unique
   passwordHash String
   role         Role     @default(USER)
-  deletedAt    DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  reports              Report[]
-  passwordResetTokens  PasswordResetToken[]
+  reports             Report[]
+  passwordResetTokens PasswordResetToken[]
+  approvalHistories   ReportApprovalHistory[]
 }
 
 model Report {
-  id                  Int            @id @default(autoincrement())
-  userId              Int
-  kategori            ReportCategory
-  namaBarang          String
-  lokasi              String
-  deskripsi           String
-  severity            ReportSeverity
-  fotoUrl             String?
-  status              ReportStatus   @default(MENUNGGU)
-  alasanPenolakan     String?
+  id                 Int            @id @default(autoincrement())
+  userId             Int
+  kategori           ReportCategory
+  namaBarang         String
+  lokasi             String
+  deskripsi          String
+  severity           ReportSeverity
+  fotoUrl            String?
+  status             ReportStatus   @default(MENUNGGU_ADMIN_1)
+  alasanPenolakan    String?
   assignedTechnician String?
-  adminNotes          String?
-  completionNotes     String?
+  adminNotes         String?
+  completionNotes    String?
   completionPhotoUrl String?
-  approvedAt          DateTime?
-  rejectedAt          DateTime?
-  processedAt         DateTime?
-  finishedAt          DateTime?
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  approvedAt         DateTime?
+  rejectedAt         DateTime?
+  processedAt        DateTime?
+  finishedAt         DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
-  user                User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  histories ReportApprovalHistory[]
 
   @@index([userId])
   @@index([userId, createdAt])
   @@index([status, createdAt])
 }
 
+model ReportApprovalHistory {
+  id         Int                  @id @default(autoincrement())
+  reportId   Int
+  adminId    Int
+  action     ReportDecisionAction
+  fromStatus ReportStatus
+  toStatus   ReportStatus
+  note       String?
+  createdAt  DateTime             @default(now())
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  admin  User   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([adminId])
+  @@index([reportId, createdAt])
+}
+
 model PasswordResetToken {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   userId    Int
-  tokenHash String   @unique
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
-}
-
-model RateLimitBucket {
-  key       String   @id
-  count     Int      @default(1)
-  resetAt   DateTime
-  updatedAt DateTime @updatedAt
 }

@@ -6,11 +6,10 @@ import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   CheckCircle2,
-  Clock3,
   ClipboardCheck,
   XCircle,
   ArrowLeft,
-  Wrench,
+  Clock3,
 } from "lucide-react";
 import {
   formatKategori,
@@ -22,6 +21,23 @@ import {
   type ReportSeverity,
   type ReportStatus,
 } from "@/lib/report-helpers";
+import type { AppRole } from "@/src/lib/roles";
+
+type ReportHistoryItem = {
+  id: number;
+  action: "ACC" | "TOLAK";
+  fromStatus: ReportStatus;
+  toStatus: ReportStatus;
+  note: string | null;
+  createdAt: string;
+  admin: {
+    id: number;
+    nama: string;
+    jabatan: string | null;
+    nip: string | null;
+    role: AppRole;
+  };
+};
 
 type ReportItem = {
   id: number;
@@ -42,6 +58,7 @@ type ReportItem = {
   rejectedAt?: string | null;
   processedAt?: string | null;
   finishedAt?: string | null;
+  histories?: ReportHistoryItem[];
   user: {
     id: number;
     nama: string;
@@ -49,6 +66,14 @@ type ReportItem = {
     nip: string | null;
   };
 };
+
+function isHistoryStatus(status: ReportStatus) {
+  return status === "DISETUJUI_FINAL" || status === "DITOLAK";
+}
+
+function isWaitingStatus(status: ReportStatus) {
+  return status.startsWith("MENUNGGU_ADMIN");
+}
 
 export default function AdminHistoryPage() {
   const router = useRouter();
@@ -72,12 +97,8 @@ export default function AdminHistoryPage() {
         return;
       }
 
-      const filtered = (data.reports || []).filter(
-        (item: ReportItem) =>
-          item.status === "DISETUJUI" ||
-          item.status === "DITOLAK" ||
-          item.status === "DIPROSES" ||
-          item.status === "SELESAI"
+      const filtered = (data.reports || []).filter((item: ReportItem) =>
+        isHistoryStatus(item.status),
       );
 
       setReports(filtered);
@@ -93,217 +114,217 @@ export default function AdminHistoryPage() {
     void loadHistory();
   }, []);
 
-  const approvedCount = reports.filter((r) => r.status === "DISETUJUI").length;
+  const approvedFinalCount = reports.filter(
+    (r) => r.status === "DISETUJUI_FINAL",
+  ).length;
   const rejectedCount = reports.filter((r) => r.status === "DITOLAK").length;
-  const processCount = reports.filter((r) => r.status === "DIPROSES").length;
-  const finishedCount = reports.filter((r) => r.status === "SELESAI").length;
+  const waitingCount = reports.filter((r) => isWaitingStatus(r.status)).length;
+  const totalCount = reports.length;
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-10 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-10 text-slate-900">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-100/75">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
               Admin Panel
             </p>
-            <h1 className="mt-2 text-3xl font-bold md:text-5xl">
+            <h1 className="mt-2 text-3xl font-bold text-slate-950 md:text-5xl">
               Riwayat Laporan
             </h1>
-            <p className="mt-3 max-w-2xl text-white/70">
-              Arsip laporan yang sudah diputuskan admin, sedang diproses, atau
-              sudah selesai.
+            <p className="mt-3 max-w-2xl text-slate-600">
+              Arsip laporan yang sudah selesai dalam alur approval: disetujui
+              final atau ditolak permanen.
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => router.push("/dashboard/admin")}
-            className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-5 py-3 font-semibold text-white transition hover:bg-white/15"
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 text-blue-600" />
             Kembali ke Dashboard
           </button>
         </div>
 
         <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/58">
-              Disetujui
-            </p>
-            <p className="mt-3 text-5xl font-extrabold text-white">{approvedCount}</p>
-            <p className="mt-3 text-sm text-white/60">Laporan diterima admin.</p>
-          </div>
+          <SummaryCard
+            label="Total Riwayat"
+            value={totalCount}
+            description="Laporan final dan ditolak."
+            colorClass="text-blue-600"
+          />
 
-          <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/58">
-              Ditolak
-            </p>
-            <p className="mt-3 text-5xl font-extrabold text-white">{rejectedCount}</p>
-            <p className="mt-3 text-sm text-white/60">Laporan yang ditolak admin.</p>
-          </div>
+          <SummaryCard
+            label="Disetujui Final"
+            value={approvedFinalCount}
+            description="Sudah melewati Admin 1 sampai Admin 6."
+            colorClass="text-emerald-600"
+          />
 
-          <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/58">
-              Diproses
-            </p>
-            <p className="mt-3 text-5xl font-extrabold text-white">{processCount}</p>
-            <p className="mt-3 text-sm text-white/60">Sedang ditindaklanjuti.</p>
-          </div>
+          <SummaryCard
+            label="Ditolak"
+            value={rejectedCount}
+            description="Ditolak oleh salah satu admin."
+            colorClass="text-rose-600"
+          />
 
-          <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/58">
-              Selesai
-            </p>
-            <p className="mt-3 text-5xl font-extrabold text-white">{finishedCount}</p>
-            <p className="mt-3 text-sm text-white/60">Pengerjaan sudah selesai.</p>
-          </div>
+          <SummaryCard
+            label="Masih Berjalan"
+            value={waitingCount}
+            description="Tidak ditampilkan di arsip final."
+            colorClass="text-amber-600"
+          />
         </section>
 
         {message ? (
-          <div className="mb-6 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm">
+          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
             {message}
           </div>
         ) : null}
 
-        <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.08] shadow-[0_24px_60px_rgba(2,6,23,0.16)]">
-          <div className="border-b border-white/10 px-6 py-5">
-            <h2 className="text-2xl font-bold text-white">Arsip Laporan</h2>
+        <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white/90 shadow-sm">
+          <div className="border-b border-slate-200 px-6 py-5">
+            <h2 className="text-2xl font-bold text-slate-900">
+              Arsip Laporan
+            </h2>
           </div>
 
           {loading ? (
-            <div className="px-6 py-8 text-white/70">Memuat riwayat laporan...</div>
+            <div className="px-6 py-8 text-slate-600">
+              Memuat riwayat laporan...
+            </div>
           ) : reports.length === 0 ? (
-            <div className="px-6 py-8 text-white/70">Belum ada riwayat laporan.</div>
+            <div className="px-6 py-8 text-slate-600">
+              Belum ada riwayat laporan final.
+            </div>
           ) : (
             <div className="space-y-4 p-6">
               {reports.map((report) => (
                 <div
                   key={report.id}
-                  className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5"
+                  className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm"
                 >
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-3">
-                        <span className="inline-flex rounded-full border border-cyan-300/18 bg-cyan-300/10 px-3 py-1.5 text-sm font-bold tracking-wide text-cyan-50">
+                        <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-bold tracking-wide text-blue-700">
                           LP-{String(report.id).padStart(4, "0")}
                         </span>
 
                         <span
                           className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-bold tracking-[0.16em] ${getStatusClass(
-                            report.status
+                            report.status,
                           )}`}
                         >
                           {formatStatus(report.status)}
                         </span>
                       </div>
 
-                      <h3 className="mt-4 text-2xl font-bold text-white">
+                      <h3 className="mt-4 text-2xl font-bold text-slate-900">
                         {report.namaBarang}
                       </h3>
 
                       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                          <p className="text-sm text-white/55">Pelapor</p>
-                          <p className="mt-1 font-semibold text-white">
+                        <InfoBox label="Pelapor">
+                          <p className="mt-1 font-semibold text-slate-900">
                             {report.user.nama}
                           </p>
                           {report.user.jabatan ? (
-                            <p className="mt-1 text-sm text-white/55">
+                            <p className="mt-1 text-sm text-slate-500">
                               {report.user.jabatan}
                             </p>
                           ) : null}
-                          <p className="mt-1 text-sm text-white/55">
+                          <p className="mt-1 text-sm text-slate-500">
                             NIP: {report.user.nip || "-"}
                           </p>
-                        </div>
+                        </InfoBox>
 
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                          <p className="text-sm text-white/55">Kategori</p>
-                          <p className="mt-1 font-semibold text-white">
-                            {formatKategori(report.kategori)}
-                          </p>
-                        </div>
+                        <InfoBox label="Kategori">
+                          {formatKategori(report.kategori)}
+                        </InfoBox>
 
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                          <p className="text-sm text-white/55">Lokasi</p>
-                          <p className="mt-1 font-semibold text-white">{report.lokasi}</p>
-                        </div>
+                        <InfoBox label="Lokasi">{report.lokasi}</InfoBox>
 
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                          <p className="text-sm text-white/55">Tingkat Kerusakan</p>
-                          <p className="mt-1 font-semibold text-white">
-                            {formatSeverity(report.severity)}
-                          </p>
-                        </div>
+                        <InfoBox label="Tingkat Kerusakan">
+                          {formatSeverity(report.severity)}
+                        </InfoBox>
                       </div>
 
-                      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-white/55">Deskripsi Kerusakan</p>
-                        <p className="mt-2 whitespace-pre-line leading-7 text-white/85">
+                      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-sm text-slate-500">
+                          Deskripsi Kerusakan
+                        </p>
+                        <p className="mt-2 whitespace-pre-line leading-7 text-slate-700">
                           {report.deskripsi}
                         </p>
                       </div>
 
                       {report.status === "DITOLAK" && report.alasanPenolakan ? (
-                        <div className="mt-4 rounded-2xl border border-rose-300/20 bg-rose-400/10 p-4">
-                          <p className="text-sm font-semibold text-rose-100">
+                        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                          <p className="text-sm font-semibold text-rose-700">
                             Alasan Penolakan
                           </p>
-                          <p className="mt-2 text-rose-50/90">
+                          <p className="mt-2 text-rose-700">
                             {report.alasanPenolakan}
                           </p>
                         </div>
                       ) : null}
 
-                      {report.assignedTechnician ||
-                      report.adminNotes ||
-                      report.completionNotes ? (
-                        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                          {report.assignedTechnician ? (
-                            <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 p-4">
-                              <div className="flex items-center gap-2 text-amber-100">
-                                <Wrench className="h-4 w-4" />
-                                <p className="text-sm font-semibold">
-                                  Penanggung Jawab
+                      {report.adminNotes ? (
+                        <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                          <p className="text-sm font-semibold text-blue-700">
+                            Catatan Admin Terakhir
+                          </p>
+                          <p className="mt-2 whitespace-pre-line text-blue-700">
+                            {report.adminNotes}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {report.histories?.length ? (
+                        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                          <p className="text-sm font-semibold text-slate-900">
+                            Riwayat Approval
+                          </p>
+                          <div className="mt-3 space-y-3">
+                            {report.histories.map((history) => (
+                              <div
+                                key={history.id}
+                                className="rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
+                              >
+                                <p className="font-semibold text-slate-900">
+                                  {history.admin.nama} ({history.admin.role}) •{" "}
+                                  {history.action}
+                                </p>
+                                <p className="mt-1 text-slate-500">
+                                  {formatStatus(history.fromStatus)} →{" "}
+                                  {formatStatus(history.toStatus)}
+                                </p>
+                                {history.note ? (
+                                  <p className="mt-2 whitespace-pre-line text-slate-700">
+                                    {history.note}
+                                  </p>
+                                ) : null}
+                                <p className="mt-2 text-xs text-slate-400">
+                                  {formatTanggal(history.createdAt)}
                                 </p>
                               </div>
-                              <p className="mt-2 text-amber-50/90">
-                                {report.assignedTechnician}
-                              </p>
-                            </div>
-                          ) : null}
-
-                          {report.adminNotes ? (
-                            <div className="rounded-2xl border border-cyan-300/18 bg-cyan-400/10 p-4">
-                              <p className="text-sm font-semibold text-cyan-50">
-                                Catatan Internal
-                              </p>
-                              <p className="mt-2 whitespace-pre-line text-cyan-50/90">
-                                {report.adminNotes}
-                              </p>
-                            </div>
-                          ) : null}
-
-                          {report.completionNotes ? (
-                            <div className="rounded-2xl border border-emerald-300/18 bg-emerald-400/10 p-4">
-                              <p className="text-sm font-semibold text-emerald-50">
-                                Catatan Penyelesaian
-                              </p>
-                              <p className="mt-2 whitespace-pre-line text-emerald-50/90">
-                                {report.completionNotes}
-                              </p>
-                            </div>
-                          ) : null}
+                            ))}
+                          </div>
                         </div>
                       ) : null}
                     </div>
 
                     <div className="w-full lg:max-w-[320px]">
-                      <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-4">
-                        <p className="mb-3 text-sm text-white/55">Foto Barang</p>
+                      <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
+                        <p className="mb-3 text-sm text-slate-500">
+                          Foto Barang
+                        </p>
 
                         {report.fotoUrl ? (
-                          <div className="overflow-hidden rounded-2xl border border-white/10">
+                          <div className="overflow-hidden rounded-2xl border border-slate-200">
                             <Image
                               src={report.fotoUrl}
                               alt={report.namaBarang}
@@ -314,83 +335,75 @@ export default function AdminHistoryPage() {
                             />
                           </div>
                         ) : (
-                          <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-8 text-center text-white/50">
+                          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-500">
                             Tidak ada foto
                           </div>
                         )}
 
-                        {report.completionPhotoUrl ? (
-                          <div className="mt-4">
-                            <p className="mb-3 text-sm text-white/55">
-                              Foto Penyelesaian
-                            </p>
-                            <div className="overflow-hidden rounded-2xl border border-emerald-300/15">
-                              <Image
-                                src={report.completionPhotoUrl}
-                                alt={`Penyelesaian ${report.namaBarang}`}
-                                width={1200}
-                                height={800}
-                                className="w-full object-cover"
-                                unoptimized
-                              />
-                            </div>
-                          </div>
-                        ) : null}
-
                         <div className="mt-4 space-y-3">
-                          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                            <CalendarDays className="h-4 w-4 text-white/60" />
+                          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                            <CalendarDays className="h-4 w-4 text-slate-400" />
                             <div>
-                              <p className="text-xs text-white/50">Tanggal Laporan</p>
-                              <p className="text-sm font-semibold text-white">
+                              <p className="text-xs text-slate-500">
+                                Tanggal Laporan
+                              </p>
+                              <p className="text-sm font-semibold text-slate-900">
                                 {formatTanggal(report.createdAt)}
                               </p>
                             </div>
                           </div>
 
                           {report.approvedAt ? (
-                            <div className="flex items-center gap-3 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3">
-                              <CheckCircle2 className="h-4 w-4 text-emerald-100" />
+                            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                               <div>
-                                <p className="text-xs text-emerald-100/70">Disetujui</p>
-                                <p className="text-sm font-semibold text-emerald-50">
-                                  {formatTanggal(report.approvedAt || null)}
+                                <p className="text-xs text-emerald-600">
+                                  Disetujui Final
+                                </p>
+                                <p className="text-sm font-semibold text-emerald-700">
+                                  {formatTanggal(report.approvedAt)}
                                 </p>
                               </div>
                             </div>
                           ) : null}
 
                           {report.rejectedAt ? (
-                            <div className="flex items-center gap-3 rounded-2xl border border-rose-300/20 bg-rose-400/10 px-4 py-3">
-                              <XCircle className="h-4 w-4 text-rose-100" />
+                            <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
+                              <XCircle className="h-4 w-4 text-rose-600" />
                               <div>
-                                <p className="text-xs text-rose-100/70">Ditolak</p>
-                                <p className="text-sm font-semibold text-rose-50">
-                                  {formatTanggal(report.rejectedAt || null)}
+                                <p className="text-xs text-rose-600">
+                                  Ditolak
+                                </p>
+                                <p className="text-sm font-semibold text-rose-700">
+                                  {formatTanggal(report.rejectedAt)}
                                 </p>
                               </div>
                             </div>
                           ) : null}
 
-                          {report.processedAt ? (
-                            <div className="flex items-center gap-3 rounded-2xl border border-amber-300/20 bg-amber-400/10 px-4 py-3">
-                              <Clock3 className="h-4 w-4 text-amber-100" />
+                          {!report.approvedAt && !report.rejectedAt ? (
+                            <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                              <Clock3 className="h-4 w-4 text-amber-600" />
                               <div>
-                                <p className="text-xs text-amber-100/70">Mulai Proses</p>
-                                <p className="text-sm font-semibold text-amber-50">
-                                  {formatTanggal(report.processedAt)}
+                                <p className="text-xs text-amber-600">
+                                  Status
+                                </p>
+                                <p className="text-sm font-semibold text-amber-700">
+                                  {formatStatus(report.status)}
                                 </p>
                               </div>
                             </div>
                           ) : null}
 
-                          {report.finishedAt ? (
-                            <div className="flex items-center gap-3 rounded-2xl border border-emerald-300/20 bg-emerald-500/10 px-4 py-3">
-                              <ClipboardCheck className="h-4 w-4 text-emerald-100" />
+                          {report.status === "DISETUJUI_FINAL" ? (
+                            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                              <ClipboardCheck className="h-4 w-4 text-emerald-600" />
                               <div>
-                                <p className="text-xs text-emerald-100/70">Selesai</p>
-                                <p className="text-sm font-semibold text-emerald-50">
-                                  {formatTanggal(report.finishedAt)}
+                                <p className="text-xs text-emerald-600">
+                                  Final
+                                </p>
+                                <p className="text-sm font-semibold text-emerald-700">
+                                  Approval selesai.
                                 </p>
                               </div>
                             </div>
@@ -405,6 +418,43 @@ export default function AdminHistoryPage() {
           )}
         </section>
       </div>
+    </div>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  description,
+  colorClass,
+}: {
+  label: string;
+  value: number;
+  description: string;
+  colorClass: string;
+}) {
+  return (
+    <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+        {label}
+      </p>
+      <p className={`mt-3 text-5xl font-extrabold ${colorClass}`}>{value}</p>
+      <p className="mt-3 text-sm text-slate-500">{description}</p>
+    </div>
+  );
+}
+
+function InfoBox({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-sm text-slate-500">{label}</p>
+      <div className="mt-1 font-semibold text-slate-900">{children}</div>
     </div>
   );
 }

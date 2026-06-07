@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import type { AppRole } from "@/src/lib/roles";
 import {
   AUTH_COOKIE_NAME,
   createAuthSessionTag,
@@ -13,6 +14,7 @@ import {
   type SessionUserRow,
   type SessionUserWithPasswordRow,
 } from "@/src/lib/raw-data";
+import { isAdminRole } from "@/src/lib/roles";
 
 export type SessionUser = Awaited<ReturnType<typeof getSessionUser>>;
 
@@ -22,9 +24,7 @@ function stripPasswordHash(user: SessionUserWithPasswordRow): SessionUserRow {
     nama: user.nama,
     jabatan: user.jabatan,
     nip: user.nip,
-    activeNip: user.activeNip,
     role: user.role,
-    deletedAt: user.deletedAt,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -74,16 +74,36 @@ export async function requireSessionUser() {
   return user;
 }
 
-export async function requireRole<Role extends "ADMIN" | "USER">(role: Role) {
+export async function requireRole<RoleInput extends AppRole>(role: RoleInput) {
   const user = await requireSessionUser();
 
   if (user.role !== role) {
-    redirect(user.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user");
+    redirect(getDefaultRedirectForRole(user.role));
   }
 
   return user as NonNullable<Awaited<ReturnType<typeof getSessionUser>>> & {
-    role: Role;
+    role: RoleInput;
   };
+}
+
+export async function requireAdminUser() {
+  const user = await requireSessionUser();
+
+  if (!isAdminRole(user.role)) {
+    redirect("/dashboard/user");
+  }
+
+  return user;
+}
+
+export async function requireUserRole() {
+  const user = await requireSessionUser();
+
+  if (user.role !== "USER") {
+    redirect("/dashboard/admin");
+  }
+
+  return user;
 }
 
 export async function getApiSessionUser() {
@@ -108,6 +128,6 @@ export async function getApiSessionUser() {
   return user;
 }
 
-export function getDefaultRedirectForRole(role: "ADMIN" | "USER") {
-  return role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user";
+export function getDefaultRedirectForRole(role: AppRole) {
+  return isAdminRole(role) ? "/dashboard/admin" : "/dashboard/user";
 }

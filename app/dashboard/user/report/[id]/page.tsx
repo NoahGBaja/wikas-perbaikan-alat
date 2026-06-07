@@ -31,7 +31,11 @@ export default async function EditReportPage({
     },
   });
 
-  if (!report || report.userId !== currentUser.id || report.status !== "MENUNGGU") {
+  if (
+    !report ||
+    report.userId !== currentUser.id ||
+    report.status !== "MENUNGGU_ADMIN_1"
+  ) {
     redirect("/dashboard/user/status");
   }
 

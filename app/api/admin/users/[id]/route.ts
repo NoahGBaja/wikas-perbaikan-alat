@@ -2,8 +2,22 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getApiSessionUser } from "@/src/lib/session";
 import { validateMutationRequest } from "@/src/lib/request-security";
+import type { AppRole } from "@/src/lib/roles";
 
-const ACTIVE_REPORT_STATUSES = ["MENUNGGU", "DISETUJUI", "DIPROSES"] as const;
+const VALID_ROLES: AppRole[] = [
+  "SUPER_ADMIN",
+  "ADMIN_1",
+  "ADMIN_2",
+  "ADMIN_3",
+  "ADMIN_4",
+  "ADMIN_5",
+  "ADMIN_6",
+  "USER",
+];
+
+function isValidRole(role: unknown): role is AppRole {
+  return typeof role === "string" && VALID_ROLES.includes(role as AppRole);
+}
 
 function parseUserId(id: string) {
   const userId = Number(id);
@@ -15,7 +29,7 @@ function parseUserId(id: string) {
   return userId;
 }
 
-async function requireAdmin() {
+async function requireSuperAdmin() {
   const authUser = await getApiSessionUser();
 
   if (!authUser) {
@@ -24,9 +38,12 @@ async function requireAdmin() {
     };
   }
 
-  if (authUser.role !== "ADMIN") {
+  if (authUser.role !== "SUPER_ADMIN") {
     return {
-      error: NextResponse.json({ message: "Forbidden" }, { status: 403 }),
+      error: NextResponse.json(
+        { message: "Hanya Super Admin yang boleh mengelola user." },
+        { status: 403 }
+      ),
     };
   }
 
@@ -44,7 +61,7 @@ export async function PATCH(
       return requestError;
     }
 
-    const access = await requireAdmin();
+    const access = await requireSuperAdmin();
 
     if ("error" in access) {
       return access.error;
@@ -60,42 +77,13 @@ export async function PATCH(
       );
     }
 
-    const targetUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        role: true,
-        deletedAt: true,
-      },
-    });
-
-    if (!targetUser) {
-      return NextResponse.json(
-        { message: "User tidak ditemukan." },
-        { status: 404 }
-      );
-    }
-
-    if (targetUser.deletedAt) {
-      return NextResponse.json(
-        { message: "User sudah dihapus dan tidak bisa diperbarui." },
-        { status: 400 }
-      );
-    }
-
     const body = await req.json();
+
     const nama = typeof body.nama === "string" ? body.nama.trim() : "";
     const jabatan =
       typeof body.jabatan === "string" ? body.jabatan.trim() : "";
     const nip = typeof body.nip === "string" ? body.nip.trim() : "";
-    const role = body.role === "ADMIN" ? "ADMIN" : "USER";
-
-    if (access.authUser.id === userId && role !== targetUser.role) {
-      return NextResponse.json(
-        { message: "Admin aktif tidak bisa mengubah role akunnya sendiri." },
-        { status: 400 }
-      );
-    }
+    const role = isValidRole(body.role) ? body.role : "USER";
 
     if (!nama || !nip) {
       return NextResponse.json(
@@ -112,7 +100,7 @@ export async function PATCH(
     }
 
     const existingUserByNip = await prisma.user.findUnique({
-      where: { activeNip: nip },
+      where: { nip },
       select: {
         id: true,
       },
@@ -125,29 +113,12 @@ export async function PATCH(
       );
     }
 
-    if (targetUser.role === "ADMIN" && role === "USER") {
-      const activeAdminCount = await prisma.user.count({
-        where: {
-          role: "ADMIN",
-          deletedAt: null,
-        },
-      });
-
-      if (activeAdminCount <= 1) {
-        return NextResponse.json(
-          { message: "Minimal harus ada satu admin aktif." },
-          { status: 400 }
-        );
-      }
-    }
-
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
         nama,
         jabatan: jabatan || null,
         nip,
-        activeNip: nip,
         role,
       },
       select: {
@@ -186,7 +157,7 @@ export async function DELETE(
       return requestError;
     }
 
-    const access = await requireAdmin();
+    const access = await requireSuperAdmin();
 
     if ("error" in access) {
       return access.error;
@@ -204,7 +175,7 @@ export async function DELETE(
 
     if (access.authUser.id === userId) {
       return NextResponse.json(
-        { message: "Akun admin yang sedang dipakai tidak bisa dihapus." },
+        { message: "Akun yang sedang dipakai tidak bisa dihapus." },
         { status: 400 }
       );
     }
@@ -213,13 +184,10 @@ export async function DELETE(
       where: { id: userId },
       select: {
         id: true,
-        deletedAt: true,
-        reports: {
+        role: true,
+        _count: {
           select: {
-            id: true,
-            status: true,
-            fotoUrl: true,
-            completionPhotoUrl: true,
+            reports: true,
           },
         },
       },
@@ -232,39 +200,29 @@ export async function DELETE(
       );
     }
 
-    if (user.deletedAt) {
+    if (user.role === "SUPER_ADMIN") {
       return NextResponse.json(
-        { message: "User sudah dihapus." },
+        { message: "Akun Super Admin tidak boleh dihapus dari dashboard." },
         { status: 400 }
       );
     }
 
-    const activeReportCount = user.reports.filter((report) =>
-      ACTIVE_REPORT_STATUSES.includes(
-        report.status as (typeof ACTIVE_REPORT_STATUSES)[number]
-      )
-    ).length;
-
-    if (activeReportCount > 0) {
+    if (user._count.reports > 0) {
       return NextResponse.json(
         {
           message:
-            "User tidak bisa dihapus karena masih memiliki laporan aktif. Selesaikan atau tolak laporan aktif terlebih dahulu.",
+            "User yang sudah memiliki laporan tidak bisa dihapus. Nonaktifkan pengguna secara operasional bila perlu.",
         },
         { status: 400 }
       );
     }
 
-    await prisma.user.update({
+    await prisma.user.delete({
       where: { id: userId },
-      data: {
-        activeNip: null,
-        deletedAt: new Date(),
-      },
     });
 
     return NextResponse.json({
-      message: "User berhasil dihapus. Riwayat laporan tetap tersimpan.",
+      message: "User berhasil dihapus.",
     });
   } catch (error) {
     console.error("DELETE_ADMIN_USER_ERROR:", error);

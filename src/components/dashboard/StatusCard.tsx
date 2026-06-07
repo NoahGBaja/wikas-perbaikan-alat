@@ -11,6 +11,8 @@ import {
   type ReportStatus,
 } from "@/lib/report-helpers";
 
+export type StatusReportStatus = ReportStatus;
+
 export type StatusReportItem = {
   id: number;
   kategori: ReportKategori;
@@ -20,7 +22,7 @@ export type StatusReportItem = {
   severity: ReportSeverity;
   fotoUrl: string | null;
   completionPhotoUrl?: string | null;
-  status: ReportStatus;
+  status: StatusReportStatus;
   alasanPenolakan: string | null;
   assignedTechnician?: string | null;
   adminNotes?: string | null;
@@ -39,24 +41,24 @@ type StatusCardProps = {
   deleting?: boolean;
 };
 
+function isWaitingStatus(status: StatusReportStatus) {
+  return status.startsWith("MENUNGGU_ADMIN");
+}
+
 function getStatusUpdateLabel(report: StatusReportItem) {
-  if (report.status === "DISETUJUI") {
-    return `Disetujui pada ${formatTanggal(report.approvedAt || null)}`;
+  if (report.status === "DISETUJUI_FINAL") {
+    return `Disetujui final pada ${formatTanggal(report.approvedAt || null)}`;
   }
 
   if (report.status === "DITOLAK") {
     return `Ditolak pada ${formatTanggal(report.rejectedAt || null)}`;
   }
 
-  if (report.status === "DIPROSES") {
-    return `Diproses sejak ${formatTanggal(report.processedAt || null)}`;
+  if (isWaitingStatus(report.status)) {
+    return `Sedang menunggu approval ${report.status.replace("MENUNGGU_", "").replace("_", " ")}`;
   }
 
-  if (report.status === "SELESAI") {
-    return `Selesai pada ${formatTanggal(report.finishedAt || null)}`;
-  }
-
-  return "Menunggu keputusan admin";
+  return "Status laporan tidak diketahui";
 }
 
 export default function StatusCard({
@@ -65,6 +67,8 @@ export default function StatusCard({
   onDelete,
   deleting = false,
 }: StatusCardProps) {
+  const canEditOrDelete = report.status === "MENUNGGU_ADMIN_1";
+
   return (
     <article className="overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.08] shadow-[0_20px_50px_rgba(2,6,23,0.18)]">
       <div className="grid grid-cols-1 gap-0 lg:grid-cols-[340px_minmax(0,1fr)]">
@@ -141,13 +145,14 @@ export default function StatusCard({
             </p>
           </div>
 
-          {report.status === "DIPROSES" && report.assignedTechnician ? (
+          {isWaitingStatus(report.status) ? (
             <div className="mt-5 rounded-2xl border border-amber-300/20 bg-amber-400/10 p-4">
               <p className="text-sm font-semibold text-amber-50">
-                Sedang Diproses
+                Sedang Menunggu Approval
               </p>
-              <p className="mt-2 text-amber-50/90">
-                Penanggung jawab perbaikan: {report.assignedTechnician}
+              <p className="mt-2 leading-7 text-amber-50/90">
+                Laporan kamu sedang berada di tahap{" "}
+                {report.status.replace("MENUNGGU_", "").replace("_", " ")}.
               </p>
             </div>
           ) : null}
@@ -163,44 +168,18 @@ export default function StatusCard({
             </div>
           ) : null}
 
-          {report.status === "DISETUJUI" ? (
+          {report.status === "DISETUJUI_FINAL" ? (
             <div className="mt-5 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-4">
               <p className="text-sm font-semibold text-emerald-100">
-                Laporan Disetujui
+                Laporan Disetujui Final
               </p>
               <p className="mt-2 leading-7 text-emerald-50/90">
-                Laporan kamu sudah diterima admin dan siap masuk tahap perbaikan.
+                Laporan kamu sudah disetujui sampai Admin 6.
               </p>
             </div>
           ) : null}
 
-          {report.status === "SELESAI" ? (
-            <div className="mt-5 space-y-4 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-4">
-              <div>
-                <p className="text-sm font-semibold text-emerald-100">
-                  Pengerjaan Selesai
-                </p>
-                <p className="mt-2 leading-7 text-emerald-50/90">
-                  {report.completionNotes || "Perbaikan sudah selesai dikerjakan."}
-                </p>
-              </div>
-
-              {report.completionPhotoUrl ? (
-                <div className="overflow-hidden rounded-2xl border border-emerald-300/15">
-                  <Image
-                    src={report.completionPhotoUrl}
-                    alt={`Bukti penyelesaian ${report.namaBarang}`}
-                    width={1200}
-                    height={900}
-                    className="w-full object-cover"
-                    unoptimized
-                  />
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {report.status === "MENUNGGU" ? (
+          {canEditOrDelete ? (
             <div className="mt-5 flex flex-wrap gap-3">
               <button
                 type="button"

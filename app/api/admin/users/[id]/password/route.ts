@@ -17,6 +17,27 @@ function parseUserId(id: string) {
   return userId;
 }
 
+async function requireSuperAdmin() {
+  const authUser = await getApiSessionUser();
+
+  if (!authUser) {
+    return {
+      error: NextResponse.json({ message: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
+  if (authUser.role !== "SUPER_ADMIN") {
+    return {
+      error: NextResponse.json(
+        { message: "Hanya Super Admin yang boleh reset password user." },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return { authUser };
+}
+
 export async function POST(
   req: Request,
   ctx: { params: Promise<{ id: string }> }
@@ -28,14 +49,10 @@ export async function POST(
       return requestError;
     }
 
-    const authUser = await getApiSessionUser();
+    const access = await requireSuperAdmin();
 
-    if (!authUser) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
-    if (authUser.role !== "ADMIN") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    if ("error" in access) {
+      return access.error;
     }
 
     const { id } = await ctx.params;
@@ -52,7 +69,6 @@ export async function POST(
       where: { id: userId },
       select: {
         id: true,
-        deletedAt: true,
       },
     });
 
@@ -60,13 +76,6 @@ export async function POST(
       return NextResponse.json(
         { message: "User tidak ditemukan." },
         { status: 404 }
-      );
-    }
-
-    if (targetUser.deletedAt) {
-      return NextResponse.json(
-        { message: "User sudah dihapus dan tidak bisa direset password." },
-        { status: 400 }
       );
     }
 
@@ -89,6 +98,21 @@ export async function POST(
       );
     }
 
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+
+    if (!existingUser) {
+      return NextResponse.json(
+        { message: "User tidak ditemukan." },
+        { status: 404 }
+      );
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -98,6 +122,7 @@ export async function POST(
         id: true,
         nama: true,
         nip: true,
+        role: true,
       },
     });
 

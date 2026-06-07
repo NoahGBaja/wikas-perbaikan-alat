@@ -2,13 +2,7 @@ import "server-only";
 
 import { prisma } from "@/src/lib/prisma";
 import type { MonthlyStatsResponse } from "@/src/lib/monthly-report-stats-types";
-
-type ReportStatus =
-  | "MENUNGGU"
-  | "DISETUJUI"
-  | "DITOLAK"
-  | "DIPROSES"
-  | "SELESAI";
+import type { ReportStatus } from "@/src/lib/workflow";
 
 type ReportCategory =
   | "FASILITAS_INVENTARIS"
@@ -28,11 +22,14 @@ const REPORT_CATEGORIES: ReportCategory[] = [
 ];
 
 const REPORT_STATUSES: ReportStatus[] = [
-  "MENUNGGU",
-  "DISETUJUI",
+  "MENUNGGU_ADMIN_1",
+  "MENUNGGU_ADMIN_2",
+  "MENUNGGU_ADMIN_3",
+  "MENUNGGU_ADMIN_4",
+  "MENUNGGU_ADMIN_5",
+  "MENUNGGU_ADMIN_6",
+  "DISETUJUI_FINAL",
   "DITOLAK",
-  "DIPROSES",
-  "SELESAI",
 ];
 
 function getMonthRange(year: number, monthIndex: number) {
@@ -43,14 +40,8 @@ function getMonthRange(year: number, monthIndex: number) {
 }
 
 function parseNumber(value: number | string | null | undefined) {
-  if (typeof value === "number") {
-    return value;
-  }
-
-  if (typeof value === "string" && value.trim()) {
-    return Number(value);
-  }
-
+  if (typeof value === "number") return value;
+  if (typeof value === "string" && value.trim()) return Number(value);
   return null;
 }
 
@@ -74,6 +65,14 @@ function parseYear(value: number | string | null | undefined, fallback: number) 
   return parsed;
 }
 
+function isReportStatus(value: unknown): value is ReportStatus {
+  return typeof value === "string" && REPORT_STATUSES.includes(value as ReportStatus);
+}
+
+function isWaitingStatus(status: ReportStatus) {
+  return status.startsWith("MENUNGGU_ADMIN");
+}
+
 function getCategoryLabel(category: ReportCategory) {
   if (category === "FASILITAS_INVENTARIS") return "Fasilitas & Inventaris";
   if (category === "IT_ELEKTRONIK") return "IT & Elektronik";
@@ -82,11 +81,14 @@ function getCategoryLabel(category: ReportCategory) {
 
 function createEmptyStatusCounts(): Record<ReportStatus, number> {
   return {
-    MENUNGGU: 0,
-    DISETUJUI: 0,
+    MENUNGGU_ADMIN_1: 0,
+    MENUNGGU_ADMIN_2: 0,
+    MENUNGGU_ADMIN_3: 0,
+    MENUNGGU_ADMIN_4: 0,
+    MENUNGGU_ADMIN_5: 0,
+    MENUNGGU_ADMIN_6: 0,
+    DISETUJUI_FINAL: 0,
     DITOLAK: 0,
-    DIPROSES: 0,
-    SELESAI: 0,
   };
 }
 
@@ -142,10 +144,9 @@ export async function getMonthlyReportStats(
   const year = parseYear(input.year, defaultPeriod.year);
   const statusFilter = input.status;
 
-  const selectedStatus: ReportStatus | "SEMUA" =
-    statusFilter && REPORT_STATUSES.includes(statusFilter as ReportStatus)
-      ? (statusFilter as ReportStatus)
-      : "SEMUA";
+  const selectedStatus: ReportStatus | "SEMUA" = isReportStatus(statusFilter)
+    ? statusFilter
+    : "SEMUA";
 
   const { start, end } = getMonthRange(year, month - 1);
 
@@ -178,6 +179,7 @@ export async function getMonthlyReportStats(
   const uniqueReporterIds = new Set<number>();
   const statusCounts = createEmptyStatusCounts();
   const categoryCounts = createEmptyCategoryCounts();
+
   const reporterMap = new Map<
     number,
     {
@@ -217,6 +219,7 @@ export async function getMonthlyReportStats(
         latestReportAtMs: createdAtMs,
         categoryCounts: reporterCategoryCounts,
       });
+
       continue;
     }
 
@@ -249,6 +252,10 @@ export async function getMonthlyReportStats(
     }));
 
   const topReporter = reporterStats[0] || null;
+  const totalWaiting = REPORT_STATUSES.filter(isWaitingStatus).reduce(
+    (sum, status) => sum + statusCounts[status],
+    0
+  );
 
   return {
     month: start.toLocaleDateString("id-ID", {
@@ -261,11 +268,11 @@ export async function getMonthlyReportStats(
     summary: {
       totalReports: reports.length,
       totalUniqueReporters: uniqueReporterIds.size,
-      totalWaiting: statusCounts.MENUNGGU,
-      totalApproved: statusCounts.DISETUJUI,
+      totalWaiting,
+      totalApproved: statusCounts.DISETUJUI_FINAL,
       totalRejected: statusCounts.DITOLAK,
-      totalProcessed: statusCounts.DIPROSES,
-      totalFinished: statusCounts.SELESAI,
+      totalProcessed: 0,
+      totalFinished: statusCounts.DISETUJUI_FINAL,
     },
     categories: {
       items: [
@@ -288,29 +295,44 @@ export async function getMonthlyReportStats(
     },
     statusBreakdown: [
       {
-        key: "DISETUJUI",
-        label: "Disetujui",
-        total: statusCounts.DISETUJUI,
+        key: "MENUNGGU_ADMIN_1",
+        label: "Menunggu Admin 1",
+        total: statusCounts.MENUNGGU_ADMIN_1,
+      },
+      {
+        key: "MENUNGGU_ADMIN_2",
+        label: "Menunggu Admin 2",
+        total: statusCounts.MENUNGGU_ADMIN_2,
+      },
+      {
+        key: "MENUNGGU_ADMIN_3",
+        label: "Menunggu Admin 3",
+        total: statusCounts.MENUNGGU_ADMIN_3,
+      },
+      {
+        key: "MENUNGGU_ADMIN_4",
+        label: "Menunggu Admin 4",
+        total: statusCounts.MENUNGGU_ADMIN_4,
+      },
+      {
+        key: "MENUNGGU_ADMIN_5",
+        label: "Menunggu Admin 5",
+        total: statusCounts.MENUNGGU_ADMIN_5,
+      },
+      {
+        key: "MENUNGGU_ADMIN_6",
+        label: "Menunggu Admin 6",
+        total: statusCounts.MENUNGGU_ADMIN_6,
+      },
+      {
+        key: "DISETUJUI_FINAL",
+        label: "Disetujui Final",
+        total: statusCounts.DISETUJUI_FINAL,
       },
       {
         key: "DITOLAK",
         label: "Ditolak",
         total: statusCounts.DITOLAK,
-      },
-      {
-        key: "MENUNGGU",
-        label: "Menunggu",
-        total: statusCounts.MENUNGGU,
-      },
-      {
-        key: "DIPROSES",
-        label: "Diproses",
-        total: statusCounts.DIPROSES,
-      },
-      {
-        key: "SELESAI",
-        label: "Selesai",
-        total: statusCounts.SELESAI,
       },
     ],
     topReporter,

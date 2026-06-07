@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums"
-import type * as Prisma from "../internal/prismaNamespace"
+import type * as $Enums from "../enums.ts"
+import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model Report
@@ -341,6 +341,7 @@ export type ReportWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Report"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  histories?: Prisma.ReportApprovalHistoryListRelationFilter
 }
 
 export type ReportOrderByWithRelationInput = {
@@ -365,6 +366,7 @@ export type ReportOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
+  histories?: Prisma.ReportApprovalHistoryOrderByRelationAggregateInput
   _relevance?: Prisma.ReportOrderByRelevanceInput
 }
 
@@ -393,6 +395,7 @@ export type ReportWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Report"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  histories?: Prisma.ReportApprovalHistoryListRelationFilter
 }, "id">
 
 export type ReportOrderByWithAggregationInput = {
@@ -469,6 +472,7 @@ export type ReportCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReportsInput
+  histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
 }
 
 export type ReportUncheckedCreateInput = {
@@ -492,6 +496,7 @@ export type ReportUncheckedCreateInput = {
   finishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
 }
 
 export type ReportUpdateInput = {
@@ -514,6 +519,7 @@ export type ReportUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
 }
 
 export type ReportUncheckedUpdateInput = {
@@ -537,6 +543,7 @@ export type ReportUncheckedUpdateInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
 }
 
 export type ReportCreateManyInput = {
@@ -701,6 +708,11 @@ export type ReportSumOrderByAggregateInput = {
   userId?: Prisma.SortOrder
 }
 
+export type ReportScalarRelationFilter = {
+  is?: Prisma.ReportWhereInput
+  isNot?: Prisma.ReportWhereInput
+}
+
 export type ReportCreateNestedManyWithoutUserInput = {
   create?: Prisma.XOR<Prisma.ReportCreateWithoutUserInput, Prisma.ReportUncheckedCreateWithoutUserInput> | Prisma.ReportCreateWithoutUserInput[] | Prisma.ReportUncheckedCreateWithoutUserInput[]
   connectOrCreate?: Prisma.ReportCreateOrConnectWithoutUserInput | Prisma.ReportCreateOrConnectWithoutUserInput[]
@@ -755,6 +767,24 @@ export type EnumReportStatusFieldUpdateOperationsInput = {
   set?: $Enums.ReportStatus
 }
 
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
+export type ReportCreateNestedOneWithoutHistoriesInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutHistoriesInput, Prisma.ReportUncheckedCreateWithoutHistoriesInput>
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutHistoriesInput
+  connect?: Prisma.ReportWhereUniqueInput
+}
+
+export type ReportUpdateOneRequiredWithoutHistoriesNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutHistoriesInput, Prisma.ReportUncheckedCreateWithoutHistoriesInput>
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutHistoriesInput
+  upsert?: Prisma.ReportUpsertWithoutHistoriesInput
+  connect?: Prisma.ReportWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ReportUpdateToOneWithWhereWithoutHistoriesInput, Prisma.ReportUpdateWithoutHistoriesInput>, Prisma.ReportUncheckedUpdateWithoutHistoriesInput>
+}
+
 export type ReportCreateWithoutUserInput = {
   kategori: $Enums.ReportCategory
   namaBarang: string
@@ -774,6 +804,7 @@ export type ReportCreateWithoutUserInput = {
   finishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
 }
 
 export type ReportUncheckedCreateWithoutUserInput = {
@@ -796,6 +827,7 @@ export type ReportUncheckedCreateWithoutUserInput = {
   finishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
 }
 
 export type ReportCreateOrConnectWithoutUserInput = {
@@ -850,6 +882,112 @@ export type ReportScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
 }
 
+export type ReportCreateWithoutHistoriesInput = {
+  kategori: $Enums.ReportCategory
+  namaBarang: string
+  lokasi: string
+  deskripsi: string
+  severity: $Enums.ReportSeverity
+  fotoUrl?: string | null
+  status?: $Enums.ReportStatus
+  alasanPenolakan?: string | null
+  assignedTechnician?: string | null
+  adminNotes?: string | null
+  completionNotes?: string | null
+  completionPhotoUrl?: string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  processedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutReportsInput
+}
+
+export type ReportUncheckedCreateWithoutHistoriesInput = {
+  id?: number
+  userId: number
+  kategori: $Enums.ReportCategory
+  namaBarang: string
+  lokasi: string
+  deskripsi: string
+  severity: $Enums.ReportSeverity
+  fotoUrl?: string | null
+  status?: $Enums.ReportStatus
+  alasanPenolakan?: string | null
+  assignedTechnician?: string | null
+  adminNotes?: string | null
+  completionNotes?: string | null
+  completionPhotoUrl?: string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  processedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ReportCreateOrConnectWithoutHistoriesInput = {
+  where: Prisma.ReportWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReportCreateWithoutHistoriesInput, Prisma.ReportUncheckedCreateWithoutHistoriesInput>
+}
+
+export type ReportUpsertWithoutHistoriesInput = {
+  update: Prisma.XOR<Prisma.ReportUpdateWithoutHistoriesInput, Prisma.ReportUncheckedUpdateWithoutHistoriesInput>
+  create: Prisma.XOR<Prisma.ReportCreateWithoutHistoriesInput, Prisma.ReportUncheckedCreateWithoutHistoriesInput>
+  where?: Prisma.ReportWhereInput
+}
+
+export type ReportUpdateToOneWithWhereWithoutHistoriesInput = {
+  where?: Prisma.ReportWhereInput
+  data: Prisma.XOR<Prisma.ReportUpdateWithoutHistoriesInput, Prisma.ReportUncheckedUpdateWithoutHistoriesInput>
+}
+
+export type ReportUpdateWithoutHistoriesInput = {
+  kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
+  lokasi?: Prisma.StringFieldUpdateOperationsInput | string
+  deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+}
+
+export type ReportUncheckedUpdateWithoutHistoriesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
+  lokasi?: Prisma.StringFieldUpdateOperationsInput | string
+  deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type ReportCreateManyUserInput = {
   id?: number
   kategori: $Enums.ReportCategory
@@ -891,6 +1029,7 @@ export type ReportUpdateWithoutUserInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
 }
 
 export type ReportUncheckedUpdateWithoutUserInput = {
@@ -913,6 +1052,7 @@ export type ReportUncheckedUpdateWithoutUserInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
 }
 
 export type ReportUncheckedUpdateManyWithoutUserInput = {
@@ -938,6 +1078,35 @@ export type ReportUncheckedUpdateManyWithoutUserInput = {
 }
 
 
+/**
+ * Count Type ReportCountOutputType
+ */
+
+export type ReportCountOutputType = {
+  histories: number
+}
+
+export type ReportCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  histories?: boolean | ReportCountOutputTypeCountHistoriesArgs
+}
+
+/**
+ * ReportCountOutputType without action
+ */
+export type ReportCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ReportCountOutputType
+   */
+  select?: Prisma.ReportCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * ReportCountOutputType without action
+ */
+export type ReportCountOutputTypeCountHistoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReportApprovalHistoryWhereInput
+}
+
 
 export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -961,6 +1130,8 @@ export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  histories?: boolean | Prisma.Report$historiesArgs<ExtArgs>
+  _count?: boolean | Prisma.ReportCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["report"]>
 
 
@@ -991,12 +1162,15 @@ export type ReportSelectScalar = {
 export type ReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "kategori" | "namaBarang" | "lokasi" | "deskripsi" | "severity" | "fotoUrl" | "status" | "alasanPenolakan" | "assignedTechnician" | "adminNotes" | "completionNotes" | "completionPhotoUrl" | "approvedAt" | "rejectedAt" | "processedAt" | "finishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["report"]>
 export type ReportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  histories?: boolean | Prisma.Report$historiesArgs<ExtArgs>
+  _count?: boolean | Prisma.ReportCountOutputTypeDefaultArgs<ExtArgs>
 }
 
 export type $ReportPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Report"
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
+    histories: Prisma.$ReportApprovalHistoryPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1360,6 +1534,7 @@ readonly fields: ReportFieldRefs;
 export interface Prisma__ReportClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  histories<T extends Prisma.Report$historiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Report$historiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportApprovalHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1754,6 +1929,30 @@ export type ReportDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Limit how many Reports to delete.
    */
   limit?: number
+}
+
+/**
+ * Report.histories
+ */
+export type Report$historiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ReportApprovalHistory
+   */
+  select?: Prisma.ReportApprovalHistorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ReportApprovalHistory
+   */
+  omit?: Prisma.ReportApprovalHistoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReportApprovalHistoryInclude<ExtArgs> | null
+  where?: Prisma.ReportApprovalHistoryWhereInput
+  orderBy?: Prisma.ReportApprovalHistoryOrderByWithRelationInput | Prisma.ReportApprovalHistoryOrderByWithRelationInput[]
+  cursor?: Prisma.ReportApprovalHistoryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReportApprovalHistoryScalarFieldEnum | Prisma.ReportApprovalHistoryScalarFieldEnum[]
 }
 
 /**

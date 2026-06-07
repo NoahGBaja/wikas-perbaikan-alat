@@ -1,17 +1,11 @@
 import { NextResponse } from "next/server";
-import {
-  AUTH_COOKIE_NAME,
-  createAuthSessionTag,
-  getAuthCookieOptions,
-  signAuthToken,
-} from "@/src/lib/auth";
-import { prisma } from "@/src/lib/prisma";
 import { getApiSessionUser } from "@/src/lib/session";
 import {
+  verifyPassword,
   hashPassword,
   validatePasswordStrength,
-  verifyPassword,
 } from "@/src/lib/passwords";
+import { prisma } from "@/src/lib/prisma";
 import { validateMutationRequest } from "@/src/lib/request-security";
 
 export async function POST(req: Request) {
@@ -28,14 +22,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (!authUser.passwordHash) {
-      return NextResponse.json(
-        { message: "Data akun tidak lengkap." },
-        { status: 400 }
-      );
-    }
-
     const body = await req.json();
+
     const currentPassword =
       typeof body.currentPassword === "string" ? body.currentPassword : "";
     const newPassword =
@@ -45,26 +33,14 @@ export async function POST(req: Request) {
 
     if (!currentPassword || !newPassword || !confirmPassword) {
       return NextResponse.json(
-        { message: "Semua field password wajib diisi." },
-        { status: 400 }
-      );
-    }
-
-    const currentPasswordValid = await verifyPassword(
-      currentPassword,
-      authUser.passwordHash
-    );
-
-    if (!currentPasswordValid) {
-      return NextResponse.json(
-        { message: "Password saat ini salah." },
+        { message: "Password saat ini, password baru, dan konfirmasi wajib diisi." },
         { status: 400 }
       );
     }
 
     if (newPassword !== confirmPassword) {
       return NextResponse.json(
-        { message: "Konfirmasi password baru tidak cocok." },
+        { message: "Konfirmasi password baru tidak sama." },
         { status: 400 }
       );
     }
@@ -78,42 +54,47 @@ export async function POST(req: Request) {
       );
     }
 
-    const passwordHash = await hashPassword(newPassword);
-
-    const updatedUser = await prisma.user.update({
+    const user = await prisma.user.findUnique({
       where: { id: authUser.id },
-      data: {
-        passwordHash,
-      },
       select: {
         id: true,
-        nama: true,
-        role: true,
         passwordHash: true,
       },
     });
 
-    const response = NextResponse.json({
-      message: "Password berhasil diperbarui.",
-    });
+    if (!user) {
+      return NextResponse.json(
+        { message: "User tidak ditemukan." },
+        { status: 404 }
+      );
+    }
 
-    response.cookies.set(
-      AUTH_COOKIE_NAME,
-      signAuthToken({
-        userId: updatedUser.id,
-        nama: updatedUser.nama,
-        role: updatedUser.role,
-        sessionTag: createAuthSessionTag({
-          passwordHash: updatedUser.passwordHash,
-          role: updatedUser.role,
-        }),
-      }),
-      getAuthCookieOptions()
+    const isCurrentPasswordValid = await verifyPassword(
+      currentPassword,
+      user.passwordHash
     );
 
-    return response;
+    if (!isCurrentPasswordValid) {
+      return NextResponse.json(
+        { message: "Password saat ini salah." },
+        { status: 400 }
+      );
+    }
+
+    const newPasswordHash = await hashPassword(newPassword);
+
+    await prisma.user.update({
+      where: { id: authUser.id },
+      data: {
+        passwordHash: newPasswordHash,
+      },
+    });
+
+    return NextResponse.json({
+      message: "Password berhasil diperbarui.",
+    });
   } catch (error) {
-    console.error("UPDATE_PASSWORD_ERROR:", error);
+    console.error("UPDATE_ACCOUNT_PASSWORD_ERROR:", error);
 
     return NextResponse.json(
       { message: "Terjadi kesalahan pada server." },

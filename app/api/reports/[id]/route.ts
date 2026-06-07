@@ -13,6 +13,7 @@ import {
   validateImageUpload,
 } from "@/src/lib/uploads";
 import { validateMutationRequest } from "@/src/lib/request-security";
+import { isAdminRole } from "@/src/lib/roles";
 
 function parseReportId(id: string) {
   const reportId = Number(id);
@@ -23,6 +24,33 @@ function parseReportId(id: string) {
 
   return reportId;
 }
+
+const reportInclude = {
+  user: {
+    select: {
+      id: true,
+      nama: true,
+      jabatan: true,
+      nip: true,
+    },
+  },
+  histories: {
+    include: {
+      admin: {
+        select: {
+          id: true,
+          nama: true,
+          jabatan: true,
+          nip: true,
+          role: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "asc" as const,
+    },
+  },
+};
 
 export async function GET(
   _req: Request,
@@ -47,16 +75,7 @@ export async function GET(
 
     const report = await prisma.report.findUnique({
       where: { id: reportId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            nama: true,
-            jabatan: true,
-            nip: true,
-          },
-        },
-      },
+      include: reportInclude,
     });
 
     if (!report) {
@@ -66,7 +85,7 @@ export async function GET(
       );
     }
 
-    if (authUser.role !== "ADMIN" && report.userId !== authUser.id) {
+    if (!isAdminRole(authUser.role) && report.userId !== authUser.id) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
@@ -127,9 +146,12 @@ export async function PATCH(
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    if (existingReport.status !== "MENUNGGU") {
+    if (existingReport.status !== "MENUNGGU_ADMIN_1") {
       return NextResponse.json(
-        { message: "Hanya laporan menunggu yang boleh diubah." },
+        {
+          message:
+            "Laporan hanya bisa diubah saat masih menunggu persetujuan Admin 1.",
+        },
         { status: 400 }
       );
     }
@@ -137,7 +159,8 @@ export async function PATCH(
     const formData = await req.formData();
     const reportInput = parseReportFormData(formData);
     const file = formData.get("foto") as File | null;
-    const removeExistingPhoto = String(formData.get("removeFoto") || "") === "true";
+    const removeExistingPhoto =
+      String(formData.get("removeFoto") || "") === "true";
 
     const validationError = validateReportInput(reportInput);
 
@@ -181,16 +204,7 @@ export async function PATCH(
         severity: reportInput.severity as ValidSeverity,
         fotoUrl,
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            nama: true,
-            jabatan: true,
-            nip: true,
-          },
-        },
-      },
+      include: reportInclude,
     });
 
     return NextResponse.json({
@@ -259,9 +273,12 @@ export async function DELETE(
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    if (existingReport.status !== "MENUNGGU") {
+    if (existingReport.status !== "MENUNGGU_ADMIN_1") {
       return NextResponse.json(
-        { message: "Hanya laporan menunggu yang boleh dihapus." },
+        {
+          message:
+            "Laporan hanya bisa dihapus saat masih menunggu persetujuan Admin 1.",
+        },
         { status: 400 }
       );
     }
@@ -271,6 +288,7 @@ export async function DELETE(
     });
 
     await deleteUploadedFileByUrl(existingReport.fotoUrl);
+
     return NextResponse.json({
       message: "Laporan berhasil dihapus.",
     });

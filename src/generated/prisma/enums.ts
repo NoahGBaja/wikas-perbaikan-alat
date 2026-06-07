@@ -10,7 +10,13 @@
 */
 
 export const Role = {
-  ADMIN: 'ADMIN',
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN_1: 'ADMIN_1',
+  ADMIN_2: 'ADMIN_2',
+  ADMIN_3: 'ADMIN_3',
+  ADMIN_4: 'ADMIN_4',
+  ADMIN_5: 'ADMIN_5',
+  ADMIN_6: 'ADMIN_6',
   USER: 'USER'
 } as const
 
@@ -36,11 +42,22 @@ export type ReportSeverity = (typeof ReportSeverity)[keyof typeof ReportSeverity
 
 
 export const ReportStatus = {
-  MENUNGGU: 'MENUNGGU',
-  DISETUJUI: 'DISETUJUI',
-  DITOLAK: 'DITOLAK',
-  DIPROSES: 'DIPROSES',
-  SELESAI: 'SELESAI'
+  MENUNGGU_ADMIN_1: 'MENUNGGU_ADMIN_1',
+  MENUNGGU_ADMIN_2: 'MENUNGGU_ADMIN_2',
+  MENUNGGU_ADMIN_3: 'MENUNGGU_ADMIN_3',
+  MENUNGGU_ADMIN_4: 'MENUNGGU_ADMIN_4',
+  MENUNGGU_ADMIN_5: 'MENUNGGU_ADMIN_5',
+  MENUNGGU_ADMIN_6: 'MENUNGGU_ADMIN_6',
+  DISETUJUI_FINAL: 'DISETUJUI_FINAL',
+  DITOLAK: 'DITOLAK'
 } as const
 
 export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus]
+
+
+export const ReportDecisionAction = {
+  ACC: 'ACC',
+  TOLAK: 'TOLAK'
+} as const
+
+export type ReportDecisionAction = (typeof ReportDecisionAction)[keyof typeof ReportDecisionAction]

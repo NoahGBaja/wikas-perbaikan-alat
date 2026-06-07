@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getApiSessionUser } from "@/src/lib/session";
 import { validateMutationRequest } from "@/src/lib/request-security";
+import { isAdminRole } from "@/src/lib/roles";
 
 export async function GET() {
   try {
@@ -44,7 +45,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (authUser.role !== "ADMIN") {
+    if (!isAdminRole(authUser.role)) {
       return NextResponse.json(
         { message: "Hanya admin yang dapat mengubah nama dan jabatan." },
         { status: 403 }

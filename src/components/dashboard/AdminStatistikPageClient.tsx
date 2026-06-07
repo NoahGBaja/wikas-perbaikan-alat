@@ -35,11 +35,14 @@ const MONTH_OPTIONS = [
 
 const STATUS_OPTIONS = [
   { value: "SEMUA", label: "Semua Status" },
-  { value: "MENUNGGU", label: "Menunggu" },
-  { value: "DISETUJUI", label: "Disetujui" },
+  { value: "MENUNGGU_ADMIN_1", label: "Menunggu Admin 1" },
+  { value: "MENUNGGU_ADMIN_2", label: "Menunggu Admin 2" },
+  { value: "MENUNGGU_ADMIN_3", label: "Menunggu Admin 3" },
+  { value: "MENUNGGU_ADMIN_4", label: "Menunggu Admin 4" },
+  { value: "MENUNGGU_ADMIN_5", label: "Menunggu Admin 5" },
+  { value: "MENUNGGU_ADMIN_6", label: "Menunggu Admin 6" },
+  { value: "DISETUJUI_FINAL", label: "Disetujui Final" },
   { value: "DITOLAK", label: "Ditolak" },
-  { value: "DIPROSES", label: "Diproses" },
-  { value: "SELESAI", label: "Selesai" },
 ] as const;
 
 export default function AdminStatistikPageClient({
@@ -156,19 +159,19 @@ export default function AdminStatistikPageClient({
     "Periode terpilih";
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-10 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-10 text-slate-900">
       <div className="mx-auto max-w-[1500px]">
         <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/15 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
               <BarChart3 className="h-4 w-4" />
               Statistik Laporan
             </div>
 
-            <h1 className="mt-4 text-3xl font-bold tracking-[-0.03em] md:text-5xl">
+            <h1 className="mt-4 text-3xl font-bold tracking-[-0.03em] text-slate-950 md:text-5xl">
               Statistik Laporan
             </h1>
-            <p className="mt-3 max-w-3xl text-white/70">
+            <p className="mt-3 max-w-3xl text-slate-600">
               Lihat performa laporan berdasarkan bulan, tahun, status, dan
               aktivitas pelapor.
             </p>
@@ -177,30 +180,30 @@ export default function AdminStatistikPageClient({
           <button
             type="button"
             onClick={() => router.push("/dashboard/admin")}
-            className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-5 py-3 font-semibold text-white transition hover:bg-white/15"
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 text-blue-600" />
             Kembali ke Dashboard
           </button>
         </div>
 
         {showInitialLoader ? (
-          <div className="rounded-[32px] border border-white/10 bg-white/[0.08] px-6 py-10 text-center text-white/70">
+          <div className="rounded-[32px] border border-slate-200 bg-white/90 px-6 py-10 text-center text-slate-600 shadow-sm">
             Memuat statistik bulanan...
           </div>
         ) : stats ? (
           <div className="space-y-6">
-            <section className="rounded-[28px] border border-white/10 bg-white/[0.06] p-5 shadow-[0_18px_40px_rgba(2,6,23,0.14)] md:p-6">
+            <section className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm md:p-6">
               <div className="max-w-2xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-100/75">
+                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
                   Filter Statistik
                 </p>
-                <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em] text-white md:text-3xl">
+                <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em] text-slate-950 md:text-3xl">
                   Rekap Pelapor {activeMonthLabel}
                 </h2>
-                <p className="mt-3 text-sm leading-6 text-white/68">
-                  Pilih bulan, tahun, dan status, lalu tampilkan data yang
-                  ingin kamu lihat.
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  Pilih bulan, tahun, dan status, lalu tampilkan data yang ingin
+                  kamu lihat.
                 </p>
               </div>
 
@@ -209,7 +212,7 @@ export default function AdminStatistikPageClient({
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(Number(e.target.value))}
                   disabled={isBusy}
-                  className="rounded-2xl border border-cyan-300/18 bg-slate-900/70 px-4 py-3 text-white outline-none transition focus:border-cyan-300/30 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {MONTH_OPTIONS.map((month) => (
                     <option key={month.value} value={month.value}>
@@ -222,7 +225,7 @@ export default function AdminStatistikPageClient({
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
                   disabled={isBusy}
-                  className="rounded-2xl border border-white/10 bg-slate-900/70 px-4 py-3 text-white outline-none transition focus:border-cyan-300/30 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {yearOptions.map((year) => (
                     <option key={year} value={year}>
@@ -237,7 +240,7 @@ export default function AdminStatistikPageClient({
                     setSelectedStatus(e.target.value as ReportStatus | "SEMUA")
                   }
                   disabled={isBusy}
-                  className="rounded-2xl border border-white/10 bg-slate-900/70 px-4 py-3 text-white outline-none transition focus:border-cyan-300/30 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {STATUS_OPTIONS.map((status) => (
                     <option key={status.value} value={status.value}>
@@ -250,7 +253,7 @@ export default function AdminStatistikPageClient({
                   type="button"
                   onClick={handleApplyFilter}
                   disabled={isBusy}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-300/18 bg-cyan-400/12 px-5 py-3 font-semibold text-cyan-50 transition hover:bg-cyan-400/18 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-blue-100 bg-blue-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   <Filter className="h-4 w-4" />
                   Terapkan
@@ -260,27 +263,27 @@ export default function AdminStatistikPageClient({
                   type="button"
                   onClick={handleResetFilter}
                   disabled={isBusy}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.08] px-5 py-3 font-semibold text-white transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  <RefreshCcw className="h-4 w-4" />
+                  <RefreshCcw className="h-4 w-4 text-slate-500" />
                   Reset
                 </button>
               </div>
 
               {isRefreshingStats ? (
-                <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-50">
+                <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
                   Memperbarui statistik...
                 </div>
               ) : null}
 
               {message ? (
-                <div className="mt-4 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm">
+                <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                   {message}
                 </div>
               ) : null}
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <p className="flex items-center text-sm font-semibold text-white/55">
+                <p className="flex items-center text-sm font-semibold text-slate-500">
                   Tampilan:
                 </p>
                 <div className="grid flex-1 gap-2 sm:grid-cols-2">
@@ -289,8 +292,8 @@ export default function AdminStatistikPageClient({
                     onClick={() => setActiveDisplay("TABLE")}
                     className={`rounded-2xl border transition ${
                       activeDisplay === "TABLE"
-                        ? "border-cyan-300/20 bg-cyan-400/12 text-cyan-50"
-                        : "border-white/10 bg-white/[0.06] text-white/78 hover:bg-white/[0.1]"
+                        ? "border-blue-200 bg-blue-50 text-blue-700"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                     }`}
                   >
                     <div className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-inherit px-4 py-3 text-sm font-semibold">
@@ -304,8 +307,8 @@ export default function AdminStatistikPageClient({
                     onClick={() => setActiveDisplay("SUMMARY")}
                     className={`rounded-2xl border transition ${
                       activeDisplay === "SUMMARY"
-                        ? "border-cyan-300/20 bg-cyan-400/12 text-cyan-50"
-                        : "border-white/10 bg-white/[0.06] text-white/78 hover:bg-white/[0.1]"
+                        ? "border-blue-200 bg-blue-50 text-blue-700"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                     }`}
                   >
                     <div className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-inherit px-4 py-3 text-sm font-semibold">
@@ -346,7 +349,7 @@ export default function AdminStatistikPageClient({
             </section>
           </div>
         ) : (
-          <div className="rounded-[32px] border border-white/10 bg-white/[0.08] px-6 py-10 text-center text-white/70">
+          <div className="rounded-[32px] border border-slate-200 bg-white/90 px-6 py-10 text-center text-slate-600 shadow-sm">
             Data statistik tidak tersedia.
           </div>
         )}

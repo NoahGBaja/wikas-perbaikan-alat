@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import type { AppRole } from "@/src/lib/roles";
 
 export const AUTH_COOKIE_NAME = "auth_token";
 export const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
@@ -20,14 +21,29 @@ function getAuthSecret(): string {
 
 const AUTH_SECRET = getAuthSecret();
 
+const VALID_ROLES: AppRole[] = [
+  "SUPER_ADMIN",
+  "ADMIN_1",
+  "ADMIN_2",
+  "ADMIN_3",
+  "ADMIN_4",
+  "ADMIN_5",
+  "ADMIN_6",
+  "USER",
+];
+
 export type AuthTokenPayload = {
   userId: number;
   nama: string;
-  role: "ADMIN" | "USER";
+  role: AppRole;
   sessionTag: string;
 };
 
 const revokedTokenHashes = new Map<string, number>();
+
+function isValidRole(role: unknown): role is AppRole {
+  return typeof role === "string" && VALID_ROLES.includes(role as AppRole);
+}
 
 function isAuthTokenPayload(value: string | JwtPayload): value is AuthTokenPayload {
   if (typeof value === "string") return false;
@@ -35,7 +51,7 @@ function isAuthTokenPayload(value: string | JwtPayload): value is AuthTokenPaylo
   return (
     typeof value.userId === "number" &&
     typeof value.nama === "string" &&
-    (value.role === "ADMIN" || value.role === "USER") &&
+    isValidRole(value.role) &&
     typeof value.sessionTag === "string"
   );
 }
@@ -56,7 +72,7 @@ function pruneRevokedTokens() {
 
 export function createAuthSessionTag(input: {
   passwordHash: string;
-  role: "ADMIN" | "USER";
+  role: AppRole;
 }) {
   return createHash("sha256")
     .update(`${input.role}:${input.passwordHash}`)
@@ -100,7 +116,7 @@ export function revokeAuthToken(token: string) {
     revokedTokenHashes.set(hashToken(token), expiresAt);
     pruneRevokedTokens();
   } catch {
-    // A malformed token still gets cleared from the browser cookie by logout.
+    // Token rusak tetap akan dihapus dari browser lewat cookie logout.
   }
 }
 

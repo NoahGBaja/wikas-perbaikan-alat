@@ -20,7 +20,7 @@ async function main() {
   }
 
   const user = await prisma.user.findUnique({
-    where: { activeNip: nip },
+    where: { nip },
   });
 
   if (!user) {
