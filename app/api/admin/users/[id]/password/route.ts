@@ -98,21 +98,6 @@ export async function POST(
       );
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        role: true,
-      },
-    });
-
-    if (!existingUser) {
-      return NextResponse.json(
-        { message: "User tidak ditemukan." },
-        { status: 404 }
-      );
-    }
-
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
