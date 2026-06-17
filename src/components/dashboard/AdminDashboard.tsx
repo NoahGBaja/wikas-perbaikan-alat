@@ -215,14 +215,14 @@ export default function AdminDashboard({
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-8 text-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-8 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
               Admin Panel
             </p>
-            <h1 className="mt-2 text-3xl font-bold text-slate-950 md:text-5xl">
+            <h1 className="mt-2 text-3xl font-bold text-slate-950 md:text-4xl">
               {title}
             </h1>
             <p className="mt-3 max-w-3xl text-slate-600">
@@ -281,52 +281,48 @@ export default function AdminDashboard({
           </div>
         </header>
 
-        <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm xl:col-span-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
-              Admin Aktif
-            </p>
-            <div className="mt-4 flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 font-semibold text-blue-700">
-                {getInitials(currentUser.nama) || "AD"}
+        <section className="mb-8 rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700">
+                  {getInitials(currentUser.nama) || "AD"}
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    {currentUser.nama}
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    {currentUser.jabatan || "Admin Sistem"} -{" "}
+                    {currentUser.role} - NIP: {currentUser.nip || "-"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-slate-900">{currentUser.nama}</p>
-                <p className="text-sm text-slate-500">
-                  {currentUser.jabatan || "Admin Sistem"}
-                </p>
-                <p className="text-xs text-slate-400">
-                  {currentUser.role} • NIP: {currentUser.nip || "-"}
-                </p>
-              </div>
+
+              {summary.giliranSaya > 0 ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+                  {summary.giliranSaya} laporan perlu disetujui
+                </div>
+              ) : null}
             </div>
           </div>
 
-          {[
-            ["Total", summary.total, "Semua laporan.", "text-blue-600"],
-            ["Menunggu", summary.menunggu, "Masih dalam approval.", "text-amber-600"],
-            [
-              "Giliran Saya",
-              summary.giliranSaya,
-              "Butuh keputusan Anda.",
-              "text-emerald-600",
-            ],
-            ["Final", summary.final, "Disetujui semua admin.", "text-purple-600"],
-            ["Ditolak", summary.ditolak, "Alur berhenti permanen.", "text-rose-600"],
-          ].map(([label, value, description, numberColor]) => (
-            <div
-              key={String(label)}
-              className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm"
-            >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
-                {label}
-              </p>
-              <p className={`mt-3 text-5xl font-extrabold ${numberColor}`}>
-                {value}
-              </p>
-              <p className="mt-3 text-sm text-slate-500">{description}</p>
-            </div>
-          ))}
+          <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 sm:grid-cols-3 lg:grid-cols-5 lg:divide-y-0">
+            {[
+              ["Total", summary.total],
+              ["Menunggu", summary.menunggu],
+              ["Perlu Disetujui", summary.giliranSaya],
+              ["Final", summary.final],
+              ["Ditolak", summary.ditolak],
+            ].map(([label, value]) => (
+              <div key={String(label)} className="px-5 py-4">
+                <p className="text-sm text-slate-500">{label}</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-900">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
         </section>
 
         {message ? (
@@ -335,7 +331,7 @@ export default function AdminDashboard({
           </div>
         ) : null}
 
-        <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white/90 shadow-sm">
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-6 py-5">
             <h2 className="text-2xl font-bold text-slate-900">Laporan Masuk</h2>
           </div>
@@ -488,7 +484,7 @@ export default function AdminDashboard({
 
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.9fr]">
                 <div className="space-y-6">
-                  <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-bold tracking-wide text-blue-700">
                         LP-{String(selectedReport.id).padStart(4, "0")}
@@ -525,7 +521,7 @@ export default function AdminDashboard({
                         {selectedReport.namaPelapor || selectedReport.user.nama}
                       </InfoBox>
 
-                      <InfoBox label="Nomor Ruangan">
+                      <InfoBox label="Kode Ruangan">
                         {selectedReport.nomorRuangan || selectedReport.lokasi}
                       </InfoBox>
 
@@ -597,11 +593,11 @@ export default function AdminDashboard({
                               className="rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
                             >
                               <p className="font-semibold text-slate-900">
-                                {history.admin.nama} ({history.admin.role}) •{" "}
+                                {history.admin.nama} ({history.admin.role}) -{" "}
                                 {history.action}
                               </p>
                               <p className="mt-1 text-slate-500">
-                                {formatStatus(history.fromStatus)} →{" "}
+                                {formatStatus(history.fromStatus)} -{" "}
                                 {formatStatus(history.toStatus)}
                               </p>
                               {history.note ? (
@@ -621,7 +617,7 @@ export default function AdminDashboard({
                 </div>
 
                 <div className="space-y-6">
-                  <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <p className="mb-3 text-sm text-slate-500">Lampiran</p>
                     {(selectedReport.attachmentUrl || selectedReport.fotoUrl) &&
                     (selectedReport.attachmentType?.startsWith("image/") ||
@@ -633,7 +629,7 @@ export default function AdminDashboard({
                           width={1200}
                           height={800}
                           className="w-full object-cover"
-                          preload
+                          unoptimized
                         />
                       </div>
                     ) : selectedReport.attachmentUrl ? (
@@ -656,7 +652,7 @@ export default function AdminDashboard({
                     )}
                   </div>
 
-                  <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <p className="text-sm text-slate-500">Keputusan Admin</p>
 
                     <div className="mt-4 space-y-4">

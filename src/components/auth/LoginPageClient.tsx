@@ -81,7 +81,7 @@ export default function LoginPageClient() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-10">
       <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_top,rgba(0,66,130,0.12),transparent_34%)]" />
-      <ParticlesBackground className="z-10 opacity-30" />
+      <ParticlesBackground className="z-10 opacity-80" />
 
       <section className="relative z-20 w-full max-w-sm rounded-3xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]">
         <div className="flex flex-col items-center px-6 pt-8 pb-4 text-center">

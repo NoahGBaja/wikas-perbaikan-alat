@@ -159,7 +159,7 @@ export default function AdminStatistikPageClient({
     "Periode terpilih";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-10 text-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-10 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
       <div className="mx-auto max-w-[1500px]">
         <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div>
@@ -168,7 +168,7 @@ export default function AdminStatistikPageClient({
               Statistik Laporan
             </div>
 
-            <h1 className="mt-4 text-3xl font-bold tracking-[-0.03em] text-slate-950 md:text-5xl">
+            <h1 className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 md:text-4xl">
               Statistik Laporan
             </h1>
             <p className="mt-3 max-w-3xl text-slate-600">
@@ -188,12 +188,12 @@ export default function AdminStatistikPageClient({
         </div>
 
         {showInitialLoader ? (
-          <div className="rounded-[32px] border border-slate-200 bg-white/90 px-6 py-10 text-center text-slate-600 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-slate-600 shadow-sm">
             Memuat statistik bulanan...
           </div>
         ) : stats ? (
           <div className="space-y-6">
-            <section className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm md:p-6">
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="max-w-2xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
                   Filter Statistik
@@ -290,31 +290,27 @@ export default function AdminStatistikPageClient({
                   <button
                     type="button"
                     onClick={() => setActiveDisplay("TABLE")}
-                    className={`rounded-2xl border transition ${
+                    className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                       activeDisplay === "TABLE"
                         ? "border-blue-200 bg-blue-50 text-blue-700"
                         : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                     }`}
                   >
-                    <div className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-inherit px-4 py-3 text-sm font-semibold">
-                      <Users className="h-4 w-4" />
-                      Rekap Pelapor
-                    </div>
+                    <Users className="h-4 w-4" />
+                    Rekap Pelapor
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setActiveDisplay("SUMMARY")}
-                    className={`rounded-2xl border transition ${
+                    className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                       activeDisplay === "SUMMARY"
                         ? "border-blue-200 bg-blue-50 text-blue-700"
                         : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                     }`}
                   >
-                    <div className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-inherit px-4 py-3 text-sm font-semibold">
-                      <BarChart3 className="h-4 w-4" />
-                      Panel Ringkasan
-                    </div>
+                    <BarChart3 className="h-4 w-4" />
+                    Panel Ringkasan
                   </button>
                 </div>
               </div>
@@ -349,7 +345,7 @@ export default function AdminStatistikPageClient({
             </section>
           </div>
         ) : (
-          <div className="rounded-[32px] border border-slate-200 bg-white/90 px-6 py-10 text-center text-slate-600 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-slate-600 shadow-sm">
             Data statistik tidak tersedia.
           </div>
         )}

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+
 require("dotenv").config();
 
 const mariadb = require("mariadb");
@@ -30,6 +32,13 @@ async function main() {
     const oldStatusRows = statusRows.filter((row) =>
       ["MENUNGGU", "DISETUJUI", "DIPROSES", "SELESAI"].includes(row.status)
     );
+    const roleRows = await conn.query(`
+      SELECT role, COUNT(*) AS count
+      FROM User
+      GROUP BY role
+      ORDER BY role
+    `);
+    const oldRoleRows = roleRows.filter((row) => row.role === "ADMIN");
 
     console.log(
       `ReportApprovalHistory table: ${
@@ -48,6 +57,18 @@ async function main() {
     console.log(
       `Current report statuses: ${statusRows
         .map((row) => `${row.status}=${row.count}`)
+        .join(", ")}`
+    );
+    console.log(
+      `Old user roles: ${
+        oldRoleRows.length > 0
+          ? oldRoleRows.map((row) => `${row.role}=${row.count}`).join(", ")
+          : "none"
+      }`
+    );
+    console.log(
+      `Current user roles: ${roleRows
+        .map((row) => `${row.role}=${row.count}`)
         .join(", ")}`
     );
   } finally {

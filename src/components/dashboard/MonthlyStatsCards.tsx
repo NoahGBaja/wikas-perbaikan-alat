@@ -61,7 +61,7 @@ function StatTile({
   valueClass = "text-slate-900",
 }: StatTileProps) {
   return (
-    <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-[26px]">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div
           className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${accentClass}`}
@@ -149,7 +149,7 @@ function MonthlyStatsCards({
 
   return (
     <section className="space-y-4">
-      <div className="rounded-[28px] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-4 shadow-sm sm:rounded-[32px] sm:p-5">
+      <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 shadow-sm sm:p-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-blue-600">
           Panel Ringkasan
         </p>
@@ -237,7 +237,7 @@ function MonthlyStatsCards({
         />
       </div>
 
-      <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-[28px] sm:p-5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
@@ -296,7 +296,7 @@ function MonthlyStatsCards({
         </div>
       </div>
 
-      <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-[28px] sm:p-5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
@@ -392,7 +392,7 @@ function MiniStat({
   colorClass: string;
 }) {
   return (
-    <div className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-[24px]">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       {icon}
       <p
         className={`mt-3 text-2xl font-black tracking-[-0.03em] ${colorClass}`}

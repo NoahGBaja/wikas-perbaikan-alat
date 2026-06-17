@@ -114,14 +114,14 @@ function MonthlyReporterTable({
 
   if (reporterStats.length === 0) {
     return (
-      <div className="rounded-[32px] border border-dashed border-slate-300 bg-white/90 px-6 py-10 text-center text-slate-600 shadow-sm">
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center text-slate-600 shadow-sm">
         Belum ada data laporan pada {monthLabel}.
       </div>
     );
   }
 
   return (
-    <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white/90 shadow-sm">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-200 px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
@@ -139,7 +139,7 @@ function MonthlyReporterTable({
           </div>
 
           <div className="flex flex-col gap-3 md:flex-row xl:min-w-[520px]">
-            <label className="flex h-12 flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
+            <label className="flex h-11 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
               <Search className="h-4 w-4 text-slate-400" />
               <input
                 value={searchTerm}
@@ -149,7 +149,7 @@ function MonthlyReporterTable({
               />
             </label>
 
-            <label className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 md:min-w-[220px]">
+            <label className="flex h-11 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 md:min-w-[220px]">
               <ArrowUpDown className="h-4 w-4 text-slate-400" />
               <select
                 value={sortBy}

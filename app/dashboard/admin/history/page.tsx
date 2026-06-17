@@ -1,15 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   CalendarDays,
   CheckCircle2,
-  ClipboardCheck,
+  Download,
+  Eye,
+  FileText,
+  Search,
+  X,
   XCircle,
-  ArrowLeft,
-  Clock3,
 } from "lucide-react";
 import {
   formatKategori,
@@ -41,23 +44,25 @@ type ReportHistoryItem = {
 
 type ReportItem = {
   id: number;
+  namaPelapor?: string | null;
+  nomorRuangan?: string | null;
+  kodeUakpb?: string | null;
+  kode?: string | null;
   kategori: ReportKategori;
   namaBarang: string;
   lokasi: string;
   deskripsi: string;
   severity: ReportSeverity;
   fotoUrl: string | null;
-  completionPhotoUrl?: string | null;
+  attachmentUrl?: string | null;
+  attachmentType?: string | null;
+  attachmentName?: string | null;
   status: ReportStatus;
   alasanPenolakan: string | null;
-  assignedTechnician?: string | null;
   adminNotes?: string | null;
-  completionNotes?: string | null;
   createdAt: string;
   approvedAt?: string | null;
   rejectedAt?: string | null;
-  processedAt?: string | null;
-  finishedAt?: string | null;
   histories?: ReportHistoryItem[];
   user: {
     id: number;
@@ -71,14 +76,25 @@ function isHistoryStatus(status: ReportStatus) {
   return status === "DISETUJUI_FINAL" || status === "DITOLAK";
 }
 
-function isWaitingStatus(status: ReportStatus) {
-  return status.startsWith("MENUNGGU_ADMIN");
+function getFinalDate(report: ReportItem) {
+  return report.rejectedAt || report.approvedAt || report.createdAt;
+}
+
+function isPdfAttachment(report: ReportItem) {
+  return report.attachmentType === "application/pdf";
 }
 
 export default function AdminHistoryPage() {
   const router = useRouter();
   const [reports, setReports] = useState<ReportItem[]>([]);
+  const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "SEMUA" | "DISETUJUI_FINAL" | "DITOLAK"
+  >("SEMUA");
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState("");
 
   async function loadHistory() {
@@ -97,11 +113,9 @@ export default function AdminHistoryPage() {
         return;
       }
 
-      const filtered = (data.reports || []).filter((item: ReportItem) =>
+      setReports((data.reports || []).filter((item: ReportItem) =>
         isHistoryStatus(item.status),
-      );
-
-      setReports(filtered);
+      ));
     } catch (error) {
       console.error("LOAD_ADMIN_HISTORY_ERROR:", error);
       setMessage("Terjadi kesalahan saat memuat riwayat laporan.");
@@ -114,309 +128,496 @@ export default function AdminHistoryPage() {
     void loadHistory();
   }, []);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 2000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [searchTerm]);
+
+  async function handleExportExcel() {
+    try {
+      setExporting(true);
+      setMessage("");
+
+      const res = await fetch("/api/reports/export", {
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setMessage(data?.message || "Gagal mengekspor riwayat laporan.");
+        return;
+      }
+
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get("content-disposition") || "";
+      const fileNameMatch = contentDisposition.match(/filename="([^"]+)"/);
+      const fileName = fileNameMatch?.[1] || "riwayat-laporan.xlsx";
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("EXPORT_ADMIN_HISTORY_ERROR:", error);
+      setMessage("Terjadi kesalahan saat mengekspor riwayat laporan.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const visibleReports = useMemo(() => {
+    const normalizedSearch = debouncedSearchTerm.trim().toLowerCase();
+
+    return reports.filter((report) => {
+      const matchesStatus =
+        statusFilter === "SEMUA" || report.status === statusFilter;
+
+      if (!matchesStatus) return false;
+
+      if (!normalizedSearch) return true;
+
+      const haystack = [
+        report.id,
+        report.namaBarang,
+        report.user.nama,
+        report.user.nip,
+        report.namaPelapor,
+        report.nomorRuangan,
+        report.kodeUakpb,
+        report.kode,
+        report.lokasi,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(normalizedSearch);
+    });
+  }, [reports, debouncedSearchTerm, statusFilter]);
+
   const approvedFinalCount = reports.filter(
-    (r) => r.status === "DISETUJUI_FINAL",
+    (report) => report.status === "DISETUJUI_FINAL",
   ).length;
-  const rejectedCount = reports.filter((r) => r.status === "DITOLAK").length;
-  const waitingCount = reports.filter((r) => isWaitingStatus(r.status)).length;
-  const totalCount = reports.length;
+  const rejectedCount = reports.filter(
+    (report) => report.status === "DITOLAK",
+  ).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-10 text-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-8 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-600">
               Admin Panel
             </p>
-            <h1 className="mt-2 text-3xl font-bold text-slate-950 md:text-5xl">
+            <h1 className="mt-2 text-3xl font-bold text-slate-950 md:text-4xl">
               Riwayat Laporan
             </h1>
-            <p className="mt-3 max-w-2xl text-slate-600">
-              Arsip laporan yang sudah selesai dalam alur approval: disetujui
-              final atau ditolak permanen.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              Arsip laporan yang sudah disetujui final atau ditolak.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/admin")}
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
-          >
-            <ArrowLeft className="h-4 w-4 text-blue-600" />
-            Kembali ke Dashboard
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => void handleExportExcel()}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <Download className="h-4 w-4" />
+              {exporting ? "Mengekspor..." : "Export Excel"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard/admin")}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
+            >
+              <ArrowLeft className="h-4 w-4 text-blue-600" />
+              Kembali
+            </button>
+          </div>
         </div>
 
-        <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3">
           <SummaryCard
             label="Total Riwayat"
-            value={totalCount}
-            description="Laporan final dan ditolak."
+            value={reports.length}
+            description="Semua arsip final."
             colorClass="text-blue-600"
           />
-
           <SummaryCard
             label="Disetujui Final"
             value={approvedFinalCount}
-            description="Sudah melewati Admin 1 sampai Admin 6."
+            description="Lolos Admin 1 sampai Admin 6."
             colorClass="text-emerald-600"
           />
-
           <SummaryCard
             label="Ditolak"
             value={rejectedCount}
-            description="Ditolak oleh salah satu admin."
+            description="Ditolak oleh admin."
             colorClass="text-rose-600"
-          />
-
-          <SummaryCard
-            label="Masih Berjalan"
-            value={waitingCount}
-            description="Tidak ditampilkan di arsip final."
-            colorClass="text-amber-600"
           />
         </section>
 
         {message ? (
-          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
             {message}
           </div>
         ) : null}
 
-        <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white/90 shadow-sm">
-          <div className="border-b border-slate-200 px-6 py-5">
-            <h2 className="text-2xl font-bold text-slate-900">
-              Arsip Laporan
-            </h2>
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Arsip Laporan
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Menampilkan {visibleReports.length} dari {reports.length}{" "}
+                  laporan.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row xl:min-w-[560px]">
+                <label className="flex h-11 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
+                  <Search className="h-4 w-4 text-slate-400" />
+                  <input
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="Cari ID, pelapor, barang, kode"
+                    className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                  />
+                  {searchTerm !== debouncedSearchTerm ? (
+                    <span className="shrink-0 text-xs font-medium text-slate-400">
+                      Menunggu...
+                    </span>
+                  ) : null}
+                </label>
+
+                <select
+                  value={statusFilter}
+                  onChange={(event) =>
+                    setStatusFilter(
+                      event.target.value as
+                        | "SEMUA"
+                        | "DISETUJUI_FINAL"
+                        | "DITOLAK",
+                    )
+                  }
+                  className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 sm:min-w-[190px]"
+                >
+                  <option value="SEMUA">Semua Status</option>
+                  <option value="DISETUJUI_FINAL">Disetujui Final</option>
+                  <option value="DITOLAK">Ditolak</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           {loading ? (
-            <div className="px-6 py-8 text-slate-600">
+            <div className="px-5 py-8 text-slate-600">
               Memuat riwayat laporan...
             </div>
-          ) : reports.length === 0 ? (
-            <div className="px-6 py-8 text-slate-600">
-              Belum ada riwayat laporan final.
+          ) : visibleReports.length === 0 ? (
+            <div className="px-5 py-8 text-slate-600">
+              Tidak ada riwayat laporan yang cocok.
             </div>
           ) : (
-            <div className="space-y-4 p-6">
-              {reports.map((report) => (
-                <div
-                  key={report.id}
-                  className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm"
-                >
-                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-bold tracking-wide text-blue-700">
+            <div className="overflow-x-auto">
+              <table className="min-w-[1060px] text-left">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
+                    <TableHead>ID</TableHead>
+                    <TableHead>Pelapor</TableHead>
+                    <TableHead>Barang</TableHead>
+                    <TableHead>Kode Ruangan</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tanggal Final</TableHead>
+                    <TableHead align="right">Aksi</TableHead>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {visibleReports.map((report) => (
+                    <tr
+                      key={report.id}
+                      className="border-b border-slate-100 transition hover:bg-blue-50/50"
+                    >
+                      <td className="px-5 py-4">
+                        <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-bold tracking-wide text-blue-700">
                           LP-{String(report.id).padStart(4, "0")}
                         </span>
-
+                      </td>
+                      <td className="px-5 py-4">
+                        <p className="font-semibold text-slate-900">
+                          {report.namaPelapor || report.user.nama}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          NIP: {report.user.nip || "-"}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4">
+                        <p className="max-w-[220px] truncate font-semibold text-slate-800">
+                          {report.namaBarang}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatKategori(report.kategori)}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4 text-slate-700">
+                        {report.nomorRuangan || report.lokasi || "-"}
+                      </td>
+                      <td className="px-5 py-4">
                         <span
-                          className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-bold tracking-[0.16em] ${getStatusClass(
+                          className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold tracking-[0.12em] ${getStatusClass(
                             report.status,
                           )}`}
                         >
                           {formatStatus(report.status)}
                         </span>
-                      </div>
-
-                      <h3 className="mt-4 text-2xl font-bold text-slate-900">
-                        {report.namaBarang}
-                      </h3>
-
-                      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        <InfoBox label="Pelapor">
-                          <p className="mt-1 font-semibold text-slate-900">
-                            {report.user.nama}
-                          </p>
-                          {report.user.jabatan ? (
-                            <p className="mt-1 text-sm text-slate-500">
-                              {report.user.jabatan}
-                            </p>
-                          ) : null}
-                          <p className="mt-1 text-sm text-slate-500">
-                            NIP: {report.user.nip || "-"}
-                          </p>
-                        </InfoBox>
-
-                        <InfoBox label="Kategori">
-                          {formatKategori(report.kategori)}
-                        </InfoBox>
-
-                        <InfoBox label="Lokasi">{report.lokasi}</InfoBox>
-
-                        <InfoBox label="Tingkat Kerusakan">
-                          {formatSeverity(report.severity)}
-                        </InfoBox>
-                      </div>
-
-                      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                        <p className="text-sm text-slate-500">
-                          Deskripsi Kerusakan
-                        </p>
-                        <p className="mt-2 whitespace-pre-line leading-7 text-slate-700">
-                          {report.deskripsi}
-                        </p>
-                      </div>
-
-                      {report.status === "DITOLAK" && report.alasanPenolakan ? (
-                        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
-                          <p className="text-sm font-semibold text-rose-700">
-                            Alasan Penolakan
-                          </p>
-                          <p className="mt-2 text-rose-700">
-                            {report.alasanPenolakan}
-                          </p>
-                        </div>
-                      ) : null}
-
-                      {report.adminNotes ? (
-                        <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-                          <p className="text-sm font-semibold text-blue-700">
-                            Catatan Admin Terakhir
-                          </p>
-                          <p className="mt-2 whitespace-pre-line text-blue-700">
-                            {report.adminNotes}
-                          </p>
-                        </div>
-                      ) : null}
-
-                      {report.histories?.length ? (
-                        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                          <p className="text-sm font-semibold text-slate-900">
-                            Riwayat Approval
-                          </p>
-                          <div className="mt-3 space-y-3">
-                            {report.histories.map((history) => (
-                              <div
-                                key={history.id}
-                                className="rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
-                              >
-                                <p className="font-semibold text-slate-900">
-                                  {history.admin.nama} ({history.admin.role}) •{" "}
-                                  {history.action}
-                                </p>
-                                <p className="mt-1 text-slate-500">
-                                  {formatStatus(history.fromStatus)} →{" "}
-                                  {formatStatus(history.toStatus)}
-                                </p>
-                                {history.note ? (
-                                  <p className="mt-2 whitespace-pre-line text-slate-700">
-                                    {history.note}
-                                  </p>
-                                ) : null}
-                                <p className="mt-2 text-xs text-slate-400">
-                                  {formatTanggal(history.createdAt)}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="w-full lg:max-w-[320px]">
-                      <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
-                        <p className="mb-3 text-sm text-slate-500">
-                          Foto Barang
-                        </p>
-
-                        {report.fotoUrl ? (
-                          <div className="overflow-hidden rounded-2xl border border-slate-200">
-                            <Image
-                              src={report.fotoUrl}
-                              alt={report.namaBarang}
-                              width={1200}
-                              height={800}
-                              className="w-full object-cover"
-                              unoptimized
-                            />
-                          </div>
-                        ) : (
-                          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-500">
-                            Tidak ada foto
-                          </div>
-                        )}
-
-                        <div className="mt-4 space-y-3">
-                          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                            <CalendarDays className="h-4 w-4 text-slate-400" />
-                            <div>
-                              <p className="text-xs text-slate-500">
-                                Tanggal Laporan
-                              </p>
-                              <p className="text-sm font-semibold text-slate-900">
-                                {formatTanggal(report.createdAt)}
-                              </p>
-                            </div>
-                          </div>
-
-                          {report.approvedAt ? (
-                            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                              <div>
-                                <p className="text-xs text-emerald-600">
-                                  Disetujui Final
-                                </p>
-                                <p className="text-sm font-semibold text-emerald-700">
-                                  {formatTanggal(report.approvedAt)}
-                                </p>
-                              </div>
-                            </div>
-                          ) : null}
-
-                          {report.rejectedAt ? (
-                            <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
-                              <XCircle className="h-4 w-4 text-rose-600" />
-                              <div>
-                                <p className="text-xs text-rose-600">
-                                  Ditolak
-                                </p>
-                                <p className="text-sm font-semibold text-rose-700">
-                                  {formatTanggal(report.rejectedAt)}
-                                </p>
-                              </div>
-                            </div>
-                          ) : null}
-
-                          {!report.approvedAt && !report.rejectedAt ? (
-                            <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-                              <Clock3 className="h-4 w-4 text-amber-600" />
-                              <div>
-                                <p className="text-xs text-amber-600">
-                                  Status
-                                </p>
-                                <p className="text-sm font-semibold text-amber-700">
-                                  {formatStatus(report.status)}
-                                </p>
-                              </div>
-                            </div>
-                          ) : null}
-
-                          {report.status === "DISETUJUI_FINAL" ? (
-                            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                              <ClipboardCheck className="h-4 w-4 text-emerald-600" />
-                              <div>
-                                <p className="text-xs text-emerald-600">
-                                  Final
-                                </p>
-                                <p className="text-sm font-semibold text-emerald-700">
-                                  Approval selesai.
-                                </p>
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                      </td>
+                      <td className="px-5 py-4 text-sm text-slate-600">
+                        <span className="inline-flex items-center gap-2">
+                          <CalendarDays className="h-4 w-4 text-slate-400" />
+                          {formatTanggal(getFinalDate(report))}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedReport(report)}
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50 hover:text-blue-700"
+                        >
+                          <Eye className="h-4 w-4" />
+                          Detail
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </section>
+      </div>
+
+      {selectedReport ? (
+        <ReportDetailModal
+          report={selectedReport}
+          onClose={() => setSelectedReport(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function ReportDetailModal({
+  report,
+  onClose,
+}: {
+  report: ReportItem;
+  onClose: () => void;
+}) {
+  const mainAttachmentUrl = report.attachmentUrl || report.fotoUrl;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-bold tracking-wide text-blue-700">
+                LP-{String(report.id).padStart(4, "0")}
+              </span>
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold tracking-[0.12em] ${getStatusClass(
+                  report.status,
+                )}`}
+              >
+                {formatStatus(report.status)}
+              </span>
+            </div>
+            <h3 className="mt-3 text-2xl font-bold text-slate-950">
+              {report.namaBarang}
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              {formatKategori(report.kategori)} -{" "}
+              {formatTanggal(report.createdAt)}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 shadow-sm transition hover:bg-slate-50"
+            aria-label="Tutup detail"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <InfoBox label="Pelapor">
+                {report.namaPelapor || report.user.nama}
+              </InfoBox>
+              <InfoBox label="NIP">{report.user.nip || "-"}</InfoBox>
+              <InfoBox label="Kode Ruangan">
+                {report.nomorRuangan || report.lokasi || "-"}
+              </InfoBox>
+              <InfoBox label="Kode UAKPB">{report.kodeUakpb || "-"}</InfoBox>
+              <InfoBox label="Kode">{report.kode || "-"}</InfoBox>
+              <InfoBox label="Tingkat Kerusakan">
+                {formatSeverity(report.severity)}
+              </InfoBox>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-500">
+                Deskripsi Kerusakan
+              </p>
+              <p className="mt-2 whitespace-pre-line leading-7 text-slate-700">
+                {report.deskripsi}
+              </p>
+            </div>
+
+            {report.status === "DITOLAK" && report.alasanPenolakan ? (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+                <p className="text-sm font-semibold text-rose-700">
+                  Alasan Penolakan
+                </p>
+                <p className="mt-2 whitespace-pre-line text-rose-700">
+                  {report.alasanPenolakan}
+                </p>
+              </div>
+            ) : null}
+
+            {report.adminNotes ? (
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <p className="text-sm font-semibold text-blue-700">
+                  Catatan Admin Terakhir
+                </p>
+                <p className="mt-2 whitespace-pre-line text-blue-700">
+                  {report.adminNotes}
+                </p>
+              </div>
+            ) : null}
+
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-sm font-semibold text-slate-900">
+                Riwayat Approval
+              </p>
+              {report.histories?.length ? (
+                <div className="mt-3 space-y-3">
+                  {report.histories.map((history) => (
+                    <div
+                      key={history.id}
+                      className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm"
+                    >
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="font-semibold text-slate-900">
+                          {history.admin.nama} ({history.admin.role})
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatTanggal(history.createdAt)}
+                        </p>
+                      </div>
+                      <p className="mt-1 text-slate-600">
+                        {history.action}: {formatStatus(history.fromStatus)} -{" "}
+                        {formatStatus(history.toStatus)}
+                      </p>
+                      {history.note ? (
+                        <p className="mt-2 whitespace-pre-line text-slate-700">
+                          {history.note}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-slate-500">
+                  Belum ada log approval.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <aside className="space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="mb-3 text-sm font-semibold text-slate-900">
+                Lampiran
+              </p>
+              {mainAttachmentUrl ? (
+                isPdfAttachment(report) ? (
+                  <a
+                    href={mainAttachmentUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                  >
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    {report.attachmentName || "Buka PDF"}
+                  </a>
+                ) : (
+                  <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                    <Image
+                      src={mainAttachmentUrl}
+                      alt={report.namaBarang}
+                      width={1000}
+                      height={700}
+                      className="max-h-[420px] w-full object-contain"
+                      unoptimized
+                    />
+                  </div>
+                )
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
+                  Tidak ada lampiran
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+              <TimelineItem
+                icon={<CalendarDays className="h-4 w-4 text-slate-500" />}
+                label="Tanggal Laporan"
+                value={formatTanggal(report.createdAt)}
+              />
+              {report.approvedAt ? (
+                <TimelineItem
+                  icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                  label="Disetujui Final"
+                  value={formatTanggal(report.approvedAt)}
+                />
+              ) : null}
+              {report.rejectedAt ? (
+                <TimelineItem
+                  icon={<XCircle className="h-4 w-4 text-rose-600" />}
+                  label="Ditolak"
+                  value={formatTanggal(report.rejectedAt)}
+                />
+              ) : null}
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
   );
@@ -434,27 +635,63 @@ function SummaryCard({
   colorClass: string;
 }) {
   return (
-    <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
         {label}
       </p>
-      <p className={`mt-3 text-5xl font-extrabold ${colorClass}`}>{value}</p>
-      <p className="mt-3 text-sm text-slate-500">{description}</p>
+      <p className={`mt-2 text-3xl font-extrabold ${colorClass}`}>{value}</p>
+      <p className="mt-2 text-sm text-slate-500">{description}</p>
     </div>
   );
 }
 
-function InfoBox({
-  label,
+function TableHead({
   children,
+  align = "left",
 }: {
-  label: string;
-  children: React.ReactNode;
+  children: ReactNode;
+  align?: "left" | "right";
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <p className="text-sm text-slate-500">{label}</p>
+    <th
+      className={`px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+        align === "right" ? "text-right" : ""
+      }`}
+    >
+      {children}
+    </th>
+  );
+}
+
+function InfoBox({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+        {label}
+      </p>
       <div className="mt-1 font-semibold text-slate-900">{children}</div>
+    </div>
+  );
+}
+
+function TimelineItem({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+      {icon}
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          {label}
+        </p>
+        <p className="text-sm font-semibold text-slate-900">{value}</p>
+      </div>
     </div>
   );
 }

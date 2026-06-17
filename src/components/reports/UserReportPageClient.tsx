@@ -82,7 +82,7 @@ export default function UserReportPageClient({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-10 text-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-10 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
       <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center text-center">
         <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
           Dashboard Pegawai

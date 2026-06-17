@@ -8,16 +8,11 @@ import type {
   StatusReportStatus,
 } from "@/src/components/dashboard/StatusCard";
 
-type StatusFilter = "SEMUA" | StatusReportStatus;
+type StatusFilter = "SEMUA" | "PENDING" | "DISETUJUI_FINAL" | "DITOLAK";
 
 const FILTERS: StatusFilter[] = [
   "SEMUA",
-  "MENUNGGU_ADMIN_1",
-  "MENUNGGU_ADMIN_2",
-  "MENUNGGU_ADMIN_3",
-  "MENUNGGU_ADMIN_4",
-  "MENUNGGU_ADMIN_5",
-  "MENUNGGU_ADMIN_6",
+  "PENDING",
   "DISETUJUI_FINAL",
   "DITOLAK",
 ];
@@ -25,12 +20,7 @@ const FILTERS: StatusFilter[] = [
 function formatFilterLabel(filter: StatusFilter) {
   const labels: Record<StatusFilter, string> = {
     SEMUA: "SEMUA",
-    MENUNGGU_ADMIN_1: "ADMIN 1",
-    MENUNGGU_ADMIN_2: "ADMIN 2",
-    MENUNGGU_ADMIN_3: "ADMIN 3",
-    MENUNGGU_ADMIN_4: "ADMIN 4",
-    MENUNGGU_ADMIN_5: "ADMIN 5",
-    MENUNGGU_ADMIN_6: "ADMIN 6",
+    PENDING: "PENDING",
     DISETUJUI_FINAL: "DISETUJUI FINAL",
     DITOLAK: "DITOLAK",
   };
@@ -114,6 +104,10 @@ export default function UserStatusPage() {
 
   const filteredReports = useMemo(() => {
     if (filter === "SEMUA") return reports;
+    if (filter === "PENDING") {
+      return reports.filter((item) => isWaitingStatus(item.status));
+    }
+
     return reports.filter((item) => item.status === filter);
   }, [filter, reports]);
 
@@ -125,7 +119,7 @@ export default function UserStatusPage() {
   const rejectedReports = reports.filter((r) => r.status === "DITOLAK").length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-10 text-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-10 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
