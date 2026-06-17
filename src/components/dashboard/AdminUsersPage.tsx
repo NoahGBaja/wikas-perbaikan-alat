@@ -347,15 +347,15 @@ export default function AdminUsersPage({
   }, [debouncedSearchQuery, users]);
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-10 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-10 text-slate-900">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-100/75">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
               Admin Panel
             </p>
             <h1 className="mt-2 text-3xl font-bold md:text-5xl">Kelola User</h1>
-            <p className="mt-3 max-w-3xl text-white/70">
+            <p className="mt-3 max-w-3xl text-slate-600">
               Buat akun pegawai atau admin baru, perbarui identitas internal, dan reset password tanpa memakai script manual.
             </p>
           </div>
@@ -364,7 +364,7 @@ export default function AdminUsersPage({
             <button
               type="button"
               onClick={() => void loadUsers()}
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-5 py-3 font-semibold text-white transition hover:bg-white/15"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50"
             >
               <RefreshCcw className="h-4 w-4" />
               Muat Ulang
@@ -373,7 +373,7 @@ export default function AdminUsersPage({
             <button
               type="button"
               onClick={() => router.push("/dashboard/admin")}
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-5 py-3 font-semibold text-white transition hover:bg-white/15"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50"
             >
               <ArrowLeft className="h-4 w-4" />
               Kembali ke Dashboard
@@ -382,19 +382,19 @@ export default function AdminUsersPage({
         </div>
 
         {message ? (
-          <div className="mb-6 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm">
+          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
             {message}
           </div>
         ) : null}
 
-        <section className="mb-8 rounded-[32px] border border-white/10 bg-white/[0.08] p-6 shadow-[0_24px_60px_rgba(2,6,23,0.16)]">
+        <section className="mb-8 rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-300/18 bg-cyan-400/10">
-              <UserPlus className="h-6 w-6 text-cyan-100" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50">
+              <UserPlus className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Tambah User</h2>
-              <p className="text-sm text-white/60">
+              <h2 className="text-2xl font-bold text-slate-950">Tambah User</h2>
+              <p className="text-sm text-slate-500">
                 Buat akun baru untuk pegawai atau admin.
               </p>
             </div>
@@ -407,7 +407,7 @@ export default function AdminUsersPage({
                 setNewUser((current) => ({ ...current, nama: event.target.value }))
               }
               placeholder="Nama"
-              className="h-14 rounded-2xl border border-white/10 bg-white/10 px-4 text-white outline-none placeholder:text-white/35"
+              className="h-14 rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
 
             <input
@@ -416,7 +416,7 @@ export default function AdminUsersPage({
                 setNewUser((current) => ({ ...current, jabatan: event.target.value }))
               }
               placeholder="Jabatan"
-              className="h-14 rounded-2xl border border-white/10 bg-white/10 px-4 text-white outline-none placeholder:text-white/35"
+              className="h-14 rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
 
             <input
@@ -425,7 +425,7 @@ export default function AdminUsersPage({
                 setNewUser((current) => ({ ...current, nip: event.target.value }))
               }
               placeholder="NIP"
-              className="h-14 rounded-2xl border border-white/10 bg-white/10 px-4 text-white outline-none placeholder:text-white/35"
+              className="h-14 rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
 
             <select
@@ -436,7 +436,7 @@ export default function AdminUsersPage({
                   role: event.target.value as "ADMIN" | "USER",
                 }))
               }
-              className="h-14 rounded-2xl border border-white/10 bg-slate-900/80 px-4 text-white outline-none"
+              className="h-14 rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="USER">USER</option>
               <option value="ADMIN">ADMIN</option>
@@ -449,48 +449,48 @@ export default function AdminUsersPage({
                 setNewUser((current) => ({ ...current, password: event.target.value }))
               }
               placeholder="Password"
-              className="h-14 rounded-2xl border border-white/10 bg-white/10 px-4 text-white outline-none placeholder:text-white/35"
+              className="h-14 rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
           <button
             type="button"
             onClick={handleCreateUser}
-            className="mt-5 inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-6 font-semibold text-white transition hover:bg-cyan-400"
+            className="mt-5 inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 font-semibold text-white shadow-sm transition hover:bg-blue-500"
           >
             <UserPlus className="h-4 w-4" />
             Buat User
           </button>
         </section>
 
-        <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.08] shadow-[0_24px_60px_rgba(2,6,23,0.16)]">
-          <div className="border-b border-white/10 px-6 py-5">
+        <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white/90 shadow-sm">
+          <div className="border-b border-slate-200 px-6 py-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-white">Daftar User</h2>
-                <p className="mt-1 text-sm text-white/55">
+                <h2 className="text-2xl font-bold text-slate-950">Daftar User</h2>
+                <p className="mt-1 text-sm text-slate-500">
                   {filteredUsers.length} dari {users.length} user ditampilkan.
                 </p>
               </div>
 
               <label className="relative block w-full lg:max-w-md">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Cari nama, NIP, jabatan, atau role"
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-white/10 py-3 pl-11 pr-4 text-white outline-none placeholder:text-white/35 focus:border-cyan-300/30"
+                  className="h-12 w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
               </label>
             </div>
           </div>
 
           {loading ? (
-            <div className="px-6 py-8 text-white/70">Memuat daftar user...</div>
+            <div className="px-6 py-8 text-slate-600">Memuat daftar user...</div>
           ) : users.length === 0 ? (
-            <div className="px-6 py-8 text-white/70">Belum ada user.</div>
+            <div className="px-6 py-8 text-slate-600">Belum ada user.</div>
           ) : filteredUsers.length === 0 ? (
-            <div className="px-6 py-8 text-white/70">
+            <div className="px-6 py-8 text-slate-600">
               Tidak ada user yang cocok dengan pencarian.
             </div>
           ) : (
@@ -517,27 +517,27 @@ export default function AdminUsersPage({
                 return (
                   <div
                     key={user.id}
-                    className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5"
+                    className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm"
                   >
                     <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_1fr_180px_auto]">
                       <div className="space-y-4">
                         <div>
-                          <p className="text-sm text-white/55">NIP</p>
-                          <p className="mt-1 font-semibold text-white">
+                          <p className="text-sm text-slate-500">NIP</p>
+                          <p className="mt-1 font-semibold text-slate-900">
                             {user.nip || "-"}
                           </p>
                         </div>
 
                         <div>
-                          <p className="text-sm text-white/55">Jabatan</p>
-                          <p className="mt-1 font-semibold text-white">
+                          <p className="text-sm text-slate-500">Jabatan</p>
+                          <p className="mt-1 font-semibold text-slate-900">
                             {user.jabatan || "-"}
                           </p>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                           <div>
-                            <label className="mb-2 block text-sm text-white/60">
+                            <label className="mb-2 block text-sm text-slate-500">
                               Nama
                             </label>
                             <input
@@ -551,12 +551,12 @@ export default function AdminUsersPage({
                                   },
                                 }))
                               }
-                              className="h-12 w-full rounded-2xl border border-white/10 bg-white/10 px-4 text-white outline-none"
+                              className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                             />
                           </div>
 
                           <div>
-                            <label className="mb-2 block text-sm text-white/60">
+                            <label className="mb-2 block text-sm text-slate-500">
                               NIP
                             </label>
                             <input
@@ -570,12 +570,12 @@ export default function AdminUsersPage({
                                   },
                                 }))
                               }
-                              className="h-12 w-full rounded-2xl border border-white/10 bg-white/10 px-4 text-white outline-none"
+                              className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                             />
                           </div>
 
                           <div>
-                            <label className="mb-2 block text-sm text-white/60">
+                            <label className="mb-2 block text-sm text-slate-500">
                               Jabatan
                             </label>
                             <input
@@ -589,15 +589,15 @@ export default function AdminUsersPage({
                                   },
                                 }))
                               }
-                              className="h-12 w-full rounded-2xl border border-white/10 bg-white/10 px-4 text-white outline-none"
+                              className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                             />
                           </div>
                         </div>
                       </div>
 
                       <div className="space-y-4">
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                          <p className="text-sm text-white/55">Role</p>
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                          <p className="text-sm text-slate-500">Role</p>
                           <select
                             value={draft.role}
                             onChange={(event) =>
@@ -609,25 +609,25 @@ export default function AdminUsersPage({
                                 },
                               }))
                             }
-                            className="mt-2 h-12 w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 text-white outline-none"
+                            className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                           >
                             <option value="USER">USER</option>
                             <option value="ADMIN">ADMIN</option>
                           </select>
                         </div>
 
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                          <p className="text-sm text-white/55">Jumlah Laporan</p>
-                          <p className="mt-2 text-2xl font-bold text-white">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                          <p className="text-sm text-slate-500">Jumlah Laporan</p>
+                          <p className="mt-2 text-2xl font-bold text-slate-950">
                             {user._count.reports}
                           </p>
-                          <p className="mt-1 text-xs text-white/50">
+                          <p className="mt-1 text-xs text-slate-500">
                             Aktif: {activeReportCount}
                           </p>
                         </div>
 
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                          <label className="mb-2 block text-sm text-white/60">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                          <label className="mb-2 block text-sm text-slate-500">
                             Password Baru
                           </label>
                           <input
@@ -639,14 +639,14 @@ export default function AdminUsersPage({
                                 [user.id]: event.target.value,
                               }))
                             }
-                            className="h-12 w-full rounded-2xl border border-white/10 bg-white/10 px-4 text-white outline-none"
+                            className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                           />
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-white/55">Status Penghapusan</p>
-                        <p className="mt-2 text-sm text-white/75">
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-sm text-slate-500">Status Penghapusan</p>
+                        <p className="mt-2 text-sm text-slate-600">
                           {deletionStatus}
                         </p>
                       </div>
@@ -655,7 +655,7 @@ export default function AdminUsersPage({
                         <button
                           type="button"
                           onClick={() => void handleSaveUser(user.id)}
-                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-400"
+                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
                         >
                           <Save className="h-4 w-4" />
                           Simpan
@@ -665,7 +665,7 @@ export default function AdminUsersPage({
                           type="button"
                           disabled={!passwordDrafts[user.id]}
                           onClick={() => void handleResetPassword(user.id)}
-                          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-300/18 bg-emerald-400/10 px-4 py-3 text-sm font-semibold text-emerald-50 transition hover:bg-emerald-400/15 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <KeyRound className="h-4 w-4" />
                           Reset Password
@@ -675,7 +675,7 @@ export default function AdminUsersPage({
                           type="button"
                           disabled={!canDeleteUser}
                           onClick={() => void handleDeleteUser(user.id)}
-                          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-300/18 bg-rose-400/10 px-4 py-3 text-sm font-semibold text-rose-50 transition hover:bg-rose-400/15 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <Trash2 className="h-4 w-4" />
                           Hapus

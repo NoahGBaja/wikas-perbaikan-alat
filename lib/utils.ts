@@ -47,18 +47,18 @@ export function formatSeverity(severity: ReportSeverity) {
 
 export function getStatusClass(status: ReportStatus) {
   if (status.startsWith("MENUNGGU_ADMIN")) {
-    return "border border-cyan-300/25 bg-cyan-400/14 text-cyan-50";
+    return "border border-cyan-200 bg-cyan-50 text-cyan-700";
   }
 
   if (status === "DISETUJUI_FINAL") {
-    return "border border-emerald-300/25 bg-emerald-400/14 text-emerald-50";
+    return "border border-emerald-200 bg-emerald-50 text-emerald-700";
   }
 
   if (status === "DITOLAK") {
-    return "border border-rose-300/25 bg-rose-400/14 text-rose-50";
+    return "border border-rose-200 bg-rose-50 text-rose-700";
   }
 
-  return "border border-slate-300/25 bg-slate-400/14 text-slate-50";
+  return "border border-slate-200 bg-slate-50 text-slate-700";
 }
 
 export function getStatusDescription(status: ReportStatus) {

@@ -17,7 +17,7 @@ export default function StatusList({
 }: StatusListProps) {
   if (reports.length === 0) {
     return (
-      <div className="rounded-[28px] border border-dashed border-white/10 bg-white/[0.06] p-10 text-center text-white/65">
+      <div className="rounded-[28px] border border-dashed border-slate-300 bg-white/90 p-10 text-center text-slate-600 shadow-sm">
         Kamu belum memiliki laporan yang dikirim.
       </div>
     );

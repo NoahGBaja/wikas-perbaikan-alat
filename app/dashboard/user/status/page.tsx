@@ -125,17 +125,17 @@ export default function UserStatusPage() {
   const rejectedReports = reports.filter((r) => r.status === "DITOLAK").length;
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-10 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-10 text-slate-900">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-100/75">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
               Dashboard Pegawai
             </p>
             <h1 className="mt-2 text-3xl font-bold md:text-5xl">
               Cek Status Laporan
             </h1>
-            <p className="mt-3 max-w-2xl text-white/70">
+            <p className="mt-3 max-w-2xl text-slate-600">
               Lihat posisi laporan kamu dalam alur persetujuan Admin 1 sampai
               Admin 6.
             </p>
@@ -145,7 +145,7 @@ export default function UserStatusPage() {
             <button
               type="button"
               onClick={() => router.push("/dashboard/user")}
-              className="rounded-2xl border border-white/10 bg-white/10 px-5 py-3 font-semibold text-white transition hover:bg-white/15"
+              className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50"
             >
               Kembali
             </button>
@@ -153,7 +153,7 @@ export default function UserStatusPage() {
             <button
               type="button"
               onClick={() => router.push("/dashboard/user/report")}
-              className="rounded-2xl bg-cyan-500 px-5 py-3 font-semibold text-white transition hover:bg-cyan-400"
+              className="rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-500"
             >
               Buat Laporan Baru
             </button>
@@ -161,56 +161,56 @@ export default function UserStatusPage() {
         </div>
 
         <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-4">
-          <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/58">
+          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
               Total Laporan
             </p>
-            <p className="mt-3 text-5xl font-extrabold text-white">
+            <p className="mt-3 text-5xl font-extrabold text-blue-600">
               {totalReports}
             </p>
-            <p className="mt-3 text-sm text-white/60">
+            <p className="mt-3 text-sm text-slate-500">
               Semua laporan milik kamu.
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/58">
+          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
               Menunggu
             </p>
-            <p className="mt-3 text-5xl font-extrabold text-white">
+            <p className="mt-3 text-5xl font-extrabold text-amber-600">
               {waitingReports}
             </p>
-            <p className="mt-3 text-sm text-white/60">
+            <p className="mt-3 text-sm text-slate-500">
               Masih dalam proses approval.
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/58">
+          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
               Disetujui Final
             </p>
-            <p className="mt-3 text-5xl font-extrabold text-white">
+            <p className="mt-3 text-5xl font-extrabold text-emerald-600">
               {approvedReports}
             </p>
-            <p className="mt-3 text-sm text-white/60">
+            <p className="mt-3 text-sm text-slate-500">
               Sudah disetujui sampai Admin 6.
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/58">
+          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
               Ditolak
             </p>
-            <p className="mt-3 text-5xl font-extrabold text-white">
+            <p className="mt-3 text-5xl font-extrabold text-rose-600">
               {rejectedReports}
             </p>
-            <p className="mt-3 text-sm text-white/60">
+            <p className="mt-3 text-sm text-slate-500">
               Perlu cek alasan penolakan.
             </p>
           </div>
         </section>
 
-        <section className="mb-6 rounded-[28px] border border-white/10 bg-white/[0.08] p-4">
+        <section className="mb-6 rounded-[28px] border border-slate-200 bg-white/90 p-4 shadow-sm">
           <div className="flex flex-wrap gap-3">
             {FILTERS.map((item) => {
               const active = filter === item;
@@ -223,8 +223,8 @@ export default function UserStatusPage() {
                   className={[
                     "rounded-2xl border px-4 py-2.5 text-sm font-semibold transition",
                     active
-                      ? "border-cyan-300/25 bg-cyan-400/15 text-cyan-50"
-                      : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10",
+                      ? "border-blue-200 bg-blue-50 text-blue-700"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
                   ].join(" ")}
                 >
                   {formatFilterLabel(item)}
@@ -235,13 +235,13 @@ export default function UserStatusPage() {
         </section>
 
         {message ? (
-          <div className="mb-6 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm">
+          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
             {message}
           </div>
         ) : null}
 
         {loading ? (
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.06] p-10 text-center text-white/70">
+          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-10 text-center text-slate-600 shadow-sm">
             Memuat status laporan...
           </div>
         ) : (
