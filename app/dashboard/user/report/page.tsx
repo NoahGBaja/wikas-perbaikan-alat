@@ -1,11 +1,8 @@
-import ReportForm from "@/src/components/reports/ReportForm";
+import UserReportPageClient from "@/src/components/reports/UserReportPageClient";
+import { requireRole } from "@/src/lib/session";
 
-export default function CreateReportPage() {
-  return (
-    <ReportForm
-      mode="create"
-      headerBackHref="/dashboard/user"
-      headerBackLabel="Kembali ke Dashboard"
-    />
-  );
+export default async function CreateReportPage() {
+  const currentUser = await requireRole("USER");
+
+  return <UserReportPageClient defaultNamaPelapor={currentUser.nama} />;
 }

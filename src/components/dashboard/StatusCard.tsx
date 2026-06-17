@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { FileText } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import {
   formatKategori,
@@ -15,12 +16,19 @@ export type StatusReportStatus = ReportStatus;
 
 export type StatusReportItem = {
   id: number;
+  namaPelapor?: string | null;
+  nomorRuangan?: string | null;
+  kodeUakpb?: string | null;
+  kode?: string | null;
   kategori: ReportKategori;
   namaBarang: string;
   lokasi: string;
   deskripsi: string;
   severity: ReportSeverity;
   fotoUrl: string | null;
+  attachmentUrl?: string | null;
+  attachmentType?: string | null;
+  attachmentName?: string | null;
   completionPhotoUrl?: string | null;
   status: StatusReportStatus;
   alasanPenolakan: string | null;
@@ -32,6 +40,18 @@ export type StatusReportItem = {
   rejectedAt?: string | null;
   processedAt?: string | null;
   finishedAt?: string | null;
+  histories?: {
+    id: number;
+    action: "ACC" | "TOLAK";
+    fromStatus: StatusReportStatus;
+    toStatus: StatusReportStatus;
+    note: string | null;
+    createdAt: string;
+    admin: {
+      nama: string;
+      role: string;
+    };
+  }[];
 };
 
 type StatusCardProps = {
@@ -68,15 +88,19 @@ export default function StatusCard({
   deleting = false,
 }: StatusCardProps) {
   const canEditOrDelete = report.status === "MENUNGGU_ADMIN_1";
+  const displayAttachmentUrl = report.attachmentUrl || report.fotoUrl;
+  const isImageAttachment =
+    !!displayAttachmentUrl &&
+    (report.attachmentType?.startsWith("image/") || !!report.fotoUrl);
 
   return (
     <article className="overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.08] shadow-[0_20px_50px_rgba(2,6,23,0.18)]">
       <div className="grid grid-cols-1 gap-0 lg:grid-cols-[340px_minmax(0,1fr)]">
         <div className="border-b border-white/10 bg-slate-950/30 p-4 lg:border-b-0 lg:border-r">
-          {report.fotoUrl ? (
+          {displayAttachmentUrl && isImageAttachment ? (
             <div className="overflow-hidden rounded-2xl border border-white/10">
               <Image
-                src={report.fotoUrl}
+                src={displayAttachmentUrl}
                 alt={report.namaBarang}
                 width={1200}
                 height={900}
@@ -84,9 +108,22 @@ export default function StatusCard({
                 unoptimized
               />
             </div>
+          ) : displayAttachmentUrl ? (
+            <a
+              href={displayAttachmentUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-[240px] flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-center text-sm text-white/75 transition hover:bg-white/10"
+            >
+              <FileText className="mb-3 h-8 w-8 text-cyan-100" />
+              <span className="font-semibold">Buka Lampiran</span>
+              <span className="mt-1 max-w-[240px] truncate text-xs text-white/50">
+                {report.attachmentName || "Dokumen PDF"}
+              </span>
+            </a>
           ) : (
             <div className="flex h-[240px] items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/5 text-sm text-white/50">
-              Tidak ada foto awal
+              Tidak ada lampiran
             </div>
           )}
         </div>
@@ -111,6 +148,34 @@ export default function StatusCard({
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="text-sm text-white/55">Nama Pelapor</p>
+              <p className="mt-1 font-semibold text-white">
+                {report.namaPelapor || "-"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="text-sm text-white/55">Nomor Ruangan</p>
+              <p className="mt-1 font-semibold text-white">
+                {report.nomorRuangan || report.lokasi}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="text-sm text-white/55">Kode UAKPB</p>
+              <p className="mt-1 font-semibold text-white">
+                {report.kodeUakpb || "-"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="text-sm text-white/55">Kode</p>
+              <p className="mt-1 font-semibold text-white">
+                {report.kode || "-"}
+              </p>
+            </div>
+
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-sm text-white/55">Kategori</p>
               <p className="mt-1 font-semibold text-white">
@@ -176,6 +241,41 @@ export default function StatusCard({
               <p className="mt-2 leading-7 text-emerald-50/90">
                 Laporan kamu sudah disetujui sampai Admin 6.
               </p>
+            </div>
+          ) : null}
+
+          {report.histories?.length ? (
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="text-sm font-semibold text-white">
+                Log Approval
+              </p>
+              <div className="mt-3 space-y-3">
+                {report.histories.map((history) => (
+                  <div
+                    key={history.id}
+                    className={[
+                      "rounded-2xl border p-3 text-sm",
+                      history.action === "TOLAK"
+                        ? "border-rose-300/20 bg-rose-400/10 text-rose-50"
+                        : "border-emerald-300/20 bg-emerald-400/10 text-emerald-50",
+                    ].join(" ")}
+                  >
+                    <p className="font-semibold">
+                      {history.admin.nama} ({history.admin.role}){" "}
+                      {history.action === "TOLAK" ? "menolak" : "menyetujui"}{" "}
+                      laporan
+                    </p>
+                    <p className="mt-1 text-white/65">
+                      {formatTanggal(history.createdAt)}
+                    </p>
+                    {history.note ? (
+                      <p className="mt-2 whitespace-pre-line leading-6">
+                        {history.note}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
 

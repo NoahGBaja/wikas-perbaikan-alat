@@ -47,12 +47,19 @@ export type ReportApprovalHistoryRow = {
 export type ReportRow = {
   id: number;
   userId: number;
+  namaPelapor: string | null;
+  nomorRuangan: string | null;
+  kodeUakpb: string | null;
+  kode: string | null;
   kategori: ReportKategori;
   namaBarang: string;
   lokasi: string;
   deskripsi: string;
   severity: ReportSeverity;
   fotoUrl: string | null;
+  attachmentUrl: string | null;
+  attachmentType: string | null;
+  attachmentName: string | null;
   status: ReportStatus;
   alasanPenolakan: string | null;
 
@@ -122,12 +129,19 @@ function normalizeReportRow(row: ReportWithUser): ReportRow {
   return {
     id: row.id,
     userId: row.userId,
+    namaPelapor: row.namaPelapor,
+    nomorRuangan: row.nomorRuangan,
+    kodeUakpb: row.kodeUakpb,
+    kode: row.kode,
     kategori: row.kategori,
     namaBarang: row.namaBarang,
     lokasi: row.lokasi,
     deskripsi: row.deskripsi,
     severity: row.severity,
     fotoUrl: row.fotoUrl,
+    attachmentUrl: row.attachmentUrl,
+    attachmentType: row.attachmentType,
+    attachmentName: row.attachmentName,
     status: row.status,
     alasanPenolakan: row.alasanPenolakan,
 

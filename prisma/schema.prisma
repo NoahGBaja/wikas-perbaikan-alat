@@ -64,12 +64,19 @@ model User {
 model Report {
   id                 Int            @id @default(autoincrement())
   userId             Int
+  namaPelapor        String?
+  nomorRuangan       String?
+  kodeUakpb          String?
+  kode               String?
   kategori           ReportCategory
   namaBarang         String
   lokasi             String
   deskripsi          String
   severity           ReportSeverity
   fotoUrl            String?
+  attachmentUrl      String?
+  attachmentType     String?
+  attachmentName     String?
   status             ReportStatus   @default(MENUNGGU_ADMIN_1)
   alasanPenolakan    String?
   assignedTechnician String?

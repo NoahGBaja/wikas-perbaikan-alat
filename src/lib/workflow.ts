@@ -72,11 +72,11 @@ export function getRejectedStatus(): ReportStatus {
 }
 
 export function isWaitingStatus(status: ReportStatus) {
-  return WAITING_STATUSES.includes(status as any);
+  return WAITING_STATUSES.some((waitingStatus) => waitingStatus === status);
 }
 
 export function isFinalStatus(status: ReportStatus) {
-  return FINAL_STATUSES.includes(status as any);
+  return FINAL_STATUSES.some((finalStatus) => finalStatus === status);
 }
 
 export function getWorkflowMessage(role: Role, status: ReportStatus) {

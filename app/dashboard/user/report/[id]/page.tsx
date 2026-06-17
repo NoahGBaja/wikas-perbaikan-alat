@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import ReportForm from "@/src/components/reports/ReportForm";
+import UserReportPageClient from "@/src/components/reports/UserReportPageClient";
 import { prisma } from "@/src/lib/prisma";
 import { requireRole } from "@/src/lib/session";
 
@@ -23,11 +23,10 @@ export default async function EditReportPage({
       userId: true,
       status: true,
       kategori: true,
-      namaBarang: true,
-      lokasi: true,
-      deskripsi: true,
-      severity: true,
-      fotoUrl: true,
+      namaPelapor: true,
+      nomorRuangan: true,
+      kodeUakpb: true,
+      kode: true,
     },
   });
 
@@ -40,16 +39,15 @@ export default async function EditReportPage({
   }
 
   return (
-    <ReportForm
-      mode="edit"
+    <UserReportPageClient
+      defaultNamaPelapor={currentUser.nama}
       initialReport={{
         id: report.id,
         kategori: report.kategori,
-        namaBarang: report.namaBarang,
-        lokasi: report.lokasi,
-        deskripsi: report.deskripsi,
-        severity: report.severity,
-        fotoUrl: report.fotoUrl,
+        namaPelapor: report.namaPelapor,
+        nomorRuangan: report.nomorRuangan,
+        kodeUakpb: report.kodeUakpb,
+        kode: report.kode,
       }}
     />
   );

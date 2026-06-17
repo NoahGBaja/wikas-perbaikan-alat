@@ -3,13 +3,27 @@ import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_REPORT_ATTACHMENT_BYTES = 2 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+const ALLOWED_REPORT_ATTACHMENT_TYPES = new Set([
+  "application/pdf",
   "image/jpeg",
   "image/png",
   "image/webp",
 ]);
 
 const IMAGE_EXTENSION_BY_TYPE = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+} as const;
+
+const REPORT_ATTACHMENT_EXTENSION_BY_TYPE = {
+  "application/pdf": ".pdf",
   "image/jpeg": ".jpg",
   "image/png": ".png",
   "image/webp": ".webp",
@@ -38,6 +52,29 @@ export function validateImageUpload(file: File | null, options?: { required?: bo
 
   if (file.size > MAX_IMAGE_BYTES) {
     return "Ukuran gambar maksimal 5MB.";
+  }
+
+  return null;
+}
+
+export function validateReportAttachmentUpload(
+  file: File | null,
+  options?: { required?: boolean }
+) {
+  if (!file || file.size === 0) {
+    if (options?.required) {
+      return "Lampiran wajib diunggah.";
+    }
+
+    return null;
+  }
+
+  if (!ALLOWED_REPORT_ATTACHMENT_TYPES.has(file.type)) {
+    return "Lampiran harus berupa JPG, PNG, WEBP, atau PDF.";
+  }
+
+  if (file.size > MAX_REPORT_ATTACHMENT_BYTES) {
+    return "Lampiran maksimal 2MB.";
   }
 
   return null;
@@ -76,6 +113,15 @@ function hasValidImageSignature(bytes: Buffer, fileType: string) {
   return false;
 }
 
+function isPdf(bytes: Buffer) {
+  return bytes.length >= 5 && bytes.subarray(0, 5).toString("ascii") === "%PDF-";
+}
+
+function hasValidReportAttachmentSignature(bytes: Buffer, fileType: string) {
+  if (fileType === "application/pdf") return isPdf(bytes);
+  return hasValidImageSignature(bytes, fileType);
+}
+
 export async function saveImageUpload(
   file: File,
   options?: {
@@ -100,6 +146,44 @@ export async function saveImageUpload(
 
   const extension =
     IMAGE_EXTENSION_BY_TYPE[file.type as keyof typeof IMAGE_EXTENSION_BY_TYPE];
+
+  const baseName = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
+  const finalFileName = `${Date.now()}-${randomUUID()}-${baseName || "file"}${extension}`;
+  const filePath = path.join(uploadDir, finalFileName);
+
+  await fs.writeFile(filePath, bytes);
+
+  return `/${uploadFolder}/${finalFileName}`;
+}
+
+export async function saveReportAttachmentUpload(
+  file: File,
+  options?: {
+    folder?: string;
+  }
+) {
+  const validationError = validateReportAttachmentUpload(file, {
+    required: true,
+  });
+
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  const uploadFolder = options?.folder || "uploads";
+  const uploadDir = path.join(process.cwd(), "public", uploadFolder);
+  await fs.mkdir(uploadDir, { recursive: true });
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+
+  if (!hasValidReportAttachmentSignature(bytes, file.type)) {
+    throw new Error("Isi lampiran tidak valid.");
+  }
+
+  const extension =
+    REPORT_ATTACHMENT_EXTENSION_BY_TYPE[
+      file.type as keyof typeof REPORT_ATTACHMENT_EXTENSION_BY_TYPE
+    ];
 
   const baseName = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
   const finalFileName = `${Date.now()}-${randomUUID()}-${baseName || "file"}${extension}`;

@@ -20,7 +20,7 @@ export type AppRole =
   | "USER";
 
 export function isAdminRole(role?: string | null) {
-  return !!role && ALL_ADMIN_ROLES.includes(role as any);
+  return !!role && ALL_ADMIN_ROLES.some((adminRole) => adminRole === role);
 }
 
 export function isSuperAdmin(role?: string | null) {
@@ -28,7 +28,7 @@ export function isSuperAdmin(role?: string | null) {
 }
 
 export function isNormalAdmin(role?: string | null) {
-  return !!role && ADMIN_ROLES.includes(role as any);
+  return !!role && ADMIN_ROLES.some((adminRole) => adminRole === role);
 }
 
 export function getAdminLevel(role?: string | null) {

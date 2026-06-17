@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   BarChart3,
   CalendarDays,
+  FileText,
   History,
   KeyRound,
   LogOut,
@@ -54,12 +55,19 @@ type ReportHistoryItem = {
 
 type ReportItem = {
   id: number;
+  namaPelapor?: string | null;
+  nomorRuangan?: string | null;
+  kodeUakpb?: string | null;
+  kode?: string | null;
   kategori: ReportKategori;
   namaBarang: string;
   lokasi: string;
   deskripsi: string;
   severity: ReportSeverity;
   fotoUrl: string | null;
+  attachmentUrl?: string | null;
+  attachmentType?: string | null;
+  attachmentName?: string | null;
   completionPhotoUrl?: string | null;
   status: ReportStatus;
   alasanPenolakan: string | null;
@@ -502,8 +510,8 @@ export default function AdminDashboard({
                     <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                       <InfoBox label="Pelapor">
                         <p className="mt-1 font-semibold text-slate-900">
-                          {selectedReport.user.nama}
-                        </p>
+                        {selectedReport.user.nama}
+                      </p>
                         <p className="mt-1 text-sm text-slate-500">
                           NIP: {selectedReport.user.nip || "-"}
                         </p>
@@ -511,6 +519,22 @@ export default function AdminDashboard({
 
                       <InfoBox label="Kategori">
                         {formatKategori(selectedReport.kategori)}
+                      </InfoBox>
+
+                      <InfoBox label="Nama Pelapor">
+                        {selectedReport.namaPelapor || selectedReport.user.nama}
+                      </InfoBox>
+
+                      <InfoBox label="Nomor Ruangan">
+                        {selectedReport.nomorRuangan || selectedReport.lokasi}
+                      </InfoBox>
+
+                      <InfoBox label="Kode UAKPB">
+                        {selectedReport.kodeUakpb || "-"}
+                      </InfoBox>
+
+                      <InfoBox label="Kode">
+                        {selectedReport.kode || "-"}
                       </InfoBox>
 
                       <InfoBox label="Severity">
@@ -598,11 +622,13 @@ export default function AdminDashboard({
 
                 <div className="space-y-6">
                   <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="mb-3 text-sm text-slate-500">Foto Barang</p>
-                    {selectedReport.fotoUrl ? (
+                    <p className="mb-3 text-sm text-slate-500">Lampiran</p>
+                    {(selectedReport.attachmentUrl || selectedReport.fotoUrl) &&
+                    (selectedReport.attachmentType?.startsWith("image/") ||
+                      selectedReport.fotoUrl) ? (
                       <div className="overflow-hidden rounded-2xl border border-slate-200">
                         <Image
-                          src={selectedReport.fotoUrl}
+                          src={selectedReport.attachmentUrl || selectedReport.fotoUrl || ""}
                           alt={selectedReport.namaBarang}
                           width={1200}
                           height={800}
@@ -610,9 +636,22 @@ export default function AdminDashboard({
                           preload
                         />
                       </div>
+                    ) : selectedReport.attachmentUrl ? (
+                      <a
+                        href={selectedReport.attachmentUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"
+                      >
+                        <FileText className="mb-3 h-8 w-8" />
+                        <span className="font-semibold">Buka Lampiran PDF</span>
+                        <span className="mt-1 max-w-full truncate text-xs">
+                          {selectedReport.attachmentName || "Dokumen laporan"}
+                        </span>
+                      </a>
                     ) : (
                       <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-500">
-                        Tidak ada foto awal
+                        Tidak ada lampiran
                       </div>
                     )}
                   </div>

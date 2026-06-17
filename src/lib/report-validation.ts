@@ -26,6 +26,14 @@ export type ReportInput = {
   severity: string;
 };
 
+export type ModalReportInput = {
+  kategori: string;
+  namaPelapor: string;
+  nomorRuangan: string;
+  kodeUakpb: string;
+  kode: string;
+};
+
 function trimmedValue(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -38,6 +46,50 @@ export function parseReportFormData(formData: FormData): ReportInput {
     deskripsi: trimmedValue(formData.get("deskripsi")),
     severity: trimmedValue(formData.get("severity")),
   };
+}
+
+export function parseModalReportFormData(formData: FormData): ModalReportInput {
+  return {
+    kategori: trimmedValue(formData.get("kategori")),
+    namaPelapor: trimmedValue(formData.get("namaPelapor")),
+    nomorRuangan: trimmedValue(formData.get("nomorRuangan")),
+    kodeUakpb: trimmedValue(formData.get("kodeUakpb")),
+    kode: trimmedValue(formData.get("kode")),
+  };
+}
+
+export function validateModalReportInput(input: ModalReportInput) {
+  if (
+    !input.namaPelapor ||
+    !input.kategori ||
+    !input.nomorRuangan ||
+    !input.kodeUakpb ||
+    !input.kode
+  ) {
+    return "Jenis perbaikan, nama pelapor, nomor ruangan, kode UAKPB, dan kode wajib diisi.";
+  }
+
+  if (!VALID_KATEGORI.includes(input.kategori as ValidKategori)) {
+    return "Jenis perbaikan tidak valid.";
+  }
+
+  if (input.namaPelapor.length > 120) {
+    return "Nama pelapor maksimal 120 karakter.";
+  }
+
+  if (input.nomorRuangan.length > 120) {
+    return "Nomor ruangan maksimal 120 karakter.";
+  }
+
+  if (input.kodeUakpb.length > 120) {
+    return "Kode UAKPB maksimal 120 karakter.";
+  }
+
+  if (!/^\d{12}$/.test(input.kode)) {
+    return "Kode harus berisi tepat 12 digit angka.";
+  }
+
+  return null;
 }
 
 export function validateReportInput(input: ReportInput) {

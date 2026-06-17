@@ -39,12 +39,19 @@ export type ReportSumAggregateOutputType = {
 export type ReportMinAggregateOutputType = {
   id: number | null
   userId: number | null
+  namaPelapor: string | null
+  nomorRuangan: string | null
+  kodeUakpb: string | null
+  kode: string | null
   kategori: $Enums.ReportCategory | null
   namaBarang: string | null
   lokasi: string | null
   deskripsi: string | null
   severity: $Enums.ReportSeverity | null
   fotoUrl: string | null
+  attachmentUrl: string | null
+  attachmentType: string | null
+  attachmentName: string | null
   status: $Enums.ReportStatus | null
   alasanPenolakan: string | null
   assignedTechnician: string | null
@@ -62,12 +69,19 @@ export type ReportMinAggregateOutputType = {
 export type ReportMaxAggregateOutputType = {
   id: number | null
   userId: number | null
+  namaPelapor: string | null
+  nomorRuangan: string | null
+  kodeUakpb: string | null
+  kode: string | null
   kategori: $Enums.ReportCategory | null
   namaBarang: string | null
   lokasi: string | null
   deskripsi: string | null
   severity: $Enums.ReportSeverity | null
   fotoUrl: string | null
+  attachmentUrl: string | null
+  attachmentType: string | null
+  attachmentName: string | null
   status: $Enums.ReportStatus | null
   alasanPenolakan: string | null
   assignedTechnician: string | null
@@ -85,12 +99,19 @@ export type ReportMaxAggregateOutputType = {
 export type ReportCountAggregateOutputType = {
   id: number
   userId: number
+  namaPelapor: number
+  nomorRuangan: number
+  kodeUakpb: number
+  kode: number
   kategori: number
   namaBarang: number
   lokasi: number
   deskripsi: number
   severity: number
   fotoUrl: number
+  attachmentUrl: number
+  attachmentType: number
+  attachmentName: number
   status: number
   alasanPenolakan: number
   assignedTechnician: number
@@ -120,12 +141,19 @@ export type ReportSumAggregateInputType = {
 export type ReportMinAggregateInputType = {
   id?: true
   userId?: true
+  namaPelapor?: true
+  nomorRuangan?: true
+  kodeUakpb?: true
+  kode?: true
   kategori?: true
   namaBarang?: true
   lokasi?: true
   deskripsi?: true
   severity?: true
   fotoUrl?: true
+  attachmentUrl?: true
+  attachmentType?: true
+  attachmentName?: true
   status?: true
   alasanPenolakan?: true
   assignedTechnician?: true
@@ -143,12 +171,19 @@ export type ReportMinAggregateInputType = {
 export type ReportMaxAggregateInputType = {
   id?: true
   userId?: true
+  namaPelapor?: true
+  nomorRuangan?: true
+  kodeUakpb?: true
+  kode?: true
   kategori?: true
   namaBarang?: true
   lokasi?: true
   deskripsi?: true
   severity?: true
   fotoUrl?: true
+  attachmentUrl?: true
+  attachmentType?: true
+  attachmentName?: true
   status?: true
   alasanPenolakan?: true
   assignedTechnician?: true
@@ -166,12 +201,19 @@ export type ReportMaxAggregateInputType = {
 export type ReportCountAggregateInputType = {
   id?: true
   userId?: true
+  namaPelapor?: true
+  nomorRuangan?: true
+  kodeUakpb?: true
+  kode?: true
   kategori?: true
   namaBarang?: true
   lokasi?: true
   deskripsi?: true
   severity?: true
   fotoUrl?: true
+  attachmentUrl?: true
+  attachmentType?: true
+  attachmentName?: true
   status?: true
   alasanPenolakan?: true
   assignedTechnician?: true
@@ -276,12 +318,19 @@ export type ReportGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 export type ReportGroupByOutputType = {
   id: number
   userId: number
+  namaPelapor: string | null
+  nomorRuangan: string | null
+  kodeUakpb: string | null
+  kode: string | null
   kategori: $Enums.ReportCategory
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
   fotoUrl: string | null
+  attachmentUrl: string | null
+  attachmentType: string | null
+  attachmentName: string | null
   status: $Enums.ReportStatus
   alasanPenolakan: string | null
   assignedTechnician: string | null
@@ -322,12 +371,19 @@ export type ReportWhereInput = {
   NOT?: Prisma.ReportWhereInput | Prisma.ReportWhereInput[]
   id?: Prisma.IntFilter<"Report"> | number
   userId?: Prisma.IntFilter<"Report"> | number
+  namaPelapor?: Prisma.StringNullableFilter<"Report"> | string | null
+  nomorRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
+  kodeUakpb?: Prisma.StringNullableFilter<"Report"> | string | null
+  kode?: Prisma.StringNullableFilter<"Report"> | string | null
   kategori?: Prisma.EnumReportCategoryFilter<"Report"> | $Enums.ReportCategory
   namaBarang?: Prisma.StringFilter<"Report"> | string
   lokasi?: Prisma.StringFilter<"Report"> | string
   deskripsi?: Prisma.StringFilter<"Report"> | string
   severity?: Prisma.EnumReportSeverityFilter<"Report"> | $Enums.ReportSeverity
   fotoUrl?: Prisma.StringNullableFilter<"Report"> | string | null
+  attachmentUrl?: Prisma.StringNullableFilter<"Report"> | string | null
+  attachmentType?: Prisma.StringNullableFilter<"Report"> | string | null
+  attachmentName?: Prisma.StringNullableFilter<"Report"> | string | null
   status?: Prisma.EnumReportStatusFilter<"Report"> | $Enums.ReportStatus
   alasanPenolakan?: Prisma.StringNullableFilter<"Report"> | string | null
   assignedTechnician?: Prisma.StringNullableFilter<"Report"> | string | null
@@ -347,12 +403,19 @@ export type ReportWhereInput = {
 export type ReportOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  namaPelapor?: Prisma.SortOrderInput | Prisma.SortOrder
+  nomorRuangan?: Prisma.SortOrderInput | Prisma.SortOrder
+  kodeUakpb?: Prisma.SortOrderInput | Prisma.SortOrder
+  kode?: Prisma.SortOrderInput | Prisma.SortOrder
   kategori?: Prisma.SortOrder
   namaBarang?: Prisma.SortOrder
   lokasi?: Prisma.SortOrder
   deskripsi?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   fotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  attachmentUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  attachmentType?: Prisma.SortOrderInput | Prisma.SortOrder
+  attachmentName?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   alasanPenolakan?: Prisma.SortOrderInput | Prisma.SortOrder
   assignedTechnician?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -376,12 +439,19 @@ export type ReportWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ReportWhereInput[]
   NOT?: Prisma.ReportWhereInput | Prisma.ReportWhereInput[]
   userId?: Prisma.IntFilter<"Report"> | number
+  namaPelapor?: Prisma.StringNullableFilter<"Report"> | string | null
+  nomorRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
+  kodeUakpb?: Prisma.StringNullableFilter<"Report"> | string | null
+  kode?: Prisma.StringNullableFilter<"Report"> | string | null
   kategori?: Prisma.EnumReportCategoryFilter<"Report"> | $Enums.ReportCategory
   namaBarang?: Prisma.StringFilter<"Report"> | string
   lokasi?: Prisma.StringFilter<"Report"> | string
   deskripsi?: Prisma.StringFilter<"Report"> | string
   severity?: Prisma.EnumReportSeverityFilter<"Report"> | $Enums.ReportSeverity
   fotoUrl?: Prisma.StringNullableFilter<"Report"> | string | null
+  attachmentUrl?: Prisma.StringNullableFilter<"Report"> | string | null
+  attachmentType?: Prisma.StringNullableFilter<"Report"> | string | null
+  attachmentName?: Prisma.StringNullableFilter<"Report"> | string | null
   status?: Prisma.EnumReportStatusFilter<"Report"> | $Enums.ReportStatus
   alasanPenolakan?: Prisma.StringNullableFilter<"Report"> | string | null
   assignedTechnician?: Prisma.StringNullableFilter<"Report"> | string | null
@@ -401,12 +471,19 @@ export type ReportWhereUniqueInput = Prisma.AtLeast<{
 export type ReportOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  namaPelapor?: Prisma.SortOrderInput | Prisma.SortOrder
+  nomorRuangan?: Prisma.SortOrderInput | Prisma.SortOrder
+  kodeUakpb?: Prisma.SortOrderInput | Prisma.SortOrder
+  kode?: Prisma.SortOrderInput | Prisma.SortOrder
   kategori?: Prisma.SortOrder
   namaBarang?: Prisma.SortOrder
   lokasi?: Prisma.SortOrder
   deskripsi?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   fotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  attachmentUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  attachmentType?: Prisma.SortOrderInput | Prisma.SortOrder
+  attachmentName?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   alasanPenolakan?: Prisma.SortOrderInput | Prisma.SortOrder
   assignedTechnician?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -432,12 +509,19 @@ export type ReportScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ReportScalarWhereWithAggregatesInput | Prisma.ReportScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Report"> | number
   userId?: Prisma.IntWithAggregatesFilter<"Report"> | number
+  namaPelapor?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  nomorRuangan?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  kodeUakpb?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  kode?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   kategori?: Prisma.EnumReportCategoryWithAggregatesFilter<"Report"> | $Enums.ReportCategory
   namaBarang?: Prisma.StringWithAggregatesFilter<"Report"> | string
   lokasi?: Prisma.StringWithAggregatesFilter<"Report"> | string
   deskripsi?: Prisma.StringWithAggregatesFilter<"Report"> | string
   severity?: Prisma.EnumReportSeverityWithAggregatesFilter<"Report"> | $Enums.ReportSeverity
   fotoUrl?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  attachmentUrl?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  attachmentType?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  attachmentName?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   status?: Prisma.EnumReportStatusWithAggregatesFilter<"Report"> | $Enums.ReportStatus
   alasanPenolakan?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   assignedTechnician?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
@@ -453,12 +537,19 @@ export type ReportScalarWhereWithAggregatesInput = {
 }
 
 export type ReportCreateInput = {
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
   kategori: $Enums.ReportCategory
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
   fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
   status?: $Enums.ReportStatus
   alasanPenolakan?: string | null
   assignedTechnician?: string | null
@@ -478,12 +569,19 @@ export type ReportCreateInput = {
 export type ReportUncheckedCreateInput = {
   id?: number
   userId: number
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
   kategori: $Enums.ReportCategory
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
   fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
   status?: $Enums.ReportStatus
   alasanPenolakan?: string | null
   assignedTechnician?: string | null
@@ -500,12 +598,19 @@ export type ReportUncheckedCreateInput = {
 }
 
 export type ReportUpdateInput = {
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
   alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -525,12 +630,19 @@ export type ReportUpdateInput = {
 export type ReportUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
   alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -549,12 +661,19 @@ export type ReportUncheckedUpdateInput = {
 export type ReportCreateManyInput = {
   id?: number
   userId: number
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
   kategori: $Enums.ReportCategory
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
   fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
   status?: $Enums.ReportStatus
   alasanPenolakan?: string | null
   assignedTechnician?: string | null
@@ -570,12 +689,19 @@ export type ReportCreateManyInput = {
 }
 
 export type ReportUpdateManyMutationInput = {
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
   alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -593,12 +719,19 @@ export type ReportUpdateManyMutationInput = {
 export type ReportUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
   alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -632,12 +765,19 @@ export type ReportOrderByRelevanceInput = {
 export type ReportCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  namaPelapor?: Prisma.SortOrder
+  nomorRuangan?: Prisma.SortOrder
+  kodeUakpb?: Prisma.SortOrder
+  kode?: Prisma.SortOrder
   kategori?: Prisma.SortOrder
   namaBarang?: Prisma.SortOrder
   lokasi?: Prisma.SortOrder
   deskripsi?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   fotoUrl?: Prisma.SortOrder
+  attachmentUrl?: Prisma.SortOrder
+  attachmentType?: Prisma.SortOrder
+  attachmentName?: Prisma.SortOrder
   status?: Prisma.SortOrder
   alasanPenolakan?: Prisma.SortOrder
   assignedTechnician?: Prisma.SortOrder
@@ -660,12 +800,19 @@ export type ReportAvgOrderByAggregateInput = {
 export type ReportMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  namaPelapor?: Prisma.SortOrder
+  nomorRuangan?: Prisma.SortOrder
+  kodeUakpb?: Prisma.SortOrder
+  kode?: Prisma.SortOrder
   kategori?: Prisma.SortOrder
   namaBarang?: Prisma.SortOrder
   lokasi?: Prisma.SortOrder
   deskripsi?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   fotoUrl?: Prisma.SortOrder
+  attachmentUrl?: Prisma.SortOrder
+  attachmentType?: Prisma.SortOrder
+  attachmentName?: Prisma.SortOrder
   status?: Prisma.SortOrder
   alasanPenolakan?: Prisma.SortOrder
   assignedTechnician?: Prisma.SortOrder
@@ -683,12 +830,19 @@ export type ReportMaxOrderByAggregateInput = {
 export type ReportMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  namaPelapor?: Prisma.SortOrder
+  nomorRuangan?: Prisma.SortOrder
+  kodeUakpb?: Prisma.SortOrder
+  kode?: Prisma.SortOrder
   kategori?: Prisma.SortOrder
   namaBarang?: Prisma.SortOrder
   lokasi?: Prisma.SortOrder
   deskripsi?: Prisma.SortOrder
   severity?: Prisma.SortOrder
   fotoUrl?: Prisma.SortOrder
+  attachmentUrl?: Prisma.SortOrder
+  attachmentType?: Prisma.SortOrder
+  attachmentName?: Prisma.SortOrder
   status?: Prisma.SortOrder
   alasanPenolakan?: Prisma.SortOrder
   assignedTechnician?: Prisma.SortOrder
@@ -786,12 +940,19 @@ export type ReportUpdateOneRequiredWithoutHistoriesNestedInput = {
 }
 
 export type ReportCreateWithoutUserInput = {
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
   kategori: $Enums.ReportCategory
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
   fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
   status?: $Enums.ReportStatus
   alasanPenolakan?: string | null
   assignedTechnician?: string | null
@@ -809,12 +970,19 @@ export type ReportCreateWithoutUserInput = {
 
 export type ReportUncheckedCreateWithoutUserInput = {
   id?: number
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
   kategori: $Enums.ReportCategory
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
   fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
   status?: $Enums.ReportStatus
   alasanPenolakan?: string | null
   assignedTechnician?: string | null
@@ -862,12 +1030,19 @@ export type ReportScalarWhereInput = {
   NOT?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
   id?: Prisma.IntFilter<"Report"> | number
   userId?: Prisma.IntFilter<"Report"> | number
+  namaPelapor?: Prisma.StringNullableFilter<"Report"> | string | null
+  nomorRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
+  kodeUakpb?: Prisma.StringNullableFilter<"Report"> | string | null
+  kode?: Prisma.StringNullableFilter<"Report"> | string | null
   kategori?: Prisma.EnumReportCategoryFilter<"Report"> | $Enums.ReportCategory
   namaBarang?: Prisma.StringFilter<"Report"> | string
   lokasi?: Prisma.StringFilter<"Report"> | string
   deskripsi?: Prisma.StringFilter<"Report"> | string
   severity?: Prisma.EnumReportSeverityFilter<"Report"> | $Enums.ReportSeverity
   fotoUrl?: Prisma.StringNullableFilter<"Report"> | string | null
+  attachmentUrl?: Prisma.StringNullableFilter<"Report"> | string | null
+  attachmentType?: Prisma.StringNullableFilter<"Report"> | string | null
+  attachmentName?: Prisma.StringNullableFilter<"Report"> | string | null
   status?: Prisma.EnumReportStatusFilter<"Report"> | $Enums.ReportStatus
   alasanPenolakan?: Prisma.StringNullableFilter<"Report"> | string | null
   assignedTechnician?: Prisma.StringNullableFilter<"Report"> | string | null
@@ -883,12 +1058,19 @@ export type ReportScalarWhereInput = {
 }
 
 export type ReportCreateWithoutHistoriesInput = {
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
   kategori: $Enums.ReportCategory
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
   fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
   status?: $Enums.ReportStatus
   alasanPenolakan?: string | null
   assignedTechnician?: string | null
@@ -907,12 +1089,19 @@ export type ReportCreateWithoutHistoriesInput = {
 export type ReportUncheckedCreateWithoutHistoriesInput = {
   id?: number
   userId: number
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
   kategori: $Enums.ReportCategory
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
   fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
   status?: $Enums.ReportStatus
   alasanPenolakan?: string | null
   assignedTechnician?: string | null
@@ -944,12 +1133,19 @@ export type ReportUpdateToOneWithWhereWithoutHistoriesInput = {
 }
 
 export type ReportUpdateWithoutHistoriesInput = {
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
   alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -968,12 +1164,19 @@ export type ReportUpdateWithoutHistoriesInput = {
 export type ReportUncheckedUpdateWithoutHistoriesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
   alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -990,12 +1193,19 @@ export type ReportUncheckedUpdateWithoutHistoriesInput = {
 
 export type ReportCreateManyUserInput = {
   id?: number
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
   kategori: $Enums.ReportCategory
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
   fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
   status?: $Enums.ReportStatus
   alasanPenolakan?: string | null
   assignedTechnician?: string | null
@@ -1011,12 +1221,19 @@ export type ReportCreateManyUserInput = {
 }
 
 export type ReportUpdateWithoutUserInput = {
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
   alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1034,12 +1251,19 @@ export type ReportUpdateWithoutUserInput = {
 
 export type ReportUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
   alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1057,12 +1281,19 @@ export type ReportUncheckedUpdateWithoutUserInput = {
 
 export type ReportUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
   alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1111,12 +1342,19 @@ export type ReportCountOutputTypeCountHistoriesArgs<ExtArgs extends runtime.Type
 export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  namaPelapor?: boolean
+  nomorRuangan?: boolean
+  kodeUakpb?: boolean
+  kode?: boolean
   kategori?: boolean
   namaBarang?: boolean
   lokasi?: boolean
   deskripsi?: boolean
   severity?: boolean
   fotoUrl?: boolean
+  attachmentUrl?: boolean
+  attachmentType?: boolean
+  attachmentName?: boolean
   status?: boolean
   alasanPenolakan?: boolean
   assignedTechnician?: boolean
@@ -1139,12 +1377,19 @@ export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
 export type ReportSelectScalar = {
   id?: boolean
   userId?: boolean
+  namaPelapor?: boolean
+  nomorRuangan?: boolean
+  kodeUakpb?: boolean
+  kode?: boolean
   kategori?: boolean
   namaBarang?: boolean
   lokasi?: boolean
   deskripsi?: boolean
   severity?: boolean
   fotoUrl?: boolean
+  attachmentUrl?: boolean
+  attachmentType?: boolean
+  attachmentName?: boolean
   status?: boolean
   alasanPenolakan?: boolean
   assignedTechnician?: boolean
@@ -1159,7 +1404,7 @@ export type ReportSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "kategori" | "namaBarang" | "lokasi" | "deskripsi" | "severity" | "fotoUrl" | "status" | "alasanPenolakan" | "assignedTechnician" | "adminNotes" | "completionNotes" | "completionPhotoUrl" | "approvedAt" | "rejectedAt" | "processedAt" | "finishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["report"]>
+export type ReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "namaPelapor" | "nomorRuangan" | "kodeUakpb" | "kode" | "kategori" | "namaBarang" | "lokasi" | "deskripsi" | "severity" | "fotoUrl" | "attachmentUrl" | "attachmentType" | "attachmentName" | "status" | "alasanPenolakan" | "assignedTechnician" | "adminNotes" | "completionNotes" | "completionPhotoUrl" | "approvedAt" | "rejectedAt" | "processedAt" | "finishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["report"]>
 export type ReportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   histories?: boolean | Prisma.Report$historiesArgs<ExtArgs>
@@ -1175,12 +1420,19 @@ export type $ReportPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     userId: number
+    namaPelapor: string | null
+    nomorRuangan: string | null
+    kodeUakpb: string | null
+    kode: string | null
     kategori: $Enums.ReportCategory
     namaBarang: string
     lokasi: string
     deskripsi: string
     severity: $Enums.ReportSeverity
     fotoUrl: string | null
+    attachmentUrl: string | null
+    attachmentType: string | null
+    attachmentName: string | null
     status: $Enums.ReportStatus
     alasanPenolakan: string | null
     assignedTechnician: string | null
@@ -1566,12 +1818,19 @@ export interface Prisma__ReportClient<T, Null = never, ExtArgs extends runtime.T
 export interface ReportFieldRefs {
   readonly id: Prisma.FieldRef<"Report", 'Int'>
   readonly userId: Prisma.FieldRef<"Report", 'Int'>
+  readonly namaPelapor: Prisma.FieldRef<"Report", 'String'>
+  readonly nomorRuangan: Prisma.FieldRef<"Report", 'String'>
+  readonly kodeUakpb: Prisma.FieldRef<"Report", 'String'>
+  readonly kode: Prisma.FieldRef<"Report", 'String'>
   readonly kategori: Prisma.FieldRef<"Report", 'ReportCategory'>
   readonly namaBarang: Prisma.FieldRef<"Report", 'String'>
   readonly lokasi: Prisma.FieldRef<"Report", 'String'>
   readonly deskripsi: Prisma.FieldRef<"Report", 'String'>
   readonly severity: Prisma.FieldRef<"Report", 'ReportSeverity'>
   readonly fotoUrl: Prisma.FieldRef<"Report", 'String'>
+  readonly attachmentUrl: Prisma.FieldRef<"Report", 'String'>
+  readonly attachmentType: Prisma.FieldRef<"Report", 'String'>
+  readonly attachmentName: Prisma.FieldRef<"Report", 'String'>
   readonly status: Prisma.FieldRef<"Report", 'ReportStatus'>
   readonly alasanPenolakan: Prisma.FieldRef<"Report", 'String'>
   readonly assignedTechnician: Prisma.FieldRef<"Report", 'String'>

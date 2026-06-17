@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import {
   ArrowUpDown,
   CircleUserRound,
@@ -53,10 +53,21 @@ function MonthlyReporterTable({
   monthLabel,
 }: MonthlyReporterTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<ReporterSortOption>("TOTAL_DESC");
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 2000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [searchTerm]);
+
   const visibleReporterStats = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const normalizedSearch = debouncedSearchTerm.trim().toLowerCase();
 
     const filtered = normalizedSearch
       ? reporterStats.filter((item) => {
@@ -99,7 +110,7 @@ function MonthlyReporterTable({
 
       return b.totalReports - a.totalReports;
     });
-  }, [reporterStats, searchTerm, sortBy]);
+  }, [reporterStats, debouncedSearchTerm, sortBy]);
 
   if (reporterStats.length === 0) {
     return (

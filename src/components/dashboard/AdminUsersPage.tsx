@@ -68,6 +68,7 @@ export default function AdminUsersPage({
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [newUser, setNewUser] = useState({
     nama: "",
     jabatan: "",
@@ -127,6 +128,16 @@ export default function AdminUsersPage({
   useEffect(() => {
     void loadUsers();
   }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 2000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [searchQuery]);
 
   async function handleCreateUser() {
     try {
@@ -315,7 +326,7 @@ export default function AdminUsersPage({
   }
 
   const filteredUsers = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+    const query = debouncedSearchQuery.trim().toLowerCase();
 
     if (!query) {
       return users;
@@ -333,7 +344,7 @@ export default function AdminUsersPage({
         .toLowerCase()
         .includes(query)
     );
-  }, [searchQuery, users]);
+  }, [debouncedSearchQuery, users]);
 
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-10 text-white">
