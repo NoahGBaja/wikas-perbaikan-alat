@@ -717,6 +717,7 @@ export const UserScalarFieldEnum = {
   nip: 'nip',
   passwordHash: 'passwordHash',
   role: 'role',
+  categoryScope: 'categoryScope',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -873,16 +874,16 @@ export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
 
 
 /**
- * Reference to a field of type 'DateTime'
+ * Reference to a field of type 'ReportCategory'
  */
-export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+export type EnumReportCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportCategory'>
     
 
 
 /**
- * Reference to a field of type 'ReportCategory'
+ * Reference to a field of type 'DateTime'
  */
-export type EnumReportCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportCategory'>
+export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
     
 
 

@@ -53,6 +53,7 @@ model User {
   nip          String?  @unique
   passwordHash String
   role         Role     @default(USER)
+  categoryScope ReportCategory?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

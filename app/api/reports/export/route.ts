@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { listReportsRaw } from "@/src/lib/raw-data";
 import { getApiSessionUser } from "@/src/lib/session";
 import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
+import { canAdminAccessReport } from "@/src/lib/workflow";
 import {
   formatKategori,
   formatSeverity,
@@ -60,8 +61,14 @@ export async function GET() {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    const reports = (await listReportsRaw()).filter((report) =>
-      isHistoryStatus(report.status),
+    const reports = (await listReportsRaw()).filter(
+      (report) =>
+        isHistoryStatus(report.status) &&
+        canAdminAccessReport({
+          role: authUser.role,
+          categoryScope: authUser.categoryScope,
+          reportCategory: report.kategori,
+        }),
     );
 
     const workbook = new ExcelJS.Workbook();

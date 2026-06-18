@@ -219,6 +219,7 @@ async function setupUsers() {
       jabatan: "Admin 1",
       nip: adminNip,
       role: "ADMIN_1",
+      categoryScope: "IT_ELEKTRONIK",
       passwordHash,
     },
   });

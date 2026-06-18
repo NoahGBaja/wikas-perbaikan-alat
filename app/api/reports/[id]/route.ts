@@ -13,6 +13,7 @@ import {
 } from "@/src/lib/uploads";
 import { validateMutationRequest } from "@/src/lib/request-security";
 import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
+import { canAdminAccessReport } from "@/src/lib/workflow";
 
 function parseReportId(id: string) {
   const reportId = Number(id);
@@ -82,6 +83,17 @@ export async function GET(
         { message: "Laporan tidak ditemukan." },
         { status: 404 }
       );
+    }
+
+    if (
+      isAdminRole(authUser.role) &&
+      !canAdminAccessReport({
+        role: authUser.role,
+        categoryScope: authUser.categoryScope,
+        reportCategory: report.kategori,
+      })
+    ) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
     if (!isAdminRole(authUser.role) && report.userId !== authUser.id) {

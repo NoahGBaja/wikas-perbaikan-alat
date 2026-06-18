@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getApiSessionUser } from "@/src/lib/session";
 import { validateMutationRequest } from "@/src/lib/request-security";
-import type { AppRole } from "@/src/lib/roles";
+import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
+import { isCategoryScopedRole } from "@/src/lib/roles";
 
 const VALID_ROLES: AppRole[] = [
   "SUPER_ADMIN",
@@ -15,8 +16,21 @@ const VALID_ROLES: AppRole[] = [
   "USER",
 ];
 
+const VALID_CATEGORY_SCOPES: AppCategoryScope[] = [
+  "FASILITAS_INVENTARIS",
+  "IT_ELEKTRONIK",
+  "LABORATORIUM",
+];
+
 function isValidRole(role: unknown): role is AppRole {
   return typeof role === "string" && VALID_ROLES.includes(role as AppRole);
+}
+
+function isValidCategoryScope(value: unknown): value is AppCategoryScope {
+  return (
+    typeof value === "string" &&
+    VALID_CATEGORY_SCOPES.includes(value as AppCategoryScope)
+  );
 }
 
 function parseUserId(id: string) {
@@ -84,6 +98,9 @@ export async function PATCH(
       typeof body.jabatan === "string" ? body.jabatan.trim() : "";
     const nip = typeof body.nip === "string" ? body.nip.trim() : "";
     const role = isValidRole(body.role) ? body.role : "USER";
+    const categoryScope = isValidCategoryScope(body.categoryScope)
+      ? body.categoryScope
+      : null;
 
     if (!nama || !nip) {
       return NextResponse.json(
@@ -95,6 +112,13 @@ export async function PATCH(
     if (nip.length > 50 || nama.length > 120 || jabatan.length > 120) {
       return NextResponse.json(
         { message: "NIP atau nama terlalu panjang." },
+        { status: 400 }
+      );
+    }
+
+    if (isCategoryScopedRole(role) && !categoryScope) {
+      return NextResponse.json(
+        { message: "Kategori wajib dipilih untuk PJ Perbaikan dan PPK." },
         { status: 400 }
       );
     }
@@ -120,6 +144,7 @@ export async function PATCH(
         jabatan: jabatan || null,
         nip,
         role,
+        categoryScope: isCategoryScopedRole(role) ? categoryScope : null,
       },
       select: {
         id: true,
@@ -127,6 +152,7 @@ export async function PATCH(
         jabatan: true,
         nip: true,
         role: true,
+        categoryScope: true,
         createdAt: true,
         updatedAt: true,
       },

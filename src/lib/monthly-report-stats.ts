@@ -1,7 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/src/lib/prisma";
-import { getRoleLabel } from "@/src/lib/roles";
+import { getRoleLabel, type AppCategoryScope } from "@/src/lib/roles";
 import type { MonthlyStatsResponse } from "@/src/lib/monthly-report-stats-types";
 import type { ReportStatus } from "@/src/lib/workflow";
 
@@ -14,6 +14,7 @@ type MonthlyReportStatsInput = {
   month?: number | string | null;
   year?: number | string | null;
   status?: string | null;
+  categoryScope?: AppCategoryScope | null;
 };
 
 const REPORT_CATEGORIES: ReportCategory[] = [
@@ -117,8 +118,12 @@ function getTopCategoryLabel(categoryCounts: Record<ReportCategory, number>) {
   return topCategory ? getCategoryLabel(topCategory) : "-";
 }
 
-async function getDefaultStatsPeriod(now: Date) {
+async function getDefaultStatsPeriod(
+  now: Date,
+  categoryScope?: AppCategoryScope | null,
+) {
   const latestReport = await prisma.report.findFirst({
+    where: categoryScope ? { kategori: categoryScope } : undefined,
     select: {
       createdAt: true,
     },
@@ -139,7 +144,7 @@ export async function getMonthlyReportStats(
   input: MonthlyReportStatsInput = {}
 ): Promise<MonthlyStatsResponse> {
   const now = new Date();
-  const defaultPeriod = await getDefaultStatsPeriod(now);
+  const defaultPeriod = await getDefaultStatsPeriod(now, input.categoryScope);
 
   const month = parseMonth(input.month, defaultPeriod.month);
   const year = parseYear(input.year, defaultPeriod.year);
@@ -158,6 +163,7 @@ export async function getMonthlyReportStats(
         lt: end,
       },
       ...(selectedStatus !== "SEMUA" ? { status: selectedStatus } : {}),
+      ...(input.categoryScope ? { kategori: input.categoryScope } : {}),
     },
     select: {
       userId: true,

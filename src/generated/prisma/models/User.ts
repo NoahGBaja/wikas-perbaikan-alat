@@ -41,6 +41,7 @@ export type UserMinAggregateOutputType = {
   nip: string | null
   passwordHash: string | null
   role: $Enums.Role | null
+  categoryScope: $Enums.ReportCategory | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -52,6 +53,7 @@ export type UserMaxAggregateOutputType = {
   nip: string | null
   passwordHash: string | null
   role: $Enums.Role | null
+  categoryScope: $Enums.ReportCategory | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -63,6 +65,7 @@ export type UserCountAggregateOutputType = {
   nip: number
   passwordHash: number
   role: number
+  categoryScope: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -84,6 +87,7 @@ export type UserMinAggregateInputType = {
   nip?: true
   passwordHash?: true
   role?: true
+  categoryScope?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -95,6 +99,7 @@ export type UserMaxAggregateInputType = {
   nip?: true
   passwordHash?: true
   role?: true
+  categoryScope?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -106,6 +111,7 @@ export type UserCountAggregateInputType = {
   nip?: true
   passwordHash?: true
   role?: true
+  categoryScope?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -204,6 +210,7 @@ export type UserGroupByOutputType = {
   nip: string | null
   passwordHash: string
   role: $Enums.Role
+  categoryScope: $Enums.ReportCategory | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -238,6 +245,7 @@ export type UserWhereInput = {
   nip?: Prisma.StringNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  categoryScope?: Prisma.EnumReportCategoryNullableFilter<"User"> | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   reports?: Prisma.ReportListRelationFilter
@@ -252,6 +260,7 @@ export type UserOrderByWithRelationInput = {
   nip?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  categoryScope?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   reports?: Prisma.ReportOrderByRelationAggregateInput
@@ -270,6 +279,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   jabatan?: Prisma.StringNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  categoryScope?: Prisma.EnumReportCategoryNullableFilter<"User"> | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   reports?: Prisma.ReportListRelationFilter
@@ -284,6 +294,7 @@ export type UserOrderByWithAggregationInput = {
   nip?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  categoryScope?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -303,6 +314,7 @@ export type UserScalarWhereWithAggregatesInput = {
   nip?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
+  categoryScope?: Prisma.EnumReportCategoryNullableWithAggregatesFilter<"User"> | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -313,6 +325,7 @@ export type UserCreateInput = {
   nip?: string | null
   passwordHash: string
   role?: $Enums.Role
+  categoryScope?: $Enums.ReportCategory | null
   createdAt?: Date | string
   updatedAt?: Date | string
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
@@ -327,6 +340,7 @@ export type UserUncheckedCreateInput = {
   nip?: string | null
   passwordHash: string
   role?: $Enums.Role
+  categoryScope?: $Enums.ReportCategory | null
   createdAt?: Date | string
   updatedAt?: Date | string
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
@@ -340,6 +354,7 @@ export type UserUpdateInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
@@ -354,6 +369,7 @@ export type UserUncheckedUpdateInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
@@ -368,6 +384,7 @@ export type UserCreateManyInput = {
   nip?: string | null
   passwordHash: string
   role?: $Enums.Role
+  categoryScope?: $Enums.ReportCategory | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -378,6 +395,7 @@ export type UserUpdateManyMutationInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -389,6 +407,7 @@ export type UserUncheckedUpdateManyInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -406,6 +425,7 @@ export type UserCountOrderByAggregateInput = {
   nip?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  categoryScope?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -421,6 +441,7 @@ export type UserMaxOrderByAggregateInput = {
   nip?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  categoryScope?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -432,6 +453,7 @@ export type UserMinOrderByAggregateInput = {
   nip?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  categoryScope?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -455,6 +477,10 @@ export type NullableStringFieldUpdateOperationsInput = {
 
 export type EnumRoleFieldUpdateOperationsInput = {
   set?: $Enums.Role
+}
+
+export type NullableEnumReportCategoryFieldUpdateOperationsInput = {
+  set?: $Enums.ReportCategory | null
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -517,6 +543,7 @@ export type UserCreateWithoutReportsInput = {
   nip?: string | null
   passwordHash: string
   role?: $Enums.Role
+  categoryScope?: $Enums.ReportCategory | null
   createdAt?: Date | string
   updatedAt?: Date | string
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
@@ -530,6 +557,7 @@ export type UserUncheckedCreateWithoutReportsInput = {
   nip?: string | null
   passwordHash: string
   role?: $Enums.Role
+  categoryScope?: $Enums.ReportCategory | null
   createdAt?: Date | string
   updatedAt?: Date | string
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
@@ -558,6 +586,7 @@ export type UserUpdateWithoutReportsInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
@@ -571,6 +600,7 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -583,6 +613,7 @@ export type UserCreateWithoutApprovalHistoriesInput = {
   nip?: string | null
   passwordHash: string
   role?: $Enums.Role
+  categoryScope?: $Enums.ReportCategory | null
   createdAt?: Date | string
   updatedAt?: Date | string
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
@@ -596,6 +627,7 @@ export type UserUncheckedCreateWithoutApprovalHistoriesInput = {
   nip?: string | null
   passwordHash: string
   role?: $Enums.Role
+  categoryScope?: $Enums.ReportCategory | null
   createdAt?: Date | string
   updatedAt?: Date | string
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
@@ -624,6 +656,7 @@ export type UserUpdateWithoutApprovalHistoriesInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
@@ -637,6 +670,7 @@ export type UserUncheckedUpdateWithoutApprovalHistoriesInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
@@ -649,6 +683,7 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   nip?: string | null
   passwordHash: string
   role?: $Enums.Role
+  categoryScope?: $Enums.ReportCategory | null
   createdAt?: Date | string
   updatedAt?: Date | string
   reports?: Prisma.ReportCreateNestedManyWithoutUserInput
@@ -662,6 +697,7 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   nip?: string | null
   passwordHash: string
   role?: $Enums.Role
+  categoryScope?: $Enums.ReportCategory | null
   createdAt?: Date | string
   updatedAt?: Date | string
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutUserInput
@@ -690,6 +726,7 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reports?: Prisma.ReportUpdateManyWithoutUserNestedInput
@@ -703,6 +740,7 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reports?: Prisma.ReportUncheckedUpdateManyWithoutUserNestedInput
@@ -765,6 +803,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   nip?: boolean
   passwordHash?: boolean
   role?: boolean
+  categoryScope?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   reports?: boolean | Prisma.User$reportsArgs<ExtArgs>
@@ -782,11 +821,12 @@ export type UserSelectScalar = {
   nip?: boolean
   passwordHash?: boolean
   role?: boolean
+  categoryScope?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nama" | "jabatan" | "nip" | "passwordHash" | "role" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nama" | "jabatan" | "nip" | "passwordHash" | "role" | "categoryScope" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   reports?: boolean | Prisma.User$reportsArgs<ExtArgs>
   passwordResetTokens?: boolean | Prisma.User$passwordResetTokensArgs<ExtArgs>
@@ -808,6 +848,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     nip: string | null
     passwordHash: string
     role: $Enums.Role
+    categoryScope: $Enums.ReportCategory | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1188,6 +1229,7 @@ export interface UserFieldRefs {
   readonly nip: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'Role'>
+  readonly categoryScope: Prisma.FieldRef<"User", 'ReportCategory'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

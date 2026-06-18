@@ -2,7 +2,7 @@ import "server-only";
 
 import type { Prisma } from "../generated/prisma/client";
 import { prisma } from "@/src/lib/prisma";
-import type { AppRole } from "@/src/lib/roles";
+import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
 import type { ReportStatus } from "@/src/lib/workflow";
 
 export type ReportKategori =
@@ -18,6 +18,7 @@ export type SessionUserRow = {
   jabatan: string | null;
   nip: string | null;
   role: AppRole;
+  categoryScope: AppCategoryScope | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -41,6 +42,7 @@ export type ReportApprovalHistoryRow = {
     jabatan: string | null;
     nip: string | null;
     role: AppRole;
+    categoryScope: AppCategoryScope | null;
   };
 };
 
@@ -81,6 +83,7 @@ export type ReportRow = {
     jabatan: string | null;
     nip: string | null;
     role: AppRole;
+    categoryScope: AppCategoryScope | null;
   };
 
   histories: ReportApprovalHistoryRow[];
@@ -103,6 +106,7 @@ const reportInclude = {
       jabatan: true,
       nip: true,
       role: true,
+      categoryScope: true,
     },
   },
   histories: {
@@ -114,6 +118,7 @@ const reportInclude = {
           jabatan: true,
           nip: true,
           role: true,
+          categoryScope: true,
         },
       },
     },
@@ -165,6 +170,7 @@ function normalizeReportRow(row: ReportWithUser): ReportRow {
       jabatan: row.user.jabatan,
       nip: row.user.nip,
       role: row.user.role,
+      categoryScope: row.user.categoryScope,
     },
 
     histories: row.histories.map((history) => ({
@@ -182,6 +188,7 @@ function normalizeReportRow(row: ReportWithUser): ReportRow {
         jabatan: history.admin.jabatan,
         nip: history.admin.nip,
         role: history.admin.role,
+        categoryScope: history.admin.categoryScope,
       },
     })),
   };
@@ -208,6 +215,7 @@ export async function findUserByIdRaw(
         jabatan: true,
         nip: true,
         role: true,
+        categoryScope: true,
         passwordHash: true,
         createdAt: true,
         updatedAt: true,
@@ -223,6 +231,7 @@ export async function findUserByIdRaw(
       jabatan: true,
       nip: true,
       role: true,
+      categoryScope: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -250,6 +259,7 @@ export async function findUserByNipRaw(
         jabatan: true,
         nip: true,
         role: true,
+        categoryScope: true,
         passwordHash: true,
         createdAt: true,
         updatedAt: true,
@@ -265,6 +275,7 @@ export async function findUserByNipRaw(
       jabatan: true,
       nip: true,
       role: true,
+      categoryScope: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -280,6 +291,7 @@ export async function listUsersWithReportCountRaw() {
         jabatan: true,
         nip: true,
         role: true,
+        categoryScope: true,
         createdAt: true,
         updatedAt: true,
         _count: {

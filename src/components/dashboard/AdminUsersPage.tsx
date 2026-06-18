@@ -12,8 +12,12 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react";
-import type { AppRole } from "@/src/lib/roles";
-import { getRoleLabel } from "@/src/lib/roles";
+import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
+import {
+  getCategoryScopeLabel,
+  getRoleLabel,
+  isCategoryScopedRole,
+} from "@/src/lib/roles";
 
 const ROLE_OPTIONS: AppRole[] = [
   "USER",
@@ -28,12 +32,19 @@ const ROLE_OPTIONS: AppRole[] = [
 
 const USER_PAGE_SIZE = 12;
 
+const CATEGORY_SCOPE_OPTIONS: AppCategoryScope[] = [
+  "FASILITAS_INVENTARIS",
+  "IT_ELEKTRONIK",
+  "LABORATORIUM",
+];
+
 type UserItem = {
   id: number;
   nama: string;
   jabatan: string | null;
   nip: string | null;
   role: AppRole;
+  categoryScope: AppCategoryScope | null;
   createdAt: string;
   _count: {
     reports: number;
@@ -48,6 +59,7 @@ type DraftMap = Record<
     jabatan: string;
     nip: string;
     role: AppRole;
+    categoryScope: AppCategoryScope | "";
   }
 >;
 
@@ -92,6 +104,7 @@ export default function AdminUsersPage({
     jabatan: "",
     nip: "",
     role: "USER" as AppRole,
+    categoryScope: "" as AppCategoryScope | "",
     password: "",
   });
 
@@ -181,6 +194,7 @@ export default function AdminUsersPage({
         jabatan: "",
         nip: "",
         role: "USER",
+        categoryScope: "",
         password: "",
       });
       await loadUsers();
@@ -205,6 +219,7 @@ export default function AdminUsersPage({
             jabatan: user.jabatan || "",
             nip: user.nip || "",
             role: user.role,
+            categoryScope: user.categoryScope || "",
           }
         : null);
 
@@ -366,6 +381,8 @@ export default function AdminUsersPage({
         user.nip || "",
         user.role,
         getRoleLabel(user.role),
+        user.categoryScope || "",
+        getCategoryScopeLabel(user.categoryScope),
         String(user.id),
       ]
         .join(" ")
@@ -387,6 +404,7 @@ export default function AdminUsersPage({
         jabatan: user.jabatan || "",
         nip: user.nip || "",
         role: user.role,
+        categoryScope: user.categoryScope || "",
       }
     );
   }
@@ -504,6 +522,9 @@ export default function AdminUsersPage({
                     setNewUser((current) => ({
                       ...current,
                       role: event.target.value as AppRole,
+                      categoryScope: isCategoryScopedRole(event.target.value)
+                        ? current.categoryScope
+                        : "",
                     }))
                   }
                   className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
@@ -511,6 +532,25 @@ export default function AdminUsersPage({
                   {ROLE_OPTIONS.map((role) => (
                     <option key={role} value={role}>
                       {getRoleLabel(role)}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={newUser.categoryScope}
+                  onChange={(event) =>
+                    setNewUser((current) => ({
+                      ...current,
+                      categoryScope: event.target.value as AppCategoryScope | "",
+                    }))
+                  }
+                  disabled={!isCategoryScopedRole(newUser.role)}
+                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                >
+                  <option value="">Kategori</option>
+                  {CATEGORY_SCOPE_OPTIONS.map((category) => (
+                    <option key={category} value={category}>
+                      {getCategoryScopeLabel(category)}
                     </option>
                   ))}
                 </select>
@@ -608,6 +648,11 @@ export default function AdminUsersPage({
                         <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 font-semibold text-blue-700">
                           {getRoleLabel(user.role)}
                         </span>
+                        {isCategoryScopedRole(user.role) ? (
+                          <span className="rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-cyan-700">
+                            {getCategoryScopeLabel(user.categoryScope)}
+                          </span>
+                        ) : null}
                         <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
                           {user._count.reports} laporan
                         </span>
@@ -672,6 +717,11 @@ export default function AdminUsersPage({
                                   [user.id]: {
                                     ...draft,
                                     role: event.target.value as AppRole,
+                                    categoryScope: isCategoryScopedRole(
+                                      event.target.value,
+                                    )
+                                      ? draft.categoryScope
+                                      : "",
                                   },
                                 }))
                               }
@@ -680,6 +730,32 @@ export default function AdminUsersPage({
                               {ROLE_OPTIONS.map((role) => (
                                 <option key={role} value={role}>
                                   {getRoleLabel(role)}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+
+                          <label className="grid gap-1 text-xs font-medium text-slate-500">
+                            Kategori
+                            <select
+                              value={draft.categoryScope}
+                              onChange={(event) =>
+                                setDrafts((current) => ({
+                                  ...current,
+                                  [user.id]: {
+                                    ...draft,
+                                    categoryScope: event.target
+                                      .value as AppCategoryScope | "",
+                                  },
+                                }))
+                              }
+                              disabled={!isCategoryScopedRole(draft.role)}
+                              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                            >
+                              <option value="">Tidak khusus</option>
+                              {CATEGORY_SCOPE_OPTIONS.map((category) => (
+                                <option key={category} value={category}>
+                                  {getCategoryScopeLabel(category)}
                                 </option>
                               ))}
                             </select>

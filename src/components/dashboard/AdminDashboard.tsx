@@ -23,8 +23,8 @@ import {
   type ReportSeverity,
   type ReportStatus,
 } from "@/lib/report-helpers";
-import type { AppRole } from "@/src/lib/roles";
-import { getRoleLabel } from "@/src/lib/roles";
+import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
+import { getCategoryScopeLabel, getRoleLabel } from "@/src/lib/roles";
 import { canRoleDecide, getWorkflowMessage } from "@/src/lib/workflow";
 
 type AdminDashboardProps = {
@@ -34,6 +34,7 @@ type AdminDashboardProps = {
     jabatan: string | null;
     nip: string | null;
     role: AppRole;
+    categoryScope: AppCategoryScope | null;
   };
   title?: string;
 };
@@ -51,6 +52,7 @@ type ReportHistoryItem = {
     jabatan: string | null;
     nip: string | null;
     role: AppRole;
+    categoryScope: AppCategoryScope | null;
   };
 };
 
@@ -215,10 +217,15 @@ export default function AdminDashboard({
       final: reports.filter((report) => report.status === "DISETUJUI_FINAL").length,
       ditolak: reports.filter((report) => report.status === "DITOLAK").length,
       giliranSaya: reports.filter((report) =>
-        canRoleDecide(currentUser.role, report.status),
+        canRoleDecide(
+          currentUser.role,
+          report.status,
+          report.kategori,
+          currentUser.categoryScope,
+        ),
       ).length,
     }),
-    [reports, currentUser.role],
+    [reports, currentUser.role, currentUser.categoryScope],
   );
 
   const selectedReportRejectingAdmin = selectedReport
@@ -307,6 +314,11 @@ export default function AdminDashboard({
                     {getRoleLabel(currentUser.role)} - NIP:{" "}
                     {currentUser.nip || "-"}
                   </p>
+                  {currentUser.categoryScope ? (
+                    <p className="mt-1 text-xs font-medium text-blue-600">
+                      Kategori: {getCategoryScopeLabel(currentUser.categoryScope)}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -418,6 +430,8 @@ export default function AdminDashboard({
                     const canDecide = canRoleDecide(
                       currentUser.role,
                       report.status,
+                      report.kategori,
+                      currentUser.categoryScope,
                     );
 
                     return (
@@ -508,7 +522,12 @@ export default function AdminDashboard({
                     Detail Laporan
                   </h3>
                   <p className="mt-1 text-sm text-slate-500">
-                    {getWorkflowMessage(currentUser.role, selectedReport.status)}
+                    {getWorkflowMessage(
+                      currentUser.role,
+                      selectedReport.status,
+                      selectedReport.kategori,
+                      currentUser.categoryScope,
+                    )}
                   </p>
                 </div>
 
@@ -703,10 +722,20 @@ export default function AdminDashboard({
 
                     <div className="mt-4 space-y-4">
                       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                        {getWorkflowMessage(currentUser.role, selectedReport.status)}
+                        {getWorkflowMessage(
+                          currentUser.role,
+                          selectedReport.status,
+                          selectedReport.kategori,
+                          currentUser.categoryScope,
+                        )}
                       </div>
 
-                      {canRoleDecide(currentUser.role, selectedReport.status) ? (
+                      {canRoleDecide(
+                        currentUser.role,
+                        selectedReport.status,
+                        selectedReport.kategori,
+                        currentUser.categoryScope,
+                      ) ? (
                         <>
                           <textarea
                             value={decisionNote}

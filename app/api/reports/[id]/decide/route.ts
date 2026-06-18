@@ -8,6 +8,7 @@ import {
   getNextApprovedStatus,
   getRejectedStatus,
   getRequiredAdminRole,
+  getWorkflowMessage,
   type ReportDecisionInput,
 } from "@/src/lib/workflow";
 import {
@@ -169,10 +170,25 @@ export async function POST(
       );
     }
 
-    if (!canRoleDecide(authUser.role, report.status)) {
+    if (
+      !canRoleDecide(
+        authUser.role,
+        report.status,
+        report.kategori,
+        authUser.categoryScope,
+      )
+    ) {
       return NextResponse.json(
         {
-          message: `Belum giliran Anda. Laporan ini sedang menunggu ${getRoleLabel(requiredRole)}.`,
+          message:
+            authUser.role === requiredRole
+              ? getWorkflowMessage(
+                  authUser.role,
+                  report.status,
+                  report.kategori,
+                  authUser.categoryScope,
+                )
+              : `Belum giliran Anda. Laporan ini sedang menunggu ${getRoleLabel(requiredRole)}.`,
         },
         { status: 403 }
       );

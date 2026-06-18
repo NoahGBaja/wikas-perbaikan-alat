@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getApiSessionUser } from "@/src/lib/session";
 import { listReportsRaw } from "@/src/lib/raw-data";
 import { isAdminRole } from "@/src/lib/roles";
+import { canAdminAccessReport } from "@/src/lib/workflow";
 
 export async function GET() {
   try {
@@ -15,7 +16,13 @@ export async function GET() {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    const reports = await listReportsRaw();
+    const reports = (await listReportsRaw()).filter((report) =>
+      canAdminAccessReport({
+        role: authUser.role,
+        categoryScope: authUser.categoryScope,
+        reportCategory: report.kategori,
+      }),
+    );
 
     return NextResponse.json({ reports });
   } catch (error) {

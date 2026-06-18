@@ -1,7 +1,12 @@
-import type { AppRole } from "@/src/lib/roles";
-import { getRoleLabel } from "@/src/lib/roles";
+import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
+import {
+  getCategoryScopeLabel,
+  getRoleLabel,
+  isCategoryScopedRole,
+} from "@/src/lib/roles";
 
 export type Role = AppRole;
+export type WorkflowCategory = AppCategoryScope;
 
 export type ReportStatus =
   | "MENUNGGU_ADMIN_1"
@@ -39,14 +44,37 @@ export function getRequiredAdminRole(status: ReportStatus): Role | null {
   return map[status] ?? null;
 }
 
-export function canRoleDecide(role: Role, status: ReportStatus) {
+export function canAdminAccessReport(input: {
+  role: Role;
+  categoryScope?: WorkflowCategory | null;
+  reportCategory: WorkflowCategory;
+}) {
+  if (input.role === "SUPER_ADMIN") return true;
+
+  if (!isCategoryScopedRole(input.role)) return true;
+
+  return input.categoryScope === input.reportCategory;
+}
+
+export function canRoleDecide(
+  role: Role,
+  status: ReportStatus,
+  reportCategory: WorkflowCategory,
+  categoryScope?: WorkflowCategory | null
+) {
   const requiredRole = getRequiredAdminRole(status);
 
   if (!requiredRole) return false;
 
   if (role === "SUPER_ADMIN") return false;
 
-  return role === requiredRole;
+  if (role !== requiredRole) return false;
+
+  return canAdminAccessReport({
+    role,
+    categoryScope,
+    reportCategory,
+  });
 }
 
 export function getNextApprovedStatus(status: ReportStatus): ReportStatus {
@@ -80,7 +108,12 @@ export function isFinalStatus(status: ReportStatus) {
   return FINAL_STATUSES.some((finalStatus) => finalStatus === status);
 }
 
-export function getWorkflowMessage(role: Role, status: ReportStatus) {
+export function getWorkflowMessage(
+  role: Role,
+  status: ReportStatus,
+  reportCategory: WorkflowCategory,
+  categoryScope?: WorkflowCategory | null
+) {
   const requiredRole = getRequiredAdminRole(status);
 
   if (status === "DISETUJUI_FINAL") {
@@ -97,6 +130,13 @@ export function getWorkflowMessage(role: Role, status: ReportStatus) {
 
   if (!requiredRole) {
     return "Status laporan tidak membutuhkan persetujuan.";
+  }
+
+  if (
+    role === requiredRole &&
+    !canAdminAccessReport({ role, categoryScope, reportCategory })
+  ) {
+    return `${getRoleLabel(role)} ini hanya bisa menangani kategori ${getCategoryScopeLabel(categoryScope)}. Laporan ini kategori ${getCategoryScopeLabel(reportCategory)}.`;
   }
 
   if (role !== requiredRole) {

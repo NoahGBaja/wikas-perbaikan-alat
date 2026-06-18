@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { formatStatus, formatTanggal } from "@/lib/report-helpers";
 import { getMonthlyReportStats } from "@/src/lib/monthly-report-stats";
 import { getApiSessionUser } from "@/src/lib/session";
-import { isAdminRole } from "@/src/lib/roles";
+import { isAdminRole, isCategoryScopedRole } from "@/src/lib/roles";
 
 function createFileName(month: string) {
   const normalizedMonth = month
@@ -45,6 +45,9 @@ export async function GET(request: NextRequest) {
       month: searchParams.get("month"),
       year: searchParams.get("year"),
       status: searchParams.get("status"),
+      categoryScope: isCategoryScopedRole(authUser.role)
+        ? authUser.categoryScope
+        : null,
     });
 
     const workbook = new ExcelJS.Workbook();

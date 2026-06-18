@@ -25,6 +25,7 @@ function stripPasswordHash(user: SessionUserWithPasswordRow): SessionUserRow {
     jabatan: user.jabatan,
     nip: user.nip,
     role: user.role,
+    categoryScope: user.categoryScope,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

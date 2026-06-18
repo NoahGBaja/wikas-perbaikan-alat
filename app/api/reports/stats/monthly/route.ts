@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiSessionUser } from "@/src/lib/session";
 import { getMonthlyReportStats } from "@/src/lib/monthly-report-stats";
-import { isAdminRole } from "@/src/lib/roles";
+import { isAdminRole, isCategoryScopedRole } from "@/src/lib/roles";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
       month: searchParams.get("month"),
       year: searchParams.get("year"),
       status: searchParams.get("status"),
+      categoryScope: isCategoryScopedRole(authUser.role)
+        ? authUser.categoryScope
+        : null,
     });
 
     return NextResponse.json(stats);
