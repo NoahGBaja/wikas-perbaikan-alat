@@ -29,7 +29,6 @@ const REPORT_STATUSES: ReportStatus[] = [
   "MENUNGGU_ADMIN_3",
   "MENUNGGU_ADMIN_4",
   "MENUNGGU_ADMIN_5",
-  "MENUNGGU_ADMIN_6",
   "DISETUJUI_FINAL",
   "DITOLAK",
 ];
@@ -88,7 +87,6 @@ function createEmptyStatusCounts(): Record<ReportStatus, number> {
     MENUNGGU_ADMIN_3: 0,
     MENUNGGU_ADMIN_4: 0,
     MENUNGGU_ADMIN_5: 0,
-    MENUNGGU_ADMIN_6: 0,
     DISETUJUI_FINAL: 0,
     DITOLAK: 0,
   };
@@ -325,11 +323,6 @@ export async function getMonthlyReportStats(
         key: "MENUNGGU_ADMIN_5",
         label: `Menunggu ${getRoleLabel("ADMIN_5")}`,
         total: statusCounts.MENUNGGU_ADMIN_5,
-      },
-      {
-        key: "MENUNGGU_ADMIN_6",
-        label: `Menunggu ${getRoleLabel("ADMIN_6")}`,
-        total: statusCounts.MENUNGGU_ADMIN_6,
       },
       {
         key: "DISETUJUI_FINAL",

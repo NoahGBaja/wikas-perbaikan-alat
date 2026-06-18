@@ -4,7 +4,6 @@ export const ADMIN_ROLES = [
   "ADMIN_3",
   "ADMIN_4",
   "ADMIN_5",
-  "ADMIN_6",
 ] as const;
 
 export const ALL_ADMIN_ROLES = ["SUPER_ADMIN", ...ADMIN_ROLES] as const;
@@ -18,7 +17,6 @@ export type AppRole =
   | "ADMIN_3"
   | "ADMIN_4"
   | "ADMIN_5"
-  | "ADMIN_6"
   | "USER";
 
 export type AppCategoryScope =
@@ -34,7 +32,6 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   ADMIN_3: "BMN",
   ADMIN_4: "PPK",
   ADMIN_5: "PP",
-  ADMIN_6: "IPP",
 };
 
 export const CATEGORY_SCOPE_LABELS: Record<AppCategoryScope, string> = {
@@ -66,8 +63,22 @@ export function isAdminRole(role?: string | null) {
   return !!role && ALL_ADMIN_ROLES.some((adminRole) => adminRole === role);
 }
 
-export function isSuperAdmin(role?: string | null) {
-  return role === "SUPER_ADMIN";
+export function hasAdminAccess(input?: {
+  role?: string | null;
+  isSuperAdmin?: boolean | null;
+} | null) {
+  return !!input && (!!input.isSuperAdmin || isAdminRole(input.role));
+}
+
+export function isSuperAdmin(input?: {
+  role?: string | null;
+  isSuperAdmin?: boolean | null;
+} | string | null) {
+  if (typeof input === "string" || input === null || input === undefined) {
+    return input === "SUPER_ADMIN";
+  }
+
+  return !!input.isSuperAdmin || input.role === "SUPER_ADMIN";
 }
 
 export function isNormalAdmin(role?: string | null) {

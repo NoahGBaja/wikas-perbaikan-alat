@@ -6,13 +6,11 @@ import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
 import { isCategoryScopedRole } from "@/src/lib/roles";
 
 const VALID_ROLES: AppRole[] = [
-  "SUPER_ADMIN",
   "ADMIN_1",
   "ADMIN_2",
   "ADMIN_3",
   "ADMIN_4",
   "ADMIN_5",
-  "ADMIN_6",
   "USER",
 ];
 
@@ -52,7 +50,7 @@ async function requireSuperAdmin() {
     };
   }
 
-  if (authUser.role !== "SUPER_ADMIN") {
+  if (!authUser.isSuperAdmin) {
     return {
       error: NextResponse.json(
         { message: "Hanya Super Admin yang boleh mengelola user." },
@@ -98,6 +96,7 @@ export async function PATCH(
       typeof body.jabatan === "string" ? body.jabatan.trim() : "";
     const nip = typeof body.nip === "string" ? body.nip.trim() : "";
     const role = isValidRole(body.role) ? body.role : "USER";
+    const isSuperAdmin = body.isSuperAdmin === true;
     const categoryScope = isValidCategoryScope(body.categoryScope)
       ? body.categoryScope
       : null;
@@ -144,6 +143,7 @@ export async function PATCH(
         jabatan: jabatan || null,
         nip,
         role,
+        isSuperAdmin,
         categoryScope: isCategoryScopedRole(role) ? categoryScope : null,
       },
       select: {
@@ -152,6 +152,7 @@ export async function PATCH(
         jabatan: true,
         nip: true,
         role: true,
+        isSuperAdmin: true,
         categoryScope: true,
         createdAt: true,
         updatedAt: true,
@@ -211,6 +212,7 @@ export async function DELETE(
       select: {
         id: true,
         role: true,
+        isSuperAdmin: true,
         _count: {
           select: {
             reports: true,
@@ -226,7 +228,7 @@ export async function DELETE(
       );
     }
 
-    if (user.role === "SUPER_ADMIN") {
+    if (user.isSuperAdmin) {
       return NextResponse.json(
         { message: "Akun Super Admin tidak boleh dihapus dari dashboard." },
         { status: 400 }

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { formatStatus, formatTanggal } from "@/lib/report-helpers";
 import { getMonthlyReportStats } from "@/src/lib/monthly-report-stats";
 import { getApiSessionUser } from "@/src/lib/session";
-import { isAdminRole, isCategoryScopedRole } from "@/src/lib/roles";
+import { hasAdminAccess, isCategoryScopedRole } from "@/src/lib/roles";
 
 function createFileName(month: string) {
   const normalizedMonth = month
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (!isAdminRole(authUser.role)) {
+    if (!hasAdminAccess(authUser)) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       month: searchParams.get("month"),
       year: searchParams.get("year"),
       status: searchParams.get("status"),
-      categoryScope: isCategoryScopedRole(authUser.role)
+      categoryScope: !authUser.isSuperAdmin && isCategoryScopedRole(authUser.role)
         ? authUser.categoryScope
         : null,
     });

@@ -16,11 +16,9 @@ import {
 import {
   formatKategori,
   formatTanggal,
-  formatSeverity,
   formatStatus,
   getStatusClass,
   type ReportKategori,
-  type ReportSeverity,
   type ReportStatus,
 } from "@/lib/report-helpers";
 import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
@@ -34,6 +32,7 @@ type AdminDashboardProps = {
     jabatan: string | null;
     nip: string | null;
     role: AppRole;
+    isSuperAdmin: boolean;
     categoryScope: AppCategoryScope | null;
   };
   title?: string;
@@ -66,7 +65,6 @@ type ReportItem = {
   namaBarang: string;
   lokasi: string;
   deskripsi: string;
-  severity: ReportSeverity;
   fotoUrl: string | null;
   attachmentUrl?: string | null;
   attachmentType?: string | null;
@@ -216,16 +214,8 @@ export default function AdminDashboard({
       menunggu: reports.filter((report) => isWaitingStatus(report.status)).length,
       final: reports.filter((report) => report.status === "DISETUJUI_FINAL").length,
       ditolak: reports.filter((report) => report.status === "DITOLAK").length,
-      giliranSaya: reports.filter((report) =>
-        canRoleDecide(
-          currentUser.role,
-          report.status,
-          report.kategori,
-          currentUser.categoryScope,
-        ),
-      ).length,
     }),
-    [reports, currentUser.role, currentUser.categoryScope],
+    [reports],
   );
 
   const selectedReportRejectingAdmin = selectedReport
@@ -268,7 +258,7 @@ export default function AdminDashboard({
               Statistik
             </button>
 
-            {currentUser.role === "SUPER_ADMIN" ? (
+            {currentUser.isSuperAdmin ? (
               <button
                 type="button"
                 onClick={() => router.push("/dashboard/admin/users")}
@@ -322,15 +312,10 @@ export default function AdminDashboard({
                 </div>
               </div>
 
-              {summary.giliranSaya > 0 ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
-                  {summary.giliranSaya} laporan perlu disetujui
-                </div>
-              ) : null}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 sm:grid-cols-3 lg:grid-cols-5 lg:divide-y-0">
+          <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 lg:grid-cols-4 lg:divide-y-0">
             {[
               {
                 label: "Total",
@@ -343,12 +328,6 @@ export default function AdminDashboard({
                 value: summary.menunggu,
                 valueClass: "text-amber-700",
                 dotClass: "bg-amber-500",
-              },
-              {
-                label: "Perlu Disetujui",
-                value: summary.giliranSaya,
-                valueClass: "text-emerald-700",
-                dotClass: "bg-emerald-500",
               },
               {
                 label: "Final",
@@ -414,9 +393,6 @@ export default function AdminDashboard({
                       Status
                     </th>
                     <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.24em]">
-                      Giliran
-                    </th>
-                    <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.24em]">
                       Tanggal
                     </th>
                     <th className="px-6 py-4 text-right text-[11px] font-semibold uppercase tracking-[0.24em]">
@@ -426,15 +402,7 @@ export default function AdminDashboard({
                 </thead>
 
                 <tbody>
-                  {reports.map((report) => {
-                    const canDecide = canRoleDecide(
-                      currentUser.role,
-                      report.status,
-                      report.kategori,
-                      currentUser.categoryScope,
-                    );
-
-                    return (
+                  {reports.map((report) => (
                       <tr
                         key={report.id}
                         className="border-b border-slate-100 transition hover:bg-blue-50/50"
@@ -472,16 +440,6 @@ export default function AdminDashboard({
                           </span>
                         </td>
 
-                        <td className="px-6 py-5">
-                          {canDecide ? (
-                            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-                              Giliran Anda
-                            </span>
-                          ) : (
-                            <span className="text-sm text-slate-400">-</span>
-                          )}
-                        </td>
-
                         <td className="px-6 py-5 text-slate-700">
                           <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
                             <CalendarDays className="h-4 w-4 text-slate-400" />
@@ -499,8 +457,7 @@ export default function AdminDashboard({
                           </button>
                         </td>
                       </tr>
-                    );
-                  })}
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -589,10 +546,6 @@ export default function AdminDashboard({
 
                       <InfoBox label="Kode">
                         {selectedReport.kode || "-"}
-                      </InfoBox>
-
-                      <InfoBox label="Severity">
-                        {formatSeverity(selectedReport.severity)}
                       </InfoBox>
 
                       <InfoBox label="Lokasi">

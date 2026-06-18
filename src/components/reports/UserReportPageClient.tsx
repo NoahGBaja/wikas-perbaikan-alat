@@ -16,6 +16,7 @@ type UserReportPageClientProps = {
     nomorRuangan: string | null;
     kodeUakpb: string | null;
     kode: string | null;
+    deskripsi: string;
     kategori: UserReportCategory;
   };
 };
@@ -51,6 +52,7 @@ export default function UserReportPageClient({
     formData.append("nomorRuangan", payload.nomorRuangan);
     formData.append("kodeUakpb", payload.kodeUakpb);
     formData.append("kode", payload.kode);
+    formData.append("deskripsi", payload.deskripsi);
 
     if (payload.attachment) {
       formData.append("attachment", payload.attachment);
@@ -94,7 +96,7 @@ export default function UserReportPageClient({
           </h1>
           <p className="mt-4 max-w-2xl text-slate-600">
             Isi data laporan melalui modal, lalu laporan akan masuk ke approval{" "}
-            {getRoleLabel("ADMIN_1")} sampai {getRoleLabel("ADMIN_6")}.
+            {getRoleLabel("ADMIN_1")} sampai {getRoleLabel("ADMIN_5")}.
           </p>
 
           <button
@@ -116,6 +118,7 @@ export default function UserReportPageClient({
         defaultNomorRuangan={initialReport?.nomorRuangan || ""}
         defaultKodeUakpb={initialReport?.kodeUakpb || ""}
         defaultKode={initialReport?.kode || ""}
+        defaultDeskripsi={initialReport?.deskripsi || ""}
         submitLabel={initialReport ? "Simpan Perubahan" : "Kirim Laporan"}
       />
     </div>

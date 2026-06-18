@@ -2,11 +2,10 @@ import ExcelJS from "exceljs";
 import { NextResponse } from "next/server";
 import { listReportsRaw } from "@/src/lib/raw-data";
 import { getApiSessionUser } from "@/src/lib/session";
-import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
+import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
 import { canAdminAccessReport } from "@/src/lib/workflow";
 import {
   formatKategori,
-  formatSeverity,
   formatStatus,
   formatTanggal,
   type ReportStatus,
@@ -57,7 +56,7 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (!isAdminRole(authUser.role)) {
+    if (!hasAdminAccess(authUser)) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
@@ -66,6 +65,7 @@ export async function GET() {
         isHistoryStatus(report.status) &&
         canAdminAccessReport({
           role: authUser.role,
+          isSuperAdmin: authUser.isSuperAdmin,
           categoryScope: authUser.categoryScope,
           reportCategory: report.kategori,
         }),
@@ -90,7 +90,6 @@ export async function GET() {
       { header: "Lokasi", key: "lokasi", width: 22 },
       { header: "Kode UAKPB", key: "kodeUakpb", width: 20 },
       { header: "Kode", key: "kode", width: 18 },
-      { header: "Tingkat Kerusakan", key: "severity", width: 18 },
       { header: "Status", key: "status", width: 20 },
       { header: "Ditolak Oleh", key: "declinedBy", width: 28 },
       { header: "Alasan Penolakan", key: "alasanPenolakan", width: 36 },
@@ -127,7 +126,6 @@ export async function GET() {
         lokasi: report.lokasi,
         kodeUakpb: report.kodeUakpb || "-",
         kode: report.kode || "-",
-        severity: formatSeverity(report.severity),
         status: formatStatus(report.status),
         declinedBy: getDeclinedBy(report),
         alasanPenolakan: report.alasanPenolakan || "-",
@@ -152,7 +150,7 @@ export async function GET() {
 
     worksheet.autoFilter = {
       from: "A1",
-      to: "S1",
+      to: "R1",
     };
 
     const buffer = await workbook.xlsx.writeBuffer();

@@ -17,11 +17,9 @@ import {
 import {
   formatKategori,
   formatTanggal,
-  formatSeverity,
   formatStatus,
   getStatusClass,
   type ReportKategori,
-  type ReportSeverity,
   type ReportStatus,
 } from "@/lib/report-helpers";
 import type { AppRole } from "@/src/lib/roles";
@@ -53,7 +51,6 @@ type ReportItem = {
   namaBarang: string;
   lokasi: string;
   deskripsi: string;
-  severity: ReportSeverity;
   fotoUrl: string | null;
   attachmentUrl?: string | null;
   attachmentType?: string | null;
@@ -266,7 +263,7 @@ export default function AdminHistoryPage() {
           <SummaryCard
             label="Disetujui Final"
             value={approvedFinalCount}
-            description={`Lolos ${getRoleLabel("ADMIN_1")} sampai ${getRoleLabel("ADMIN_6")}.`}
+            description={`Lolos ${getRoleLabel("ADMIN_1")} sampai ${getRoleLabel("ADMIN_5")}.`}
             colorClass="text-emerald-600"
           />
           <SummaryCard
@@ -493,9 +490,6 @@ function ReportDetailModal({
               </InfoBox>
               <InfoBox label="Kode UAKPB">{report.kodeUakpb || "-"}</InfoBox>
               <InfoBox label="Kode">{report.kode || "-"}</InfoBox>
-              <InfoBox label="Tingkat Kerusakan">
-                {formatSeverity(report.severity)}
-              </InfoBox>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">

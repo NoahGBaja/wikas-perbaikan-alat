@@ -12,7 +12,7 @@ import {
 } from "@/src/lib/uploads";
 import { listReportsRaw } from "@/src/lib/raw-data";
 import { validateMutationRequest } from "@/src/lib/request-security";
-import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
+import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
 
 export async function POST(req: Request) {
   try {
@@ -70,12 +70,7 @@ export async function POST(req: Request) {
         kategori: reportInput.kategori as ValidKategori,
         namaBarang: "Perbaikan Alat",
         lokasi: `Ruangan ${reportInput.nomorRuangan}`,
-        deskripsi: [
-          `Nama pelapor: ${reportInput.namaPelapor}`,
-          `Nomor ruangan: ${reportInput.nomorRuangan}`,
-          `Kode UAKPB: ${reportInput.kodeUakpb}`,
-          `Kode: ${reportInput.kode}`,
-        ].join("\n"),
+        deskripsi: reportInput.deskripsi,
         severity: "SEDANG",
         fotoUrl: file?.type.startsWith("image/") ? attachmentUrl : null,
         attachmentUrl,
@@ -134,7 +129,7 @@ export async function GET() {
     }
 
     const reports = await listReportsRaw(
-      isAdminRole(authUser.role) ? undefined : authUser.id
+      hasAdminAccess(authUser) ? undefined : authUser.id
     );
 
     return NextResponse.json({ reports });

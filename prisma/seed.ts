@@ -18,14 +18,16 @@ const accounts = [
     nama: "Super Admin Wikas",
     nip: "SUPER001",
     jabatan: "Super Admin",
-    role: "SUPER_ADMIN",
-    categoryScope: null,
+    role: "ADMIN_1",
+    isSuperAdmin: true,
+    categoryScope: "FASILITAS_INVENTARIS",
   },
   {
     nama: "Admin 1 Wikas",
     nip: "ADMIN001",
     jabatan: "Admin Approval Level 1",
     role: "ADMIN_1",
+    isSuperAdmin: false,
     categoryScope: "FASILITAS_INVENTARIS",
   },
   {
@@ -33,6 +35,7 @@ const accounts = [
     nip: "ADMIN002",
     jabatan: "Admin Approval Level 2",
     role: "ADMIN_2",
+    isSuperAdmin: false,
     categoryScope: null,
   },
   {
@@ -40,6 +43,7 @@ const accounts = [
     nip: "ADMIN003",
     jabatan: "Admin Approval Level 3",
     role: "ADMIN_3",
+    isSuperAdmin: false,
     categoryScope: null,
   },
   {
@@ -47,6 +51,7 @@ const accounts = [
     nip: "ADMIN004",
     jabatan: "Admin Approval Level 4",
     role: "ADMIN_4",
+    isSuperAdmin: false,
     categoryScope: "FASILITAS_INVENTARIS",
   },
   {
@@ -54,13 +59,7 @@ const accounts = [
     nip: "ADMIN005",
     jabatan: "Admin Approval Level 5",
     role: "ADMIN_5",
-    categoryScope: null,
-  },
-  {
-    nama: "Admin 6 Wikas",
-    nip: "ADMIN006",
-    jabatan: "Admin Approval Level 6",
-    role: "ADMIN_6",
+    isSuperAdmin: false,
     categoryScope: null,
   },
   {
@@ -68,6 +67,7 @@ const accounts = [
     nip: "USER001",
     jabatan: "User Testing",
     role: "USER",
+    isSuperAdmin: false,
     categoryScope: null,
   },
 ];
@@ -82,13 +82,14 @@ async function main() {
       await conn.query(
         `
         INSERT INTO \`user\`
-          (nama, nip, jabatan, role, categoryScope, passwordHash, createdAt, updatedAt)
+          (nama, nip, jabatan, role, isSuperAdmin, categoryScope, passwordHash, createdAt, updatedAt)
         VALUES
-          (?, ?, ?, ?, ?, ?, NOW(3), NOW(3))
+          (?, ?, ?, ?, ?, ?, ?, NOW(3), NOW(3))
         ON DUPLICATE KEY UPDATE
           nama = VALUES(nama),
           jabatan = VALUES(jabatan),
           role = VALUES(role),
+          isSuperAdmin = VALUES(isSuperAdmin),
           categoryScope = VALUES(categoryScope),
           passwordHash = VALUES(passwordHash),
           updatedAt = NOW(3)
@@ -98,6 +99,7 @@ async function main() {
           account.nip,
           account.jabatan,
           account.role,
+          account.isSuperAdmin,
           account.categoryScope,
           passwordHash,
         ]

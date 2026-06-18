@@ -6,7 +6,7 @@ import { isCategoryScopedRole } from "@/src/lib/roles";
 export default async function AdminStatistikPage() {
   const currentUser = await requireAdminUser();
   const initialStats = await getMonthlyReportStats({
-    categoryScope: isCategoryScopedRole(currentUser.role)
+    categoryScope: !currentUser.isSuperAdmin && isCategoryScopedRole(currentUser.role)
       ? currentUser.categoryScope
       : null,
   });

@@ -25,6 +25,7 @@ function stripPasswordHash(user: SessionUserWithPasswordRow): SessionUserRow {
     jabatan: user.jabatan,
     nip: user.nip,
     role: user.role,
+    isSuperAdmin: user.isSuperAdmin,
     categoryScope: user.categoryScope,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -39,6 +40,7 @@ function hasValidSessionTag(
     createAuthSessionTag({
       passwordHash: user.passwordHash,
       role: user.role,
+      isSuperAdmin: user.isSuperAdmin,
     }) === sessionTag
   );
 }
@@ -90,7 +92,7 @@ export async function requireRole<RoleInput extends AppRole>(role: RoleInput) {
 export async function requireAdminUser() {
   const user = await requireSessionUser();
 
-  if (!isAdminRole(user.role)) {
+  if (!user.isSuperAdmin && !isAdminRole(user.role)) {
     redirect("/dashboard/user");
   }
 
@@ -131,4 +133,13 @@ export async function getApiSessionUser() {
 
 export function getDefaultRedirectForRole(role: AppRole) {
   return isAdminRole(role) ? "/dashboard/admin" : "/dashboard/user";
+}
+
+export function getDefaultRedirectForUser(user: {
+  role: AppRole;
+  isSuperAdmin?: boolean | null;
+}) {
+  return user.isSuperAdmin || isAdminRole(user.role)
+    ? "/dashboard/admin"
+    : "/dashboard/user";
 }

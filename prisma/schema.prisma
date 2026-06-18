@@ -14,7 +14,6 @@ enum Role {
   ADMIN_3
   ADMIN_4
   ADMIN_5
-  ADMIN_6
   USER
 }
 
@@ -36,7 +35,6 @@ enum ReportStatus {
   MENUNGGU_ADMIN_3
   MENUNGGU_ADMIN_4
   MENUNGGU_ADMIN_5
-  MENUNGGU_ADMIN_6
   DISETUJUI_FINAL
   DITOLAK
 }
@@ -53,6 +51,7 @@ model User {
   nip          String?  @unique
   passwordHash String
   role         Role     @default(USER)
+  isSuperAdmin Boolean  @default(false)
   categoryScope ReportCategory?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

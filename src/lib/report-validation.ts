@@ -32,6 +32,7 @@ export type ModalReportInput = {
   nomorRuangan: string;
   kodeUakpb: string;
   kode: string;
+  deskripsi: string;
 };
 
 function trimmedValue(value: FormDataEntryValue | null) {
@@ -55,6 +56,7 @@ export function parseModalReportFormData(formData: FormData): ModalReportInput {
     nomorRuangan: trimmedValue(formData.get("nomorRuangan")),
     kodeUakpb: trimmedValue(formData.get("kodeUakpb")),
     kode: trimmedValue(formData.get("kode")),
+    deskripsi: trimmedValue(formData.get("deskripsi")),
   };
 }
 
@@ -64,9 +66,10 @@ export function validateModalReportInput(input: ModalReportInput) {
     !input.kategori ||
     !input.nomorRuangan ||
     !input.kodeUakpb ||
-    !input.kode
+    !input.kode ||
+    !input.deskripsi
   ) {
-    return "Jenis perbaikan, nama pelapor, nomor ruangan, kode UAKPB, dan kode wajib diisi.";
+    return "Jenis perbaikan, nama pelapor, kode ruangan, kode UAKPB, kode, dan deskripsi wajib diisi.";
   }
 
   if (!VALID_KATEGORI.includes(input.kategori as ValidKategori)) {
@@ -78,7 +81,7 @@ export function validateModalReportInput(input: ModalReportInput) {
   }
 
   if (input.nomorRuangan.length > 120) {
-    return "Nomor ruangan maksimal 120 karakter.";
+    return "Kode ruangan maksimal 120 karakter.";
   }
 
   if (input.kodeUakpb.length > 120) {
@@ -87,6 +90,10 @@ export function validateModalReportInput(input: ModalReportInput) {
 
   if (!/^\d{12}$/.test(input.kode)) {
     return "Kode harus berisi tepat 12 digit angka.";
+  }
+
+  if (input.deskripsi.length > 2000) {
+    return "Deskripsi maksimal 2000 karakter.";
   }
 
   return null;

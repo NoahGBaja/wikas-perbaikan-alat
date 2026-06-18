@@ -11,15 +11,12 @@ type Kategori =
   | "IT_ELEKTRONIK"
   | "LABORATORIUM";
 
-type Severity = "RINGAN" | "SEDANG" | "BERAT";
-
 type EditableReport = {
   id: number;
   kategori: Kategori;
   namaBarang: string;
   lokasi: string;
   deskripsi: string;
-  severity: Severity;
   fotoUrl: string | null;
 };
 
@@ -50,9 +47,6 @@ export default function ReportForm({
   const [namaBarang, setNamaBarang] = useState(initialReport?.namaBarang || "");
   const [lokasi, setLokasi] = useState(initialReport?.lokasi || "");
   const [deskripsi, setDeskripsi] = useState(initialReport?.deskripsi || "");
-  const [severity, setSeverity] = useState<Severity>(
-    initialReport?.severity || "SEDANG"
-  );
   const [foto, setFoto] = useState<File | null>(null);
   const [removeFoto, setRemoveFoto] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -94,7 +88,6 @@ export default function ReportForm({
       formData.append("namaBarang", namaBarang);
       formData.append("lokasi", lokasi);
       formData.append("deskripsi", deskripsi);
-      formData.append("severity", severity);
       formData.append("removeFoto", String(removeFoto));
 
       if (foto) {
@@ -129,7 +122,6 @@ export default function ReportForm({
         setNamaBarang("");
         setLokasi("");
         setDeskripsi("");
-        setSeverity("SEDANG");
         setFoto(null);
         setRemoveFoto(false);
       }
@@ -248,27 +240,6 @@ export default function ReportForm({
                   className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none placeholder:text-white/40"
                   required
                 />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Tingkat Kerusakan
-                </label>
-                <select
-                  value={severity}
-                  onChange={(e) => setSeverity(e.target.value as Severity)}
-                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none"
-                >
-                  <option value="RINGAN" className="text-black">
-                    Ringan
-                  </option>
-                  <option value="SEDANG" className="text-black">
-                    Sedang
-                  </option>
-                  <option value="BERAT" className="text-black">
-                    Berat
-                  </option>
-                </select>
               </div>
 
               <div>

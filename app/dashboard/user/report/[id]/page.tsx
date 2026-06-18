@@ -27,6 +27,7 @@ export default async function EditReportPage({
       nomorRuangan: true,
       kodeUakpb: true,
       kode: true,
+      deskripsi: true,
     },
   });
 
@@ -48,6 +49,7 @@ export default async function EditReportPage({
         nomorRuangan: report.nomorRuangan,
         kodeUakpb: report.kodeUakpb,
         kode: report.kode,
+        deskripsi: report.deskripsi,
       }}
     />
   );

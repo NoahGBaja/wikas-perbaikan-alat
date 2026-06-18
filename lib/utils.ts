@@ -17,7 +17,6 @@ export type ReportStatus =
   | "MENUNGGU_ADMIN_3"
   | "MENUNGGU_ADMIN_4"
   | "MENUNGGU_ADMIN_5"
-  | "MENUNGGU_ADMIN_6"
   | "DISETUJUI_FINAL"
   | "DITOLAK";
 
@@ -35,7 +34,6 @@ export function formatStatus(status: ReportStatus) {
   if (status === "MENUNGGU_ADMIN_3") return `Menunggu ${getRoleLabel("ADMIN_3")}`;
   if (status === "MENUNGGU_ADMIN_4") return `Menunggu ${getRoleLabel("ADMIN_4")}`;
   if (status === "MENUNGGU_ADMIN_5") return `Menunggu ${getRoleLabel("ADMIN_5")}`;
-  if (status === "MENUNGGU_ADMIN_6") return `Menunggu ${getRoleLabel("ADMIN_6")}`;
   if (status === "DISETUJUI_FINAL") return "Disetujui Final";
   return "Ditolak";
 }
@@ -81,10 +79,6 @@ export function getStatusDescription(status: ReportStatus) {
 
   if (status === "MENUNGGU_ADMIN_5") {
     return `Sudah disetujui ${getRoleLabel("ADMIN_4")} dan menunggu persetujuan ${getRoleLabel("ADMIN_5")}.`;
-  }
-
-  if (status === "MENUNGGU_ADMIN_6") {
-    return `Sudah disetujui ${getRoleLabel("ADMIN_5")} dan menunggu persetujuan ${getRoleLabel("ADMIN_6")}.`;
   }
 
   if (status === "DISETUJUI_FINAL") {

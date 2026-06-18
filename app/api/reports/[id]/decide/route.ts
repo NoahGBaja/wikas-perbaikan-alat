@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getApiSessionUser } from "@/src/lib/session";
 import { findReportByIdRaw } from "@/src/lib/raw-data";
-import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
+import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
 import {
   canRoleDecide,
   getNextApprovedStatus,
@@ -98,7 +98,7 @@ export async function POST(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (!isAdminRole(authUser.role)) {
+    if (!hasAdminAccess(authUser)) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 

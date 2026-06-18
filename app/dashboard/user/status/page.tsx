@@ -17,6 +17,7 @@ const FILTERS: StatusFilter[] = [
   "DISETUJUI_FINAL",
   "DITOLAK",
 ];
+const STATUS_PAGE_SIZE = 8;
 
 function formatFilterLabel(filter: StatusFilter) {
   const labels: Record<StatusFilter, string> = {
@@ -40,6 +41,7 @@ export default function UserStatusPage() {
   const [deletingReportId, setDeletingReportId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [filter, setFilter] = useState<StatusFilter>("SEMUA");
+  const [visibleLimit, setVisibleLimit] = useState(STATUS_PAGE_SIZE);
 
   async function loadReports() {
     try {
@@ -70,6 +72,10 @@ export default function UserStatusPage() {
   useEffect(() => {
     void loadReports();
   }, []);
+
+  useEffect(() => {
+    setVisibleLimit(STATUS_PAGE_SIZE);
+  }, [filter]);
 
   async function handleDeleteReport(reportId: number) {
     const confirmed = window.confirm(
@@ -112,6 +118,15 @@ export default function UserStatusPage() {
     return reports.filter((item) => item.status === filter);
   }, [filter, reports]);
 
+  const visibleReports = useMemo(
+    () => filteredReports.slice(0, visibleLimit),
+    [filteredReports, visibleLimit]
+  );
+  const hiddenReportsCount = Math.max(
+    filteredReports.length - visibleReports.length,
+    0
+  );
+
   const totalReports = reports.length;
   const waitingReports = reports.filter((r) => isWaitingStatus(r.status)).length;
   const approvedReports = reports.filter(
@@ -132,7 +147,7 @@ export default function UserStatusPage() {
             </h1>
             <p className="mt-3 max-w-2xl text-slate-600">
               Lihat posisi laporan kamu dalam alur persetujuan{" "}
-              {getRoleLabel("ADMIN_1")} sampai {getRoleLabel("ADMIN_6")}.
+              {getRoleLabel("ADMIN_1")} sampai {getRoleLabel("ADMIN_5")}.
             </p>
           </div>
 
@@ -188,7 +203,7 @@ export default function UserStatusPage() {
               {approvedReports}
             </p>
             <p className="mt-3 text-sm text-slate-500">
-              Sudah disetujui sampai {getRoleLabel("ADMIN_6")}.
+              Sudah disetujui sampai {getRoleLabel("ADMIN_5")}.
             </p>
           </div>
 
@@ -240,14 +255,31 @@ export default function UserStatusPage() {
             Memuat status laporan...
           </div>
         ) : (
-          <StatusList
-            reports={filteredReports}
-            deletingReportId={deletingReportId}
-            onEdit={(reportId) =>
-              router.push(`/dashboard/user/report/${reportId}`)
-            }
-            onDelete={(reportId) => void handleDeleteReport(reportId)}
-          />
+          <>
+            <StatusList
+              reports={visibleReports}
+              deletingReportId={deletingReportId}
+              onEdit={(reportId) =>
+                router.push(`/dashboard/user/report/${reportId}`)
+              }
+              onDelete={(reportId) => void handleDeleteReport(reportId)}
+            />
+
+            {hiddenReportsCount > 0 ? (
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setVisibleLimit((current) => current + STATUS_PAGE_SIZE)
+                  }
+                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50 hover:text-blue-700"
+                >
+                  Tampilkan {Math.min(hiddenReportsCount, STATUS_PAGE_SIZE)}{" "}
+                  laporan lagi
+                </button>
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     </div>

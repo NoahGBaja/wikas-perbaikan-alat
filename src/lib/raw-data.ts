@@ -18,6 +18,7 @@ export type SessionUserRow = {
   jabatan: string | null;
   nip: string | null;
   role: AppRole;
+  isSuperAdmin: boolean;
   categoryScope: AppCategoryScope | null;
   createdAt: Date;
   updatedAt: Date;
@@ -42,6 +43,7 @@ export type ReportApprovalHistoryRow = {
     jabatan: string | null;
     nip: string | null;
     role: AppRole;
+    isSuperAdmin: boolean;
     categoryScope: AppCategoryScope | null;
   };
 };
@@ -83,6 +85,7 @@ export type ReportRow = {
     jabatan: string | null;
     nip: string | null;
     role: AppRole;
+    isSuperAdmin: boolean;
     categoryScope: AppCategoryScope | null;
   };
 
@@ -106,6 +109,7 @@ const reportInclude = {
       jabatan: true,
       nip: true,
       role: true,
+      isSuperAdmin: true,
       categoryScope: true,
     },
   },
@@ -118,6 +122,7 @@ const reportInclude = {
           jabatan: true,
           nip: true,
           role: true,
+          isSuperAdmin: true,
           categoryScope: true,
         },
       },
@@ -170,6 +175,7 @@ function normalizeReportRow(row: ReportWithUser): ReportRow {
       jabatan: row.user.jabatan,
       nip: row.user.nip,
       role: row.user.role,
+      isSuperAdmin: row.user.isSuperAdmin,
       categoryScope: row.user.categoryScope,
     },
 
@@ -188,6 +194,7 @@ function normalizeReportRow(row: ReportWithUser): ReportRow {
         jabatan: history.admin.jabatan,
         nip: history.admin.nip,
         role: history.admin.role,
+        isSuperAdmin: history.admin.isSuperAdmin,
         categoryScope: history.admin.categoryScope,
       },
     })),
@@ -215,6 +222,7 @@ export async function findUserByIdRaw(
         jabatan: true,
         nip: true,
         role: true,
+        isSuperAdmin: true,
         categoryScope: true,
         passwordHash: true,
         createdAt: true,
@@ -231,6 +239,7 @@ export async function findUserByIdRaw(
       jabatan: true,
       nip: true,
       role: true,
+      isSuperAdmin: true,
       categoryScope: true,
       createdAt: true,
       updatedAt: true,
@@ -259,6 +268,7 @@ export async function findUserByNipRaw(
         jabatan: true,
         nip: true,
         role: true,
+        isSuperAdmin: true,
         categoryScope: true,
         passwordHash: true,
         createdAt: true,
@@ -275,6 +285,7 @@ export async function findUserByNipRaw(
       jabatan: true,
       nip: true,
       role: true,
+      isSuperAdmin: true,
       categoryScope: true,
       createdAt: true,
       updatedAt: true,
@@ -291,6 +302,7 @@ export async function listUsersWithReportCountRaw() {
         jabatan: true,
         nip: true,
         role: true,
+        isSuperAdmin: true,
         categoryScope: true,
         createdAt: true,
         updatedAt: true,

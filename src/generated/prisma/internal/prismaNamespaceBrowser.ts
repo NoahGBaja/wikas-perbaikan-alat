@@ -80,6 +80,7 @@ export const UserScalarFieldEnum = {
   nip: 'nip',
   passwordHash: 'passwordHash',
   role: 'role',
+  isSuperAdmin: 'isSuperAdmin',
   categoryScope: 'categoryScope',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

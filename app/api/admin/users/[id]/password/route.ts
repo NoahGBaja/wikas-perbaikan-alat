@@ -26,7 +26,7 @@ async function requireSuperAdmin() {
     };
   }
 
-  if (authUser.role !== "SUPER_ADMIN") {
+  if (!authUser.isSuperAdmin) {
     return {
       error: NextResponse.json(
         { message: "Hanya Super Admin yang boleh reset password user." },

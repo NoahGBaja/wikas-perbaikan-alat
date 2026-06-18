@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  Download,
   KeyRound,
   RefreshCcw,
   Save,
@@ -26,8 +27,6 @@ const ROLE_OPTIONS: AppRole[] = [
   "ADMIN_3",
   "ADMIN_4",
   "ADMIN_5",
-  "ADMIN_6",
-  "SUPER_ADMIN",
 ];
 
 const USER_PAGE_SIZE = 12;
@@ -44,6 +43,7 @@ type UserItem = {
   jabatan: string | null;
   nip: string | null;
   role: AppRole;
+  isSuperAdmin: boolean;
   categoryScope: AppCategoryScope | null;
   createdAt: string;
   _count: {
@@ -59,6 +59,7 @@ type DraftMap = Record<
     jabatan: string;
     nip: string;
     role: AppRole;
+    isSuperAdmin: boolean;
     categoryScope: AppCategoryScope | "";
   }
 >;
@@ -93,6 +94,7 @@ export default function AdminUsersPage({
   const [drafts, setDrafts] = useState<DraftMap>({});
   const [passwordDrafts, setPasswordDrafts] = useState<PasswordDraftMap>({});
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -104,6 +106,7 @@ export default function AdminUsersPage({
     jabatan: "",
     nip: "",
     role: "USER" as AppRole,
+    isSuperAdmin: false,
     categoryScope: "" as AppCategoryScope | "",
     password: "",
   });
@@ -194,6 +197,7 @@ export default function AdminUsersPage({
         jabatan: "",
         nip: "",
         role: "USER",
+        isSuperAdmin: false,
         categoryScope: "",
         password: "",
       });
@@ -219,6 +223,7 @@ export default function AdminUsersPage({
             jabatan: user.jabatan || "",
             nip: user.nip || "",
             role: user.role,
+            isSuperAdmin: user.isSuperAdmin,
             categoryScope: user.categoryScope || "",
           }
         : null);
@@ -381,6 +386,7 @@ export default function AdminUsersPage({
         user.nip || "",
         user.role,
         getRoleLabel(user.role),
+        user.isSuperAdmin ? "Super Admin" : "",
         user.categoryScope || "",
         getCategoryScopeLabel(user.categoryScope),
         String(user.id),
@@ -404,9 +410,46 @@ export default function AdminUsersPage({
         jabatan: user.jabatan || "",
         nip: user.nip || "",
         role: user.role,
+        isSuperAdmin: user.isSuperAdmin,
         categoryScope: user.categoryScope || "",
       }
     );
+  }
+
+  async function handleExportUsers() {
+    try {
+      setExporting(true);
+      setMessage("");
+
+      const res = await fetch("/api/admin/users/export", {
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        const data = await readApiResponse(res);
+        setMessage(data.message || "Gagal mengekspor daftar user.");
+        return;
+      }
+
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get("content-disposition") || "";
+      const fileNameMatch = contentDisposition.match(/filename="([^"]+)"/);
+      const fileName = fileNameMatch?.[1] || "daftar-user.xlsx";
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("EXPORT_ADMIN_USERS_ERROR:", error);
+      setMessage("Terjadi kesalahan saat mengekspor daftar user.");
+    } finally {
+      setExporting(false);
+    }
   }
 
   function toggleExpandedUser(user: UserItem) {
@@ -456,6 +499,16 @@ export default function AdminUsersPage({
               <RefreshCcw className="h-4 w-4" />
               Muat Ulang
             </button>
+
+            <button
+              type="button"
+              onClick={() => void handleExportUsers()}
+              disabled={exporting}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <Download className="h-4 w-4" />
+              {exporting ? "Mengekspor..." : "Export Excel"}
+            </button>
           </div>
         </div>
 
@@ -491,7 +544,7 @@ export default function AdminUsersPage({
 
           {showCreateForm ? (
             <>
-              <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-4">
+              <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-5">
                 <input
                   value={newUser.nama}
                   onChange={(event) =>
@@ -567,6 +620,21 @@ export default function AdminUsersPage({
                   placeholder="Password"
                   className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
+
+                <label className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={newUser.isSuperAdmin}
+                    onChange={(event) =>
+                      setNewUser((current) => ({
+                        ...current,
+                        isSuperAdmin: event.target.checked,
+                      }))
+                    }
+                    className="h-4 w-4 accent-blue-600"
+                  />
+                  Super Admin
+                </label>
               </div>
 
               <button
@@ -648,6 +716,11 @@ export default function AdminUsersPage({
                         <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 font-semibold text-blue-700">
                           {getRoleLabel(user.role)}
                         </span>
+                        {user.isSuperAdmin ? (
+                          <span className="rounded-full border border-violet-100 bg-violet-50 px-3 py-1 font-semibold text-violet-700">
+                            Super Admin
+                          </span>
+                        ) : null}
                         {isCategoryScopedRole(user.role) ? (
                           <span className="rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-cyan-700">
                             {getCategoryScopeLabel(user.categoryScope)}
@@ -672,7 +745,7 @@ export default function AdminUsersPage({
 
                     {expanded ? (
                       <div className="border-t border-slate-100 bg-slate-50/60 p-3">
-                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
                           <label className="grid gap-1 text-xs font-medium text-slate-500">
                             Nama
                             <input
@@ -774,6 +847,27 @@ export default function AdminUsersPage({
                               }
                               className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                             />
+                          </label>
+
+                          <label className="grid gap-1 text-xs font-medium text-slate-500">
+                            Akses
+                            <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={draft.isSuperAdmin}
+                                onChange={(event) =>
+                                  setDrafts((current) => ({
+                                    ...current,
+                                    [user.id]: {
+                                      ...draft,
+                                      isSuperAdmin: event.target.checked,
+                                    },
+                                  }))
+                                }
+                                className="h-4 w-4 accent-blue-600"
+                              />
+                              Super Admin
+                            </span>
                           </label>
                         </div>
 

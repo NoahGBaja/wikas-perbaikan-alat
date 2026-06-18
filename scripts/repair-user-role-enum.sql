@@ -15,6 +15,10 @@ UPDATE `User`
 SET `role` = 'ADMIN_1'
 WHERE `role` = 'ADMIN';
 
+UPDATE `User`
+SET `role` = 'ADMIN_5'
+WHERE `role` = 'ADMIN_6';
+
 ALTER TABLE `User`
 MODIFY `role` ENUM(
   'SUPER_ADMIN',
@@ -23,6 +27,5 @@ MODIFY `role` ENUM(
   'ADMIN_3',
   'ADMIN_4',
   'ADMIN_5',
-  'ADMIN_6',
   'USER'
 ) NOT NULL DEFAULT 'USER';

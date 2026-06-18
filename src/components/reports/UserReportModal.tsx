@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from "react";
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import Image from "next/image";
 import { FileText, Send, Upload, X } from "lucide-react";
+import { toast } from "sonner";
 
 const MAX_ATTACHMENT_SIZE = 2 * 1024 * 1024;
 const ALLOWED_ATTACHMENT_TYPES = [
@@ -46,6 +47,7 @@ export type UserReportModalPayload = {
   nomorRuangan: string;
   kodeUakpb: string;
   kode: string;
+  deskripsi: string;
   attachment: File | null;
 };
 
@@ -57,6 +59,7 @@ type UserReportModalProps = {
   defaultNomorRuangan?: string;
   defaultKodeUakpb?: string;
   defaultKode?: string;
+  defaultDeskripsi?: string;
   defaultKategori?: UserReportCategory;
   submitLabel?: string;
 };
@@ -79,7 +82,7 @@ function validateForm(payload: UserReportModalPayload) {
   }
 
   if (!payload.nomorRuangan.trim()) {
-    errors.nomorRuangan = "Nomor ruangan wajib diisi.";
+    errors.nomorRuangan = "Kode ruangan wajib diisi.";
   }
 
   if (!payload.kodeUakpb.trim()) {
@@ -90,6 +93,12 @@ function validateForm(payload: UserReportModalPayload) {
     errors.kode = "Kode wajib diisi.";
   } else if (!/^\d{12}$/.test(payload.kode.trim())) {
     errors.kode = "Kode harus berisi tepat 12 digit angka.";
+  }
+
+  if (!payload.deskripsi.trim()) {
+    errors.deskripsi = "Deskripsi wajib diisi.";
+  } else if (payload.deskripsi.trim().length > 2000) {
+    errors.deskripsi = "Deskripsi maksimal 2000 karakter.";
   }
 
   if (payload.attachment) {
@@ -111,6 +120,7 @@ export default function UserReportModal({
   defaultNomorRuangan = "",
   defaultKodeUakpb = "",
   defaultKode = "",
+  defaultDeskripsi = "",
   defaultKategori = "FASILITAS_INVENTARIS",
   submitLabel = "Kirim Laporan",
 }: UserReportModalProps) {
@@ -122,6 +132,7 @@ export default function UserReportModal({
   const [nomorRuangan, setNomorRuangan] = useState(defaultNomorRuangan);
   const [kodeUakpb, setKodeUakpb] = useState(defaultKodeUakpb);
   const [kode, setKode] = useState(defaultKode);
+  const [deskripsi, setDeskripsi] = useState(defaultDeskripsi);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
@@ -134,10 +145,12 @@ export default function UserReportModal({
     setNomorRuangan(defaultNomorRuangan);
     setKodeUakpb(defaultKodeUakpb);
     setKode(defaultKode);
+    setDeskripsi(defaultDeskripsi);
   }, [
     defaultKategori,
     defaultKode,
     defaultKodeUakpb,
+    defaultDeskripsi,
     defaultNamaPelapor,
     defaultNomorRuangan,
   ]);
@@ -182,6 +195,7 @@ export default function UserReportModal({
     nomorRuangan,
     kodeUakpb,
     kode,
+    deskripsi,
     attachment,
   };
 
@@ -193,6 +207,9 @@ export default function UserReportModal({
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
+      toast.error("Data laporan belum lengkap", {
+        description: Object.values(nextErrors).filter(Boolean).join(" "),
+      });
       return;
     }
 
@@ -205,6 +222,7 @@ export default function UserReportModal({
         nomorRuangan: payload.nomorRuangan.trim(),
         kodeUakpb: payload.kodeUakpb.trim(),
         kode: payload.kode.trim(),
+        deskripsi: payload.deskripsi.trim(),
       });
 
       if (!onSubmit) {
@@ -216,6 +234,12 @@ export default function UserReportModal({
           ? error.message
           : "Terjadi kesalahan saat mengirim laporan.",
       );
+      toast.error("Gagal mengirim laporan", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan saat mengirim laporan.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -235,6 +259,12 @@ export default function UserReportModal({
       ...current,
       attachment: nextErrors.attachment,
     }));
+
+    if (nextErrors.attachment) {
+      toast.error("Lampiran tidak valid", {
+        description: nextErrors.attachment,
+      });
+    }
   }
 
   return (
@@ -270,7 +300,7 @@ export default function UserReportModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5">
+        <form onSubmit={handleSubmit} noValidate className="px-6 py-5">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <Field label="Jenis Perbaikan" required className="md:col-span-2">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -316,7 +346,7 @@ export default function UserReportModal({
               />
             </Field>
 
-            <Field label="Nomor Ruangan" required error={errors.nomorRuangan}>
+            <Field label="Kode Ruangan" required error={errors.nomorRuangan}>
               <input
                 value={nomorRuangan}
                 onChange={(event) => setNomorRuangan(event.target.value)}
@@ -351,6 +381,26 @@ export default function UserReportModal({
                 className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 required
               />
+            </Field>
+
+            <Field
+              label="Deskripsi"
+              required
+              error={errors.deskripsi}
+              className="md:col-span-2"
+            >
+              <textarea
+                value={deskripsi}
+                onChange={(event) => setDeskripsi(event.target.value)}
+                rows={5}
+                maxLength={2000}
+                className="w-full resize-y rounded-md border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Jelaskan kendala atau kerusakan yang perlu diperbaiki"
+                required
+              />
+              <p className="mt-2 text-xs text-slate-500">
+                {deskripsi.trim().length}/2000 karakter
+              </p>
             </Field>
 
             <Field

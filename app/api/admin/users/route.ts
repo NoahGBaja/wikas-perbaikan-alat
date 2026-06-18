@@ -14,13 +14,11 @@ import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
 import { isCategoryScopedRole } from "@/src/lib/roles";
 
 const VALID_ROLES: AppRole[] = [
-  "SUPER_ADMIN",
   "ADMIN_1",
   "ADMIN_2",
   "ADMIN_3",
   "ADMIN_4",
   "ADMIN_5",
-  "ADMIN_6",
   "USER",
 ];
 
@@ -50,7 +48,7 @@ async function requireSuperAdmin() {
     };
   }
 
-  if (authUser.role !== "SUPER_ADMIN") {
+  if (!authUser.isSuperAdmin) {
     return {
       error: NextResponse.json(
         { message: "Hanya Super Admin yang boleh mengelola user." },
@@ -105,6 +103,7 @@ export async function POST(req: Request) {
     const nip = typeof body.nip === "string" ? body.nip.trim() : "";
     const password = typeof body.password === "string" ? body.password : "";
     const role = isValidRole(body.role) ? body.role : "USER";
+    const isSuperAdmin = body.isSuperAdmin === true;
     const categoryScope = isValidCategoryScope(body.categoryScope)
       ? body.categoryScope
       : null;
@@ -157,6 +156,7 @@ export async function POST(req: Request) {
         nip,
         passwordHash,
         role,
+        isSuperAdmin,
         categoryScope: isCategoryScopedRole(role) ? categoryScope : null,
       },
       select: {
@@ -165,6 +165,7 @@ export async function POST(req: Request) {
         jabatan: true,
         nip: true,
         role: true,
+        isSuperAdmin: true,
         categoryScope: true,
         createdAt: true,
         updatedAt: true,

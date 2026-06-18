@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getApiSessionUser } from "@/src/lib/session";
 import { validateMutationRequest } from "@/src/lib/request-security";
-import { isAdminRole } from "@/src/lib/roles";
+import { hasAdminAccess } from "@/src/lib/roles";
 
 export async function GET() {
   try {
@@ -19,6 +19,7 @@ export async function GET() {
         jabatan: authUser.jabatan,
         nip: authUser.nip,
         role: authUser.role,
+        isSuperAdmin: authUser.isSuperAdmin,
       },
     });
   } catch (error) {
@@ -45,7 +46,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (!isAdminRole(authUser.role)) {
+    if (!hasAdminAccess(authUser)) {
       return NextResponse.json(
         { message: "Hanya admin yang dapat mengubah nama." },
         { status: 403 }

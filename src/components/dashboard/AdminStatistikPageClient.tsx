@@ -42,7 +42,6 @@ const STATUS_OPTIONS = [
   { value: "MENUNGGU_ADMIN_3", label: `Menunggu ${getRoleLabel("ADMIN_3")}` },
   { value: "MENUNGGU_ADMIN_4", label: `Menunggu ${getRoleLabel("ADMIN_4")}` },
   { value: "MENUNGGU_ADMIN_5", label: `Menunggu ${getRoleLabel("ADMIN_5")}` },
-  { value: "MENUNGGU_ADMIN_6", label: `Menunggu ${getRoleLabel("ADMIN_6")}` },
   { value: "DISETUJUI_FINAL", label: "Disetujui Final" },
   { value: "DITOLAK", label: "Ditolak" },
 ] as const;

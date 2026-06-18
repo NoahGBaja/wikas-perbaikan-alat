@@ -14,7 +14,6 @@ export type ReportStatus =
   | "MENUNGGU_ADMIN_3"
   | "MENUNGGU_ADMIN_4"
   | "MENUNGGU_ADMIN_5"
-  | "MENUNGGU_ADMIN_6"
   | "DISETUJUI_FINAL"
   | "DITOLAK";
 
@@ -24,7 +23,6 @@ export const WAITING_STATUSES = [
   "MENUNGGU_ADMIN_3",
   "MENUNGGU_ADMIN_4",
   "MENUNGGU_ADMIN_5",
-  "MENUNGGU_ADMIN_6",
 ] as const;
 
 export const FINAL_STATUSES = ["DISETUJUI_FINAL", "DITOLAK"] as const;
@@ -38,7 +36,6 @@ export function getRequiredAdminRole(status: ReportStatus): Role | null {
     MENUNGGU_ADMIN_3: "ADMIN_3",
     MENUNGGU_ADMIN_4: "ADMIN_4",
     MENUNGGU_ADMIN_5: "ADMIN_5",
-    MENUNGGU_ADMIN_6: "ADMIN_6",
   };
 
   return map[status] ?? null;
@@ -46,10 +43,11 @@ export function getRequiredAdminRole(status: ReportStatus): Role | null {
 
 export function canAdminAccessReport(input: {
   role: Role;
+  isSuperAdmin?: boolean | null;
   categoryScope?: WorkflowCategory | null;
   reportCategory: WorkflowCategory;
 }) {
-  if (input.role === "SUPER_ADMIN") return true;
+  if (input.isSuperAdmin || input.role === "SUPER_ADMIN") return true;
 
   if (!isCategoryScopedRole(input.role)) return true;
 
@@ -72,6 +70,7 @@ export function canRoleDecide(
 
   return canAdminAccessReport({
     role,
+    isSuperAdmin: false,
     categoryScope,
     reportCategory,
   });
@@ -83,8 +82,7 @@ export function getNextApprovedStatus(status: ReportStatus): ReportStatus {
     MENUNGGU_ADMIN_2: "MENUNGGU_ADMIN_3",
     MENUNGGU_ADMIN_3: "MENUNGGU_ADMIN_4",
     MENUNGGU_ADMIN_4: "MENUNGGU_ADMIN_5",
-    MENUNGGU_ADMIN_5: "MENUNGGU_ADMIN_6",
-    MENUNGGU_ADMIN_6: "DISETUJUI_FINAL",
+    MENUNGGU_ADMIN_5: "DISETUJUI_FINAL",
   };
 
   const nextStatus = map[status];

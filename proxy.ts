@@ -13,8 +13,10 @@ function getAuthPayload(request: NextRequest) {
   return verifyAuthToken(token);
 }
 
-function getDefaultDashboard(role: AppRole) {
-  return isAdminRole(role) ? "/dashboard/admin" : "/dashboard/user";
+function getDefaultDashboard(auth: { role: AppRole; isSuperAdmin?: boolean }) {
+  return auth.isSuperAdmin || isAdminRole(auth.role)
+    ? "/dashboard/admin"
+    : "/dashboard/user";
 }
 
 export function proxy(request: NextRequest) {
@@ -53,7 +55,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const defaultDashboard = getDefaultDashboard(auth.role);
+  const defaultDashboard = getDefaultDashboard(auth);
 
   if (pathname === "/dashboard") {
     return NextResponse.redirect(new URL(defaultDashboard, request.url));
@@ -63,7 +65,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(defaultDashboard, request.url));
   }
 
-  if (pathname.startsWith("/dashboard/admin") && !isAdminRole(auth.role)) {
+  if (
+    pathname.startsWith("/dashboard/admin") &&
+    !auth.isSuperAdmin &&
+    !isAdminRole(auth.role)
+  ) {
     return NextResponse.redirect(new URL("/dashboard/user", request.url));
   }
 

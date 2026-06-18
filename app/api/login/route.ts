@@ -6,7 +6,7 @@ import {
   signAuthToken,
 } from "@/src/lib/auth";
 import { verifyPassword } from "@/src/lib/passwords";
-import { getDefaultRedirectForRole } from "@/src/lib/session";
+import { getDefaultRedirectForUser } from "@/src/lib/session";
 import { findUserByNipRaw } from "@/src/lib/raw-data";
 import {
   clearRateLimit,
@@ -79,9 +79,11 @@ export async function POST(req: Request) {
       userId: user.id,
       nama: user.nama,
       role: user.role,
+      isSuperAdmin: user.isSuperAdmin,
       sessionTag: createAuthSessionTag({
         passwordHash: user.passwordHash,
         role: user.role,
+        isSuperAdmin: user.isSuperAdmin,
       }),
     });
 
@@ -92,8 +94,9 @@ export async function POST(req: Request) {
         nama: user.nama,
         nip: user.nip,
         role: user.role,
+        isSuperAdmin: user.isSuperAdmin,
       },
-      redirectTo: getDefaultRedirectForRole(user.role),
+      redirectTo: getDefaultRedirectForUser(user),
     });
 
     response.cookies.set(AUTH_COOKIE_NAME, token, getAuthCookieOptions());

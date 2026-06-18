@@ -12,7 +12,7 @@ import {
   validateReportAttachmentUpload,
 } from "@/src/lib/uploads";
 import { validateMutationRequest } from "@/src/lib/request-security";
-import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
+import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
 import { canAdminAccessReport } from "@/src/lib/workflow";
 
 function parseReportId(id: string) {
@@ -86,9 +86,10 @@ export async function GET(
     }
 
     if (
-      isAdminRole(authUser.role) &&
+      hasAdminAccess(authUser) &&
       !canAdminAccessReport({
         role: authUser.role,
+        isSuperAdmin: authUser.isSuperAdmin,
         categoryScope: authUser.categoryScope,
         reportCategory: report.kategori,
       })
@@ -96,7 +97,7 @@ export async function GET(
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    if (!isAdminRole(authUser.role) && report.userId !== authUser.id) {
+    if (!hasAdminAccess(authUser) && report.userId !== authUser.id) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
@@ -216,12 +217,7 @@ export async function PATCH(
         kategori: reportInput.kategori as ValidKategori,
         namaBarang: "Perbaikan Alat",
         lokasi: `Ruangan ${reportInput.nomorRuangan}`,
-        deskripsi: [
-          `Nama pelapor: ${reportInput.namaPelapor}`,
-          `Nomor ruangan: ${reportInput.nomorRuangan}`,
-          `Kode UAKPB: ${reportInput.kodeUakpb}`,
-          `Kode: ${reportInput.kode}`,
-        ].join("\n"),
+        deskripsi: reportInput.deskripsi,
         severity: "SEDANG",
         fotoUrl,
         attachmentUrl,

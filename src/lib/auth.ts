@@ -28,7 +28,6 @@ const VALID_ROLES: AppRole[] = [
   "ADMIN_3",
   "ADMIN_4",
   "ADMIN_5",
-  "ADMIN_6",
   "USER",
 ];
 
@@ -36,6 +35,7 @@ export type AuthTokenPayload = {
   userId: number;
   nama: string;
   role: AppRole;
+  isSuperAdmin: boolean;
   sessionTag: string;
 };
 
@@ -52,6 +52,8 @@ function isAuthTokenPayload(value: string | JwtPayload): value is AuthTokenPaylo
     typeof value.userId === "number" &&
     typeof value.nama === "string" &&
     isValidRole(value.role) &&
+    (typeof value.isSuperAdmin === "boolean" ||
+      typeof value.isSuperAdmin === "undefined") &&
     typeof value.sessionTag === "string"
   );
 }
@@ -73,9 +75,10 @@ function pruneRevokedTokens() {
 export function createAuthSessionTag(input: {
   passwordHash: string;
   role: AppRole;
+  isSuperAdmin?: boolean | null;
 }) {
   return createHash("sha256")
-    .update(`${input.role}:${input.passwordHash}`)
+    .update(`${input.role}:${input.isSuperAdmin ? "1" : "0"}:${input.passwordHash}`)
     .digest("hex");
 }
 

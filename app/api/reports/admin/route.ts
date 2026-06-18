@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getApiSessionUser } from "@/src/lib/session";
 import { listReportsRaw } from "@/src/lib/raw-data";
-import { isAdminRole } from "@/src/lib/roles";
+import { hasAdminAccess } from "@/src/lib/roles";
 import { canAdminAccessReport } from "@/src/lib/workflow";
 
 export async function GET() {
@@ -12,13 +12,14 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (!isAdminRole(authUser.role)) {
+    if (!hasAdminAccess(authUser)) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
     const reports = (await listReportsRaw()).filter((report) =>
       canAdminAccessReport({
         role: authUser.role,
+        isSuperAdmin: authUser.isSuperAdmin,
         categoryScope: authUser.categoryScope,
         reportCategory: report.kategori,
       }),

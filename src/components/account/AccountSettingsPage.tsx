@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, KeyRound, Save, ShieldCheck, UserRound } from "lucide-react";
 import type { AppRole } from "@/src/lib/roles";
-import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
+import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
 
 type AccountUser = {
   id: number;
@@ -13,6 +13,7 @@ type AccountUser = {
   jabatan: string | null;
   nip: string | null;
   role: AppRole;
+  isSuperAdmin: boolean;
 };
 
 type AccountSettingsPageProps = {
@@ -39,7 +40,7 @@ export default function AccountSettingsPage({
   currentUser,
 }: AccountSettingsPageProps) {
   const router = useRouter();
-  const canEditProfile = isAdminRole(currentUser.role);
+  const canEditProfile = hasAdminAccess(currentUser);
 
   const [nama, setNama] = useState(currentUser.nama);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -49,6 +50,9 @@ export default function AccountSettingsPage({
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordMessageType, setPasswordMessageType] = useState<
+    "success" | "error"
+  >("success");
 
   async function handleProfileSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -91,6 +95,7 @@ export default function AccountSettingsPage({
     event.preventDefault();
     setPasswordLoading(true);
     setPasswordMessage("");
+    setPasswordMessageType("success");
 
     try {
       const res = await fetch("/api/account/password", {
@@ -111,12 +116,14 @@ export default function AccountSettingsPage({
       setPasswordMessage(responseMessage);
 
       if (!res.ok) {
+        setPasswordMessageType("error");
         toast.error("Password gagal diperbarui", {
           description: responseMessage,
         });
         return;
       }
 
+      setPasswordMessageType("success");
       toast.success("Password berhasil diperbarui", {
         description: responseMessage,
       });
@@ -128,6 +135,7 @@ export default function AccountSettingsPage({
       const errorMessage = "Terjadi kesalahan saat memperbarui password.";
 
       setPasswordMessage(errorMessage);
+      setPasswordMessageType("error");
       toast.error("Password gagal diperbarui", {
         description: errorMessage,
       });
@@ -160,11 +168,11 @@ export default function AccountSettingsPage({
             <button
               type="button"
               onClick={() =>
-                router.push(
-                  isAdminRole(currentUser.role)
-                    ? "/dashboard/admin"
-                    : "/dashboard/user",
-                )
+              router.push(
+                hasAdminAccess(currentUser)
+                  ? "/dashboard/admin"
+                  : "/dashboard/user",
+              )
               }
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
             >
@@ -199,6 +207,7 @@ export default function AccountSettingsPage({
               <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
                 <ShieldCheck className="h-4 w-4" />
                 {getRoleLabel(currentUser.role)}
+                {currentUser.isSuperAdmin ? " + Super Admin" : ""}
               </div>
             </div>
 
@@ -307,7 +316,14 @@ export default function AccountSettingsPage({
               </div>
 
               {passwordMessage ? (
-                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <div
+                  className={[
+                    "rounded-2xl border px-4 py-3 text-sm",
+                    passwordMessageType === "error"
+                      ? "border-rose-200 bg-rose-50 text-rose-700"
+                      : "border-emerald-100 bg-emerald-50 text-emerald-800",
+                  ].join(" ")}
+                >
                   {passwordMessage}
                 </div>
               ) : null}

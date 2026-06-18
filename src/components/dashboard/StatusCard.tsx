@@ -5,11 +5,9 @@ import { FileText } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import {
   formatKategori,
-  formatSeverity,
   formatStatus,
   formatTanggal,
   type ReportKategori,
-  type ReportSeverity,
   type ReportStatus,
 } from "@/lib/report-helpers";
 import { getRoleLabel } from "@/src/lib/roles";
@@ -26,7 +24,6 @@ export type StatusReportItem = {
   namaBarang: string;
   lokasi: string;
   deskripsi: string;
-  severity: ReportSeverity;
   fotoUrl: string | null;
   attachmentUrl?: string | null;
   attachmentType?: string | null;
@@ -165,7 +162,7 @@ export default function StatusCard({
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Nomor Ruangan</p>
+              <p className="text-sm text-slate-500">Kode Ruangan</p>
               <p className="mt-1 font-semibold text-slate-900">
                 {report.nomorRuangan || report.lokasi}
               </p>
@@ -195,13 +192,6 @@ export default function StatusCard({
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Lokasi</p>
               <p className="mt-1 font-semibold text-slate-900">{report.lokasi}</p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Tingkat Kerusakan</p>
-              <p className="mt-1 font-semibold text-slate-900">
-                {formatSeverity(report.severity)}
-              </p>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -254,7 +244,7 @@ export default function StatusCard({
                 Laporan Disetujui Final
               </p>
               <p className="mt-2 leading-7 text-emerald-700">
-                Laporan kamu sudah disetujui sampai {getRoleLabel("ADMIN_6")}.
+                Laporan kamu sudah disetujui sampai {getRoleLabel("ADMIN_5")}.
               </p>
             </div>
           ) : null}
