@@ -122,7 +122,7 @@ function MonthlyReporterTable({
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-200 px-6 py-5">
+      <div className="border-b border-blue-100 bg-blue-50/30 px-6 py-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-blue-600">
@@ -189,7 +189,7 @@ function MonthlyReporterTable({
         <div className="overflow-x-auto">
           <table className="min-w-[980px] text-left">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
+              <tr className="border-b border-blue-100 bg-blue-50/40 text-slate-600">
                 <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.24em]">
                   Rank
                 </th>

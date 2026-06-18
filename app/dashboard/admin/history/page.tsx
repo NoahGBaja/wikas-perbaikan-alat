@@ -84,6 +84,12 @@ function isPdfAttachment(report: ReportItem) {
   return report.attachmentType === "application/pdf";
 }
 
+function getRejectingAdmin(report: ReportItem) {
+  return [...(report.histories || [])]
+    .reverse()
+    .find((history) => history.action === "TOLAK")?.admin;
+}
+
 export default function AdminHistoryPage() {
   const router = useRouter();
   const [reports, setReports] = useState<ReportItem[]>([]);
@@ -277,7 +283,7 @@ export default function AdminHistoryPage() {
         ) : null}
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
+          <div className="border-b border-blue-100 bg-blue-50/30 px-5 py-4">
             <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
@@ -337,7 +343,7 @@ export default function AdminHistoryPage() {
             <div className="overflow-x-auto">
               <table className="min-w-[1060px] text-left">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
+                  <tr className="border-b border-blue-100 bg-blue-50/40 text-slate-600">
                     <TableHead>ID</TableHead>
                     <TableHead>Pelapor</TableHead>
                     <TableHead>Barang</TableHead>
@@ -430,6 +436,7 @@ function ReportDetailModal({
   onClose: () => void;
 }) {
   const mainAttachmentUrl = report.attachmentUrl || report.fotoUrl;
+  const rejectingAdmin = getRejectingAdmin(report);
 
   return (
     <div
@@ -504,6 +511,11 @@ function ReportDetailModal({
                 <p className="text-sm font-semibold text-rose-700">
                   Alasan Penolakan
                 </p>
+                {rejectingAdmin ? (
+                  <p className="mt-2 text-sm font-semibold text-rose-800">
+                    Ditolak oleh {rejectingAdmin.nama} ({rejectingAdmin.role})
+                  </p>
+                ) : null}
                 <p className="mt-2 whitespace-pre-line text-rose-700">
                   {report.alasanPenolakan}
                 </p>

@@ -84,24 +84,26 @@ export default function UserReportPageClient({
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-10 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
       <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center text-center">
-        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
-          Dashboard Pegawai
-        </p>
-        <h1 className="mt-3 text-3xl font-bold md:text-5xl">
-          Buat Laporan Perbaikan Alat
-        </h1>
-        <p className="mt-4 max-w-2xl text-slate-600">
-          Isi data laporan melalui modal, lalu laporan akan masuk ke approval
-          Admin 1 sampai Admin 6.
-        </p>
+        <section className="rounded-2xl border border-blue-100 bg-blue-50/40 px-8 py-10 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
+            Dashboard Pegawai
+          </p>
+          <h1 className="mt-3 text-3xl font-bold md:text-5xl">
+            Buat Laporan Perbaikan Alat
+          </h1>
+          <p className="mt-4 max-w-2xl text-slate-600">
+            Isi data laporan melalui modal, lalu laporan akan masuk ke approval
+            Admin 1 sampai Admin 6.
+          </p>
 
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="mt-8 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-500"
-        >
-          Buka Form Laporan
-        </button>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="mt-8 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-500"
+          >
+            Buka Form Laporan
+          </button>
+        </section>
       </div>
 
       <UserReportModal

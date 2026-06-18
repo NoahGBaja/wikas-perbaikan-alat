@@ -193,8 +193,9 @@ export default function AdminStatistikPageClient({
           </div>
         ) : stats ? (
           <div className="space-y-6">
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="max-w-2xl">
+            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-blue-100 bg-blue-50/30 p-5">
+                <div className="max-w-2xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
                   Filter Statistik
                 </p>
@@ -205,9 +206,10 @@ export default function AdminStatistikPageClient({
                   Pilih bulan, tahun, dan status, lalu tampilkan data yang ingin
                   kamu lihat.
                 </p>
+                </div>
               </div>
 
-              <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-[1fr_1fr_1fr_auto_auto]">
+              <div className="grid grid-cols-1 gap-3 p-5 md:grid-cols-3 xl:grid-cols-[1fr_1fr_1fr_auto_auto]">
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(Number(e.target.value))}
@@ -271,18 +273,18 @@ export default function AdminStatistikPageClient({
               </div>
 
               {isRefreshingStats ? (
-                <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                <div className="mx-5 mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
                   Memperbarui statistik...
                 </div>
               ) : null}
 
               {message ? (
-                <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                <div className="mx-5 mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                   {message}
                 </div>
               ) : null}
 
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-col gap-3 p-5 pt-0 sm:flex-row">
                 <p className="flex items-center text-sm font-semibold text-slate-500">
                   Tampilan:
                 </p>

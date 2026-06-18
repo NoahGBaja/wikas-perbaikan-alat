@@ -81,6 +81,12 @@ function getStatusUpdateLabel(report: StatusReportItem) {
   return "Status laporan tidak diketahui";
 }
 
+function getRejectingAdmin(report: StatusReportItem) {
+  return [...(report.histories || [])]
+    .reverse()
+    .find((history) => history.action === "TOLAK")?.admin;
+}
+
 export default function StatusCard({
   report,
   onEdit,
@@ -92,6 +98,7 @@ export default function StatusCard({
   const isImageAttachment =
     !!displayAttachmentUrl &&
     (report.attachmentType?.startsWith("image/") || !!report.fotoUrl);
+  const rejectingAdmin = getRejectingAdmin(report);
 
   return (
     <article className="overflow-hidden rounded-[28px] border border-slate-200 bg-white/90 shadow-sm">
@@ -227,6 +234,11 @@ export default function StatusCard({
               <p className="text-sm font-semibold text-rose-700">
                 Alasan Penolakan
               </p>
+              {rejectingAdmin ? (
+                <p className="mt-2 text-sm font-semibold text-rose-800">
+                  Ditolak oleh {rejectingAdmin.nama} ({rejectingAdmin.role})
+                </p>
+              ) : null}
               <p className="mt-2 whitespace-pre-line leading-7 text-rose-700">
                 {report.alasanPenolakan}
               </p>

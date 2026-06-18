@@ -60,7 +60,7 @@ function ParticlesBackground({ className }: ParticlesBackgroundProps) {
   const options: ISourceOptions = useMemo(
     () => ({
       fullScreen: { enable: false },
-      fpsLimit: reducedMotion ? 24 : 40,
+      fpsLimit: reducedMotion ? 24 : 50,
       pauseOnBlur: true,
       pauseOnOutsideViewport: true,
       interactivity: {
@@ -69,32 +69,32 @@ function ParticlesBackground({ className }: ParticlesBackgroundProps) {
         },
         modes: {
           grab: {
-            distance: 120,
+            distance: 140,
             links: {
-              opacity: 0.35,
+              opacity: 0.5,
             },
           },
         },
       },
       particles: {
         number: {
-          value: reducedMotion ? 24 : 48,
+          value: reducedMotion ? 28 : 72,
           density: { enable: true, area: 1000 },
         },
-        color: { value: ["#ffffff", "#86efac", "#7dd3fc"] },
+        color: { value: ["#ffffff", "#7dd3fc", "#38bdf8"] },
         links: {
           enable: true,
-          color: "#a7f3d0",
-          distance: 125,
-          opacity: 0.42,
+          color: "#93c5fd",
+          distance: 135,
+          opacity: 0.48,
           width: 0.9,
         },
         move: {
           enable: true,
-          speed: reducedMotion ? 0.35 : 0.7,
+          speed: reducedMotion ? 0.35 : 0.85,
           outModes: { default: "out" },
         },
-        opacity: { value: { min: 0.28, max: 0.62 } },
+        opacity: { value: { min: 0.35, max: 0.78 } },
         size: { value: { min: 1, max: 3 } },
       },
       detectRetina: false,

@@ -155,7 +155,7 @@ export default function UserStatusPage() {
         </div>
 
         <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-4">
-          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-5 shadow-sm">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
               Total Laporan
             </p>
@@ -167,7 +167,7 @@ export default function UserStatusPage() {
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+          <div className="rounded-2xl border border-amber-100 bg-amber-50/50 p-5 shadow-sm">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
               Menunggu
             </p>
@@ -179,7 +179,7 @@ export default function UserStatusPage() {
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 shadow-sm">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
               Disetujui Final
             </p>
@@ -191,7 +191,7 @@ export default function UserStatusPage() {
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm">
+          <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-5 shadow-sm">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
               Ditolak
             </p>
@@ -204,7 +204,7 @@ export default function UserStatusPage() {
           </div>
         </section>
 
-        <section className="mb-6 rounded-[28px] border border-slate-200 bg-white/90 p-4 shadow-sm">
+        <section className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/30 p-4 shadow-sm">
           <div className="flex flex-wrap gap-3">
             {FILTERS.map((item) => {
               const active = filter === item;

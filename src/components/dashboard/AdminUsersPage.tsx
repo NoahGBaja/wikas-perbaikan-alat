@@ -387,7 +387,7 @@ export default function AdminUsersPage({
           </div>
         ) : null}
 
-        <section className="mb-8 rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-sm">
+        <section className="mb-8 rounded-2xl border border-blue-100 bg-blue-50/30 p-6 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50">
               <UserPlus className="h-6 w-6 text-blue-600" />
@@ -463,8 +463,8 @@ export default function AdminUsersPage({
           </button>
         </section>
 
-        <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white/90 shadow-sm">
-          <div className="border-b border-slate-200 px-6 py-5">
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-blue-100 bg-blue-50/30 px-6 py-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-slate-950">Daftar User</h2>

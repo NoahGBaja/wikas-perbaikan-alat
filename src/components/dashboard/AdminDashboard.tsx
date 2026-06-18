@@ -101,6 +101,12 @@ function isWaitingStatus(status: ReportStatus) {
   return status.startsWith("MENUNGGU_ADMIN");
 }
 
+function getRejectingAdmin(report: ReportItem) {
+  return [...(report.histories || [])]
+    .reverse()
+    .find((history) => history.action === "TOLAK")?.admin;
+}
+
 export default function AdminDashboard({
   currentUser,
   title = "Dashboard Laporan Kerusakan Barang & Alat",
@@ -214,6 +220,10 @@ export default function AdminDashboard({
     [reports, currentUser.role],
   );
 
+  const selectedReportRejectingAdmin = selectedReport
+    ? getRejectingAdmin(selectedReport)
+    : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-8 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
       <div className="mx-auto max-w-7xl">
@@ -281,11 +291,11 @@ export default function AdminDashboard({
           </div>
         </header>
 
-        <section className="mb-8 rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
+        <section className="mb-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 bg-blue-50/40 px-5 py-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-white text-sm font-semibold text-blue-700">
                   {getInitials(currentUser.nama) || "AD"}
                 </div>
                 <div>
@@ -309,16 +319,44 @@ export default function AdminDashboard({
 
           <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 sm:grid-cols-3 lg:grid-cols-5 lg:divide-y-0">
             {[
-              ["Total", summary.total],
-              ["Menunggu", summary.menunggu],
-              ["Perlu Disetujui", summary.giliranSaya],
-              ["Final", summary.final],
-              ["Ditolak", summary.ditolak],
-            ].map(([label, value]) => (
-              <div key={String(label)} className="px-5 py-4">
-                <p className="text-sm text-slate-500">{label}</p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
-                  {value}
+              {
+                label: "Total",
+                value: summary.total,
+                valueClass: "text-blue-700",
+                dotClass: "bg-blue-500",
+              },
+              {
+                label: "Menunggu",
+                value: summary.menunggu,
+                valueClass: "text-amber-700",
+                dotClass: "bg-amber-500",
+              },
+              {
+                label: "Perlu Disetujui",
+                value: summary.giliranSaya,
+                valueClass: "text-emerald-700",
+                dotClass: "bg-emerald-500",
+              },
+              {
+                label: "Final",
+                value: summary.final,
+                valueClass: "text-indigo-700",
+                dotClass: "bg-indigo-500",
+              },
+              {
+                label: "Ditolak",
+                value: summary.ditolak,
+                valueClass: "text-rose-700",
+                dotClass: "bg-rose-500",
+              },
+            ].map((item) => (
+              <div key={item.label} className="px-5 py-4">
+                <div className="flex items-center gap-2">
+                  <span className={`h-2 w-2 rounded-full ${item.dotClass}`} />
+                  <p className="text-sm text-slate-500">{item.label}</p>
+                </div>
+                <p className={`mt-1 text-2xl font-semibold ${item.valueClass}`}>
+                  {item.value}
                 </p>
               </div>
             ))}
@@ -332,7 +370,7 @@ export default function AdminDashboard({
         ) : null}
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-6 py-5">
+          <div className="border-b border-blue-100 bg-blue-50/30 px-6 py-5">
             <h2 className="text-2xl font-bold text-slate-900">Laporan Masuk</h2>
           </div>
 
@@ -346,7 +384,7 @@ export default function AdminDashboard({
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-500">
+                  <tr className="border-b border-blue-100 bg-blue-50/40 text-slate-600">
                     <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.24em]">
                       ID
                     </th>
@@ -564,6 +602,12 @@ export default function AdminDashboard({
                         <p className="text-sm font-semibold text-rose-700">
                           Alasan Penolakan
                         </p>
+                        {selectedReportRejectingAdmin ? (
+                          <p className="mt-2 text-sm font-semibold text-rose-800">
+                            Ditolak oleh {selectedReportRejectingAdmin.nama}{" "}
+                            ({selectedReportRejectingAdmin.role})
+                          </p>
+                        ) : null}
                         <p className="mt-2 text-rose-700">
                           {selectedReport.alasanPenolakan}
                         </p>
