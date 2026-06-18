@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, KeyRound, Save, ShieldCheck, UserRound } from "lucide-react";
 import type { AppRole } from "@/src/lib/roles";
-import { isAdminRole } from "@/src/lib/roles";
+import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
 
 type AccountUser = {
   id: number;
@@ -42,7 +42,6 @@ export default function AccountSettingsPage({
   const canEditProfile = isAdminRole(currentUser.role);
 
   const [nama, setNama] = useState(currentUser.nama);
-  const [jabatan, setJabatan] = useState(currentUser.jabatan || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -55,7 +54,7 @@ export default function AccountSettingsPage({
     event.preventDefault();
 
     if (!canEditProfile) {
-      setMessage("Nama dan jabatan hanya dapat diubah oleh admin.");
+      setMessage("Nama hanya dapat diubah oleh admin.");
       return;
     }
 
@@ -70,7 +69,7 @@ export default function AccountSettingsPage({
         },
         body: JSON.stringify({
           nama,
-          jabatan,
+          jabatan: currentUser.jabatan || "",
         }),
       });
 
@@ -140,7 +139,7 @@ export default function AccountSettingsPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-4 py-10 text-slate-900">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
               Pengaturan Akun
@@ -153,24 +152,26 @@ export default function AccountSettingsPage({
             <p className="mt-3 max-w-2xl text-slate-600">
               {canEditProfile
                 ? "Perbarui identitas yang tampil di dashboard dan ubah password akunmu."
-                : "Lihat identitas akunmu dan ubah password. Nama dan jabatan dikelola oleh admin."}
+                : "Lihat identitas akunmu dan ubah password. Nama dikelola oleh admin."}
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() =>
-              router.push(
-                isAdminRole(currentUser.role)
-                  ? "/dashboard/admin"
-                  : "/dashboard/user",
-              )
-            }
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
-          >
-            <ArrowLeft className="h-4 w-4 text-blue-600" />
-            Kembali ke Dashboard
-          </button>
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  isAdminRole(currentUser.role)
+                    ? "/dashboard/admin"
+                    : "/dashboard/user",
+                )
+              }
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
+            >
+              <ArrowLeft className="h-4 w-4 text-blue-600" />
+              Kembali ke Dashboard
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_1fr]">
@@ -197,7 +198,7 @@ export default function AccountSettingsPage({
 
               <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
                 <ShieldCheck className="h-4 w-4" />
-                {currentUser.role}
+                {getRoleLabel(currentUser.role)}
               </div>
             </div>
 
@@ -216,23 +217,9 @@ export default function AccountSettingsPage({
                 />
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-800">
-                  Jabatan
-                </label>
-
-                <input
-                  value={jabatan}
-                  onChange={(event) => setJabatan(event.target.value)}
-                  placeholder="Contoh: Staff Operasional"
-                  disabled={!canEditProfile}
-                  className="h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none placeholder:text-slate-400 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
-                />
-              </div>
-
               {!canEditProfile ? (
                 <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                  Nama dan jabatan hanya dapat diperbarui oleh admin.
+                  Nama hanya dapat diperbarui oleh admin.
                 </div>
               ) : null}
 

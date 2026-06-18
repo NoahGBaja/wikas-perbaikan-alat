@@ -94,7 +94,7 @@ export async function PATCH(
 
     if (nip.length > 50 || nama.length > 120 || jabatan.length > 120) {
       return NextResponse.json(
-        { message: "NIP, nama, atau jabatan terlalu panjang." },
+        { message: "NIP atau nama terlalu panjang." },
         { status: 400 }
       );
     }

@@ -6,6 +6,7 @@ import UserReportModal, {
   type UserReportCategory,
   type UserReportModalPayload,
 } from "@/src/components/reports/UserReportModal";
+import { getRoleLabel } from "@/src/lib/roles";
 
 type UserReportPageClientProps = {
   defaultNamaPelapor: string;
@@ -92,8 +93,8 @@ export default function UserReportPageClient({
             Buat Laporan Perbaikan Alat
           </h1>
           <p className="mt-4 max-w-2xl text-slate-600">
-            Isi data laporan melalui modal, lalu laporan akan masuk ke approval
-            Admin 1 sampai Admin 6.
+            Isi data laporan melalui modal, lalu laporan akan masuk ke approval{" "}
+            {getRoleLabel("ADMIN_1")} sampai {getRoleLabel("ADMIN_6")}.
           </p>
 
           <button

@@ -80,6 +80,7 @@ export type ReportRow = {
     nama: string;
     jabatan: string | null;
     nip: string | null;
+    role: AppRole;
   };
 
   histories: ReportApprovalHistoryRow[];
@@ -101,6 +102,7 @@ const reportInclude = {
       nama: true,
       jabatan: true,
       nip: true,
+      role: true,
     },
   },
   histories: {
@@ -162,6 +164,7 @@ function normalizeReportRow(row: ReportWithUser): ReportRow {
       nama: row.user.nama,
       jabatan: row.user.jabatan,
       nip: row.user.nip,
+      role: row.user.role,
     },
 
     histories: row.histories.map((history) => ({
@@ -269,23 +272,48 @@ export async function findUserByNipRaw(
 }
 
 export async function listUsersWithReportCountRaw() {
-  return prisma.user.findMany({
-    select: {
-      id: true,
-      nama: true,
-      jabatan: true,
-      nip: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-      _count: {
-        select: {
-          reports: true,
+  const [users, activeReportCounts] = await Promise.all([
+    prisma.user.findMany({
+      select: {
+        id: true,
+        nama: true,
+        jabatan: true,
+        nip: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            reports: true,
+          },
         },
       },
+      orderBy: [{ role: "asc" }, { nama: "asc" }],
+    }),
+    prisma.report.groupBy({
+      by: ["userId"],
+      where: {
+        status: {
+          notIn: ["DISETUJUI_FINAL", "DITOLAK"],
+        },
+      },
+      _count: {
+        _all: true,
+      },
+    }),
+  ]);
+
+  const activeReportCountByUser = new Map(
+    activeReportCounts.map((item) => [item.userId, item._count._all])
+  );
+
+  return users.map((user) => ({
+    ...user,
+    _count: {
+      ...user._count,
+      activeReports: activeReportCountByUser.get(user.id) || 0,
     },
-    orderBy: [{ role: "asc" }, { nama: "asc" }],
-  });
+  }));
 }
 
 export async function listReportsRaw(userId?: number) {

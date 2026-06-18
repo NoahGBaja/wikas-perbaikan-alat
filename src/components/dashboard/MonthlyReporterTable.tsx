@@ -59,7 +59,7 @@ function MonthlyReporterTable({
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 2000);
+    }, 1500);
 
     return () => {
       window.clearTimeout(timer);

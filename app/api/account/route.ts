@@ -47,7 +47,7 @@ export async function PATCH(req: Request) {
 
     if (!isAdminRole(authUser.role)) {
       return NextResponse.json(
-        { message: "Hanya admin yang dapat mengubah nama dan jabatan." },
+        { message: "Hanya admin yang dapat mengubah nama." },
         { status: 403 }
       );
     }
@@ -73,7 +73,7 @@ export async function PATCH(req: Request) {
 
     if (jabatan.length > 120) {
       return NextResponse.json(
-        { message: "Jabatan maksimal 120 karakter." },
+        { message: "Role terlalu panjang." },
         { status: 400 }
       );
     }

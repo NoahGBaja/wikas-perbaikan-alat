@@ -68,7 +68,7 @@ export async function requireSessionUser() {
   const user = await getSessionUser();
 
   if (!user) {
-    redirect("/login");
+    redirect("/login?expired=1");
   }
 
   return user;

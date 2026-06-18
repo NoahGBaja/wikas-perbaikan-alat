@@ -1,4 +1,5 @@
 import type { AppRole } from "@/src/lib/roles";
+import { getRoleLabel } from "@/src/lib/roles";
 
 export type Role = AppRole;
 
@@ -99,7 +100,7 @@ export function getWorkflowMessage(role: Role, status: ReportStatus) {
   }
 
   if (role !== requiredRole) {
-    return `Belum giliran Anda. Laporan ini sedang menunggu ${requiredRole}.`;
+    return `Belum giliran Anda. Laporan ini sedang menunggu ${getRoleLabel(requiredRole)}.`;
   }
 
   return "Giliran Anda untuk melakukan ACC atau TOLAK.";

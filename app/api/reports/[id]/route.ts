@@ -12,7 +12,7 @@ import {
   validateReportAttachmentUpload,
 } from "@/src/lib/uploads";
 import { validateMutationRequest } from "@/src/lib/request-security";
-import { isAdminRole } from "@/src/lib/roles";
+import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
 
 function parseReportId(id: string) {
   const reportId = Number(id);
@@ -149,7 +149,7 @@ export async function PATCH(
       return NextResponse.json(
         {
           message:
-            "Laporan hanya bisa diubah saat masih menunggu persetujuan Admin 1.",
+            `Laporan hanya bisa diubah saat masih menunggu persetujuan ${getRoleLabel("ADMIN_1")}.`,
         },
         { status: 400 }
       );
@@ -290,7 +290,7 @@ export async function DELETE(
       return NextResponse.json(
         {
           message:
-            "Laporan hanya bisa dihapus saat masih menunggu persetujuan Admin 1.",
+            `Laporan hanya bisa dihapus saat masih menunggu persetujuan ${getRoleLabel("ADMIN_1")}.`,
         },
         { status: 400 }
       );

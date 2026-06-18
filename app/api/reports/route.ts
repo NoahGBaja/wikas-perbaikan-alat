@@ -12,7 +12,7 @@ import {
 } from "@/src/lib/uploads";
 import { listReportsRaw } from "@/src/lib/raw-data";
 import { validateMutationRequest } from "@/src/lib/request-security";
-import { isAdminRole } from "@/src/lib/roles";
+import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
 
 export async function POST(req: Request) {
   try {
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({
-      message: "Laporan berhasil dikirim dan menunggu persetujuan Admin 1.",
+      message: `Laporan berhasil dikirim dan menunggu persetujuan ${getRoleLabel("ADMIN_1")}.`,
       report,
     });
   } catch (error) {

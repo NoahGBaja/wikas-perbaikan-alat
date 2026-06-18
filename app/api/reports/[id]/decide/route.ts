@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getApiSessionUser } from "@/src/lib/session";
 import { findReportByIdRaw } from "@/src/lib/raw-data";
-import { isAdminRole } from "@/src/lib/roles";
+import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
 import {
   canRoleDecide,
   getNextApprovedStatus,
@@ -172,7 +172,7 @@ export async function POST(
     if (!canRoleDecide(authUser.role, report.status)) {
       return NextResponse.json(
         {
-          message: `Belum giliran Anda. Laporan ini sedang menunggu ${requiredRole}.`,
+          message: `Belum giliran Anda. Laporan ini sedang menunggu ${getRoleLabel(requiredRole)}.`,
         },
         { status: 403 }
       );

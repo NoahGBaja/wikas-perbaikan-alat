@@ -25,6 +25,7 @@ import {
   type ReportStatus,
 } from "@/lib/report-helpers";
 import type { AppRole } from "@/src/lib/roles";
+import { getRoleLabel } from "@/src/lib/roles";
 
 type ReportHistoryItem = {
   id: number;
@@ -137,7 +138,7 @@ export default function AdminHistoryPage() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 2000);
+    }, 1500);
 
     return () => {
       window.clearTimeout(timer);
@@ -220,7 +221,7 @@ export default function AdminHistoryPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-8 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mb-6 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-600">
               Admin Panel
@@ -233,24 +234,24 @@ export default function AdminHistoryPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
             <button
               type="button"
-              onClick={() => void handleExportExcel()}
-              disabled={exporting}
-              className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
+              onClick={() => router.push("/dashboard/admin")}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
             >
-              <Download className="h-4 w-4" />
-              {exporting ? "Mengekspor..." : "Export Excel"}
+              <ArrowLeft className="h-4 w-4 text-blue-600" />
+              Kembali
             </button>
 
             <button
               type="button"
-              onClick={() => router.push("/dashboard/admin")}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
+              onClick={() => void handleExportExcel()}
+              disabled={exporting}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              <ArrowLeft className="h-4 w-4 text-blue-600" />
-              Kembali
+              <Download className="h-4 w-4" />
+              {exporting ? "Mengekspor..." : "Export Excel"}
             </button>
           </div>
         </div>
@@ -265,7 +266,7 @@ export default function AdminHistoryPage() {
           <SummaryCard
             label="Disetujui Final"
             value={approvedFinalCount}
-            description="Lolos Admin 1 sampai Admin 6."
+            description={`Lolos ${getRoleLabel("ADMIN_1")} sampai ${getRoleLabel("ADMIN_6")}.`}
             colorClass="text-emerald-600"
           />
           <SummaryCard
@@ -513,7 +514,8 @@ function ReportDetailModal({
                 </p>
                 {rejectingAdmin ? (
                   <p className="mt-2 text-sm font-semibold text-rose-800">
-                    Ditolak oleh {rejectingAdmin.nama} ({rejectingAdmin.role})
+                    Ditolak oleh {rejectingAdmin.nama}{" "}
+                    ({getRoleLabel(rejectingAdmin.role)})
                   </p>
                 ) : null}
                 <p className="mt-2 whitespace-pre-line text-rose-700">
@@ -546,7 +548,7 @@ function ReportDetailModal({
                     >
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                         <p className="font-semibold text-slate-900">
-                          {history.admin.nama} ({history.admin.role})
+                          {history.admin.nama} ({getRoleLabel(history.admin.role)})
                         </p>
                         <p className="text-xs text-slate-500">
                           {formatTanggal(history.createdAt)}

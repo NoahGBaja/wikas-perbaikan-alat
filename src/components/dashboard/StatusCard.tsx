@@ -6,11 +6,13 @@ import StatusBadge from "./StatusBadge";
 import {
   formatKategori,
   formatSeverity,
+  formatStatus,
   formatTanggal,
   type ReportKategori,
   type ReportSeverity,
   type ReportStatus,
 } from "@/lib/report-helpers";
+import { getRoleLabel } from "@/src/lib/roles";
 
 export type StatusReportStatus = ReportStatus;
 
@@ -75,7 +77,7 @@ function getStatusUpdateLabel(report: StatusReportItem) {
   }
 
   if (isWaitingStatus(report.status)) {
-    return `Sedang menunggu approval ${report.status.replace("MENUNGGU_", "").replace("_", " ")}`;
+    return `Sedang menunggu approval ${formatStatus(report.status)}`;
   }
 
   return "Status laporan tidak diketahui";
@@ -224,7 +226,7 @@ export default function StatusCard({
               </p>
               <p className="mt-2 leading-7 text-amber-700">
                 Laporan kamu sedang berada di tahap{" "}
-                {report.status.replace("MENUNGGU_", "").replace("_", " ")}.
+                {formatStatus(report.status)}.
               </p>
             </div>
           ) : null}
@@ -236,7 +238,8 @@ export default function StatusCard({
               </p>
               {rejectingAdmin ? (
                 <p className="mt-2 text-sm font-semibold text-rose-800">
-                  Ditolak oleh {rejectingAdmin.nama} ({rejectingAdmin.role})
+                  Ditolak oleh {rejectingAdmin.nama}{" "}
+                  ({getRoleLabel(rejectingAdmin.role)})
                 </p>
               ) : null}
               <p className="mt-2 whitespace-pre-line leading-7 text-rose-700">
@@ -251,7 +254,7 @@ export default function StatusCard({
                 Laporan Disetujui Final
               </p>
               <p className="mt-2 leading-7 text-emerald-700">
-                Laporan kamu sudah disetujui sampai Admin 6.
+                Laporan kamu sudah disetujui sampai {getRoleLabel("ADMIN_6")}.
               </p>
             </div>
           ) : null}
@@ -273,7 +276,7 @@ export default function StatusCard({
                     ].join(" ")}
                   >
                     <p className="font-semibold">
-                      {history.admin.nama} ({history.admin.role}){" "}
+                      {history.admin.nama} ({getRoleLabel(history.admin.role)}){" "}
                       {history.action === "TOLAK" ? "menolak" : "menyetujui"}{" "}
                       laporan
                     </p>

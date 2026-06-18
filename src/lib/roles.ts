@@ -19,6 +19,23 @@ export type AppRole =
   | "ADMIN_6"
   | "USER";
 
+export const ROLE_LABELS: Record<AppRole, string> = {
+  SUPER_ADMIN: "Super Admin",
+  USER: "PJ Ruangan",
+  ADMIN_1: "PJ Perbaikan",
+  ADMIN_2: "PU",
+  ADMIN_3: "BMN",
+  ADMIN_4: "PPK",
+  ADMIN_5: "PP",
+  ADMIN_6: "IPP",
+};
+
+export function getRoleLabel(role?: string | null) {
+  if (!role) return "-";
+
+  return ROLE_LABELS[role as AppRole] || role;
+}
+
 export function isAdminRole(role?: string | null) {
   return !!role && ALL_ADMIN_ROLES.some((adminRole) => adminRole === role);
 }

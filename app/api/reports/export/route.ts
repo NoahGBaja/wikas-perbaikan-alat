@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import { NextResponse } from "next/server";
 import { listReportsRaw } from "@/src/lib/raw-data";
 import { getApiSessionUser } from "@/src/lib/session";
-import { isAdminRole } from "@/src/lib/roles";
+import { getRoleLabel, isAdminRole } from "@/src/lib/roles";
 import {
   formatKategori,
   formatSeverity,
@@ -24,7 +24,7 @@ function getHistorySummary(
     .map((history) => {
       const note = history.note ? ` | Catatan: ${history.note}` : "";
 
-      return `${formatTanggal(history.createdAt)} - ${history.admin.nama} (${history.admin.role}) ${history.action}: ${formatStatus(history.fromStatus)} -> ${formatStatus(history.toStatus)}${note}`;
+      return `${formatTanggal(history.createdAt)} - ${history.admin.nama} (${getRoleLabel(history.admin.role)}) ${history.action}: ${formatStatus(history.fromStatus)} -> ${formatStatus(history.toStatus)}${note}`;
     })
     .join("\n");
 }
@@ -38,7 +38,7 @@ function getDeclinedBy(
 
   if (!rejection) return "-";
 
-  return `${rejection.admin.nama} (${rejection.admin.role})`;
+  return `${rejection.admin.nama} (${getRoleLabel(rejection.admin.role)})`;
 }
 
 function createFileName() {
@@ -76,7 +76,7 @@ export async function GET() {
       { header: "ID Laporan", key: "id", width: 14 },
       { header: "Nama Pelapor", key: "namaPelapor", width: 24 },
       { header: "NIP Pelapor", key: "nipPelapor", width: 22 },
-      { header: "Jabatan Pelapor", key: "jabatanPelapor", width: 24 },
+      { header: "Role Pelapor", key: "rolePelapor", width: 30 },
       { header: "Jenis Perbaikan", key: "kategori", width: 24 },
       { header: "Nama Barang", key: "namaBarang", width: 24 },
       { header: "Kode Ruangan", key: "kodeRuangan", width: 18 },
@@ -113,7 +113,7 @@ export async function GET() {
         id: `LP-${String(report.id).padStart(4, "0")}`,
         namaPelapor: report.namaPelapor || report.user.nama,
         nipPelapor: report.user.nip || "-",
-        jabatanPelapor: report.user.jabatan || "-",
+        rolePelapor: getRoleLabel(report.user.role),
         kategori: formatKategori(report.kategori),
         namaBarang: report.namaBarang,
         kodeRuangan: report.nomorRuangan || "-",

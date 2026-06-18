@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BriefcaseBusiness, CircleUserRound, ShieldCheck } from "lucide-react";
+import { CircleUserRound, ShieldCheck } from "lucide-react";
 import UserDashboardLogoutButton from "./UserDashboardLogoutButton";
+import { getRoleLabel } from "@/src/lib/roles";
 
 type UserDashboardProps = {
   currentUser: {
@@ -62,14 +63,9 @@ export default function UserDashboard({ currentUser }: UserDashboardProps) {
                     {currentUser.nama}
                   </p>
 
-                  <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                    <BriefcaseBusiness className="h-3.5 w-3.5" />
-                    <span>{currentUser.jabatan || "Pegawai Internal"}</span>
-                  </div>
-
                   <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
                     <ShieldCheck className="h-3.5 w-3.5" />
-                    {currentUser.role}
+                    {getRoleLabel(currentUser.role)}
                   </div>
 
                   <div className="mt-2 text-[11px] text-slate-500">

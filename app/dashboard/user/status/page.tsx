@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import StatusList from "@/src/components/dashboard/StatusList";
+import { getRoleLabel } from "@/src/lib/roles";
 import type {
   StatusReportItem,
   StatusReportStatus,
@@ -72,7 +73,7 @@ export default function UserStatusPage() {
 
   async function handleDeleteReport(reportId: number) {
     const confirmed = window.confirm(
-      "Hapus laporan ini? Aksi ini hanya tersedia saat laporan masih menunggu Admin 1."
+      `Hapus laporan ini? Aksi ini hanya tersedia saat laporan masih menunggu ${getRoleLabel("ADMIN_1")}.`
     );
 
     if (!confirmed) return;
@@ -121,7 +122,7 @@ export default function UserStatusPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-10 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
               Dashboard Pegawai
@@ -130,16 +131,16 @@ export default function UserStatusPage() {
               Cek Status Laporan
             </h1>
             <p className="mt-3 max-w-2xl text-slate-600">
-              Lihat posisi laporan kamu dalam alur persetujuan Admin 1 sampai
-              Admin 6.
+              Lihat posisi laporan kamu dalam alur persetujuan{" "}
+              {getRoleLabel("ADMIN_1")} sampai {getRoleLabel("ADMIN_6")}.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3 md:justify-end">
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
             <button
               type="button"
               onClick={() => router.push("/dashboard/user")}
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50"
             >
               Kembali
             </button>
@@ -147,7 +148,7 @@ export default function UserStatusPage() {
             <button
               type="button"
               onClick={() => router.push("/dashboard/user/report")}
-              className="rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-500"
+              className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-500"
             >
               Buat Laporan Baru
             </button>
@@ -187,7 +188,7 @@ export default function UserStatusPage() {
               {approvedReports}
             </p>
             <p className="mt-3 text-sm text-slate-500">
-              Sudah disetujui sampai Admin 6.
+              Sudah disetujui sampai {getRoleLabel("ADMIN_6")}.
             </p>
           </div>
 

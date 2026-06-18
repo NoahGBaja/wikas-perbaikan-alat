@@ -20,6 +20,7 @@ function getDefaultDashboard(role: AppRole) {
 export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const auth = getAuthPayload(request);
+  const hasAuthCookie = request.cookies.has(AUTH_COOKIE_NAME);
 
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isAuthRoute =
@@ -27,7 +28,24 @@ export function proxy(request: NextRequest) {
     pathname === "/forgot-password" ||
     pathname.startsWith("/reset-password/");
 
+  if (isAuthRoute && request.nextUrl.searchParams.get("expired") === "1") {
+    const response = NextResponse.next();
+    response.cookies.delete(AUTH_COOKIE_NAME);
+
+    return response;
+  }
+
   if (!auth) {
+    if (hasAuthCookie) {
+      const response = isDashboardRoute
+        ? NextResponse.redirect(new URL("/login?expired=1", request.url))
+        : NextResponse.next();
+
+      response.cookies.delete(AUTH_COOKIE_NAME);
+
+      return response;
+    }
+
     if (isDashboardRoute) {
       return NextResponse.redirect(new URL("/login", request.url));
     }

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { getRoleLabel } from "@/src/lib/roles";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -29,12 +30,12 @@ export function formatKategori(kategori: ReportKategori) {
 }
 
 export function formatStatus(status: ReportStatus) {
-  if (status === "MENUNGGU_ADMIN_1") return "Menunggu Admin 1";
-  if (status === "MENUNGGU_ADMIN_2") return "Menunggu Admin 2";
-  if (status === "MENUNGGU_ADMIN_3") return "Menunggu Admin 3";
-  if (status === "MENUNGGU_ADMIN_4") return "Menunggu Admin 4";
-  if (status === "MENUNGGU_ADMIN_5") return "Menunggu Admin 5";
-  if (status === "MENUNGGU_ADMIN_6") return "Menunggu Admin 6";
+  if (status === "MENUNGGU_ADMIN_1") return `Menunggu ${getRoleLabel("ADMIN_1")}`;
+  if (status === "MENUNGGU_ADMIN_2") return `Menunggu ${getRoleLabel("ADMIN_2")}`;
+  if (status === "MENUNGGU_ADMIN_3") return `Menunggu ${getRoleLabel("ADMIN_3")}`;
+  if (status === "MENUNGGU_ADMIN_4") return `Menunggu ${getRoleLabel("ADMIN_4")}`;
+  if (status === "MENUNGGU_ADMIN_5") return `Menunggu ${getRoleLabel("ADMIN_5")}`;
+  if (status === "MENUNGGU_ADMIN_6") return `Menunggu ${getRoleLabel("ADMIN_6")}`;
   if (status === "DISETUJUI_FINAL") return "Disetujui Final";
   return "Ditolak";
 }
@@ -63,31 +64,31 @@ export function getStatusClass(status: ReportStatus) {
 
 export function getStatusDescription(status: ReportStatus) {
   if (status === "MENUNGGU_ADMIN_1") {
-    return "Laporan baru masuk dan menunggu persetujuan Admin 1.";
+    return `Laporan baru masuk dan menunggu persetujuan ${getRoleLabel("ADMIN_1")}.`;
   }
 
   if (status === "MENUNGGU_ADMIN_2") {
-    return "Sudah disetujui Admin 1 dan menunggu persetujuan Admin 2.";
+    return `Sudah disetujui ${getRoleLabel("ADMIN_1")} dan menunggu persetujuan ${getRoleLabel("ADMIN_2")}.`;
   }
 
   if (status === "MENUNGGU_ADMIN_3") {
-    return "Sudah disetujui Admin 2 dan menunggu persetujuan Admin 3.";
+    return `Sudah disetujui ${getRoleLabel("ADMIN_2")} dan menunggu persetujuan ${getRoleLabel("ADMIN_3")}.`;
   }
 
   if (status === "MENUNGGU_ADMIN_4") {
-    return "Sudah disetujui Admin 3 dan menunggu persetujuan Admin 4.";
+    return `Sudah disetujui ${getRoleLabel("ADMIN_3")} dan menunggu persetujuan ${getRoleLabel("ADMIN_4")}.`;
   }
 
   if (status === "MENUNGGU_ADMIN_5") {
-    return "Sudah disetujui Admin 4 dan menunggu persetujuan Admin 5.";
+    return `Sudah disetujui ${getRoleLabel("ADMIN_4")} dan menunggu persetujuan ${getRoleLabel("ADMIN_5")}.`;
   }
 
   if (status === "MENUNGGU_ADMIN_6") {
-    return "Sudah disetujui Admin 5 dan menunggu persetujuan Admin 6.";
+    return `Sudah disetujui ${getRoleLabel("ADMIN_5")} dan menunggu persetujuan ${getRoleLabel("ADMIN_6")}.`;
   }
 
   if (status === "DISETUJUI_FINAL") {
-    return "Laporan sudah disetujui final oleh seluruh admin.";
+    return "Laporan sudah disetujui final oleh seluruh penanggung jawab.";
   }
 
   return "Laporan ditolak dan alur berhenti permanen.";

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/src/lib/prisma";
+import { getRoleLabel } from "@/src/lib/roles";
 import type { MonthlyStatsResponse } from "@/src/lib/monthly-report-stats-types";
 import type { ReportStatus } from "@/src/lib/workflow";
 
@@ -296,32 +297,32 @@ export async function getMonthlyReportStats(
     statusBreakdown: [
       {
         key: "MENUNGGU_ADMIN_1",
-        label: "Menunggu Admin 1",
+        label: `Menunggu ${getRoleLabel("ADMIN_1")}`,
         total: statusCounts.MENUNGGU_ADMIN_1,
       },
       {
         key: "MENUNGGU_ADMIN_2",
-        label: "Menunggu Admin 2",
+        label: `Menunggu ${getRoleLabel("ADMIN_2")}`,
         total: statusCounts.MENUNGGU_ADMIN_2,
       },
       {
         key: "MENUNGGU_ADMIN_3",
-        label: "Menunggu Admin 3",
+        label: `Menunggu ${getRoleLabel("ADMIN_3")}`,
         total: statusCounts.MENUNGGU_ADMIN_3,
       },
       {
         key: "MENUNGGU_ADMIN_4",
-        label: "Menunggu Admin 4",
+        label: `Menunggu ${getRoleLabel("ADMIN_4")}`,
         total: statusCounts.MENUNGGU_ADMIN_4,
       },
       {
         key: "MENUNGGU_ADMIN_5",
-        label: "Menunggu Admin 5",
+        label: `Menunggu ${getRoleLabel("ADMIN_5")}`,
         total: statusCounts.MENUNGGU_ADMIN_5,
       },
       {
         key: "MENUNGGU_ADMIN_6",
-        label: "Menunggu Admin 6",
+        label: `Menunggu ${getRoleLabel("ADMIN_6")}`,
         total: statusCounts.MENUNGGU_ADMIN_6,
       },
       {

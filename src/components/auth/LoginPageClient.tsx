@@ -58,7 +58,7 @@ export default function LoginPageClient() {
 
       const redirectTo =
         data?.redirectTo ||
-        (data?.user?.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/user");
+        (data?.user?.role === "USER" ? "/dashboard/user" : "/dashboard/admin");
 
       toast.success("Login berhasil", {
         description: "Anda akan diarahkan ke dashboard.",

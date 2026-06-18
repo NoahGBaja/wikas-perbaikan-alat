@@ -24,6 +24,7 @@ import {
   type ReportStatus,
 } from "@/lib/report-helpers";
 import type { AppRole } from "@/src/lib/roles";
+import { getRoleLabel } from "@/src/lib/roles";
 import { canRoleDecide, getWorkflowMessage } from "@/src/lib/workflow";
 
 type AdminDashboardProps = {
@@ -227,7 +228,7 @@ export default function AdminDashboard({
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-8 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <header className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
               Admin Panel
@@ -241,11 +242,11 @@ export default function AdminDashboard({
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
             <button
               type="button"
               onClick={() => router.push("/dashboard/admin/history")}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
             >
               <History className="h-4 w-4 text-blue-600" />
               Riwayat
@@ -254,7 +255,7 @@ export default function AdminDashboard({
             <button
               type="button"
               onClick={() => router.push("/dashboard/admin/statistik")}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
             >
               <BarChart3 className="h-4 w-4 text-blue-600" />
               Statistik
@@ -264,7 +265,7 @@ export default function AdminDashboard({
               <button
                 type="button"
                 onClick={() => router.push("/dashboard/admin/users")}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
               >
                 <UserCog className="h-4 w-4 text-blue-600" />
                 Kelola User
@@ -274,7 +275,7 @@ export default function AdminDashboard({
             <button
               type="button"
               onClick={() => router.push("/dashboard/account")}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
             >
               <KeyRound className="h-4 w-4 text-blue-600" />
               Akun
@@ -283,7 +284,7 @@ export default function AdminDashboard({
             <button
               type="button"
               onClick={() => void handleLogout()}
-              className="inline-flex items-center gap-2 rounded-2xl border border-rose-200 bg-white px-5 py-3 font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-white px-5 py-3 font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50"
             >
               <LogOut className="h-4 w-4" />
               Logout
@@ -303,8 +304,8 @@ export default function AdminDashboard({
                     {currentUser.nama}
                   </p>
                   <p className="text-sm text-slate-500">
-                    {currentUser.jabatan || "Admin Sistem"} -{" "}
-                    {currentUser.role} - NIP: {currentUser.nip || "-"}
+                    {getRoleLabel(currentUser.role)} - NIP:{" "}
+                    {currentUser.nip || "-"}
                   </p>
                 </div>
               </div>
@@ -605,7 +606,7 @@ export default function AdminDashboard({
                         {selectedReportRejectingAdmin ? (
                           <p className="mt-2 text-sm font-semibold text-rose-800">
                             Ditolak oleh {selectedReportRejectingAdmin.nama}{" "}
-                            ({selectedReportRejectingAdmin.role})
+                            ({getRoleLabel(selectedReportRejectingAdmin.role)})
                           </p>
                         ) : null}
                         <p className="mt-2 text-rose-700">
@@ -637,7 +638,8 @@ export default function AdminDashboard({
                               className="rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-sm"
                             >
                               <p className="font-semibold text-slate-900">
-                                {history.admin.nama} ({history.admin.role}) -{" "}
+                                {history.admin.nama}{" "}
+                                ({getRoleLabel(history.admin.role)}) -{" "}
                                 {history.action}
                               </p>
                               <p className="mt-1 text-slate-500">
