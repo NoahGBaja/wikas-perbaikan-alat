@@ -12,6 +12,22 @@ export type ReportKategori =
 
 export type ReportSeverity = "RINGAN" | "SEDANG" | "BERAT";
 
+const USER_SEARCH_ROLES: AppRole[] = [
+  "SUPER_ADMIN",
+  "ADMIN_1",
+  "ADMIN_2",
+  "ADMIN_3",
+  "ADMIN_4",
+  "ADMIN_5",
+  "USER",
+];
+
+const USER_SEARCH_CATEGORY_SCOPES: AppCategoryScope[] = [
+  "FASILITAS_INVENTARIS",
+  "IT_ELEKTRONIK",
+  "LABORATORIUM",
+];
+
 export type SessionUserRow = {
   id: number;
   nama: string;
@@ -293,9 +309,34 @@ export async function findUserByNipRaw(
   });
 }
 
-export async function listUsersWithReportCountRaw() {
-  const [users, activeReportCounts] = await Promise.all([
+export async function listUsersWithReportCountRaw(options: {
+  search?: string;
+  take?: number;
+  skip?: number;
+} = {}) {
+  const search = options.search?.trim() || "";
+  const take = Math.min(Math.max(options.take || 12, 1), 10000);
+  const skip = Math.max(options.skip || 0, 0);
+  const normalizedSearch = search.toUpperCase();
+  const roleSearch = USER_SEARCH_ROLES.find((role) => role === normalizedSearch);
+  const categorySearch = USER_SEARCH_CATEGORY_SCOPES.find(
+    (category) => category === normalizedSearch,
+  );
+  const where: Prisma.UserWhereInput | undefined = search
+    ? {
+        OR: [
+          { nama: { contains: search } },
+          { jabatan: { contains: search } },
+          { nip: { contains: search } },
+          ...(roleSearch ? [{ role: roleSearch }] : []),
+          ...(categorySearch ? [{ categoryScope: categorySearch }] : []),
+        ],
+      }
+    : undefined;
+
+  const [users, total] = await Promise.all([
     prisma.user.findMany({
+      where,
       select: {
         id: true,
         nama: true,
@@ -313,31 +354,46 @@ export async function listUsersWithReportCountRaw() {
         },
       },
       orderBy: [{ role: "asc" }, { nama: "asc" }],
+      skip,
+      take,
     }),
-    prisma.report.groupBy({
-      by: ["userId"],
-      where: {
-        status: {
-          notIn: ["DISETUJUI_FINAL", "DITOLAK"],
-        },
-      },
-      _count: {
-        _all: true,
-      },
-    }),
+    prisma.user.count({ where }),
   ]);
+
+  const userIds = users.map((user) => user.id);
+  const activeReportCounts = userIds.length
+    ? await prisma.report.groupBy({
+        by: ["userId"],
+        where: {
+          userId: {
+            in: userIds,
+          },
+          status: {
+            notIn: ["DISETUJUI_FINAL", "DITOLAK"],
+          },
+        },
+        _count: {
+          _all: true,
+        },
+      })
+    : [];
 
   const activeReportCountByUser = new Map(
     activeReportCounts.map((item) => [item.userId, item._count._all])
   );
 
-  return users.map((user) => ({
-    ...user,
-    _count: {
-      ...user._count,
-      activeReports: activeReportCountByUser.get(user.id) || 0,
-    },
-  }));
+  return {
+    users: users.map((user) => ({
+      ...user,
+      _count: {
+        ...user._count,
+        activeReports: activeReportCountByUser.get(user.id) || 0,
+      },
+    })),
+    total,
+    limit: take,
+    offset: skip,
+  };
 }
 
 export async function listReportsRaw(userId?: number) {

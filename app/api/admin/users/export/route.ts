@@ -24,7 +24,7 @@ export async function GET() {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    const users = await listUsersWithReportCountRaw();
+    const { users } = await listUsersWithReportCountRaw({ take: 10000 });
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "WIKAS Perbaikan Alat";
     workbook.created = new Date();

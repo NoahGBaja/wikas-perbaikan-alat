@@ -60,7 +60,17 @@ async function requireSuperAdmin() {
   return { authUser };
 }
 
-export async function GET() {
+function parsePositiveInt(value: string | null, fallback: number) {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+export async function GET(req: Request) {
   try {
     const access = await requireSuperAdmin();
 
@@ -68,9 +78,17 @@ export async function GET() {
       return access.error;
     }
 
-    const users = await listUsersWithReportCountRaw();
+    const url = new URL(req.url);
+    const search = url.searchParams.get("q") || "";
+    const limit = parsePositiveInt(url.searchParams.get("limit"), 12);
+    const offset = parsePositiveInt(url.searchParams.get("offset"), 0);
+    const result = await listUsersWithReportCountRaw({
+      search,
+      take: limit,
+      skip: offset,
+    });
 
-    return NextResponse.json({ users });
+    return NextResponse.json(result);
   } catch (error) {
     console.error("GET_ADMIN_USERS_ERROR:", error);
 

@@ -38,6 +38,8 @@ type AdminDashboardProps = {
   title?: string;
 };
 
+const REPORT_PAGE_SIZE = 50;
+
 type ReportHistoryItem = {
   id: number;
   action: "ACC" | "TOLAK";
@@ -120,6 +122,7 @@ export default function AdminDashboard({
   const [decisionNote, setDecisionNote] = useState("");
   const [submitLoading, setSubmitLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [visibleReportLimit, setVisibleReportLimit] = useState(REPORT_PAGE_SIZE);
 
   async function loadReports() {
     try {
@@ -133,6 +136,7 @@ export default function AdminDashboard({
       }
 
       setReports(data.reports || []);
+      setVisibleReportLimit(REPORT_PAGE_SIZE);
     } catch (error) {
       console.error("LOAD_ADMIN_REPORTS_ERROR:", error);
       setMessage("Terjadi kesalahan saat memuat laporan.");
@@ -221,6 +225,11 @@ export default function AdminDashboard({
   const selectedReportRejectingAdmin = selectedReport
     ? getRejectingAdmin(selectedReport)
     : null;
+  const visibleReports = useMemo(
+    () => reports.slice(0, visibleReportLimit),
+    [reports, visibleReportLimit],
+  );
+  const hiddenReportCount = Math.max(reports.length - visibleReports.length, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-8 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
@@ -402,7 +411,7 @@ export default function AdminDashboard({
                 </thead>
 
                 <tbody>
-                  {reports.map((report) => (
+                  {visibleReports.map((report) => (
                       <tr
                         key={report.id}
                         className="border-b border-slate-100 transition hover:bg-blue-50/50"
@@ -460,6 +469,22 @@ export default function AdminDashboard({
                   ))}
                 </tbody>
               </table>
+              {hiddenReportCount > 0 ? (
+                <div className="border-t border-slate-100 bg-white p-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVisibleReportLimit(
+                        (current) => current + REPORT_PAGE_SIZE,
+                      )
+                    }
+                    className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                  >
+                    Tampilkan {Math.min(REPORT_PAGE_SIZE, hiddenReportCount)}{" "}
+                    laporan lagi
+                  </button>
+                </div>
+              ) : null}
             </div>
           )}
         </section>

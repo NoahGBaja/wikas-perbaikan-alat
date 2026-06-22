@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -94,11 +94,12 @@ export default function AdminUsersPage({
   const [drafts, setDrafts] = useState<DraftMap>({});
   const [passwordDrafts, setPasswordDrafts] = useState<PasswordDraftMap>({});
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [visibleLimit, setVisibleLimit] = useState(USER_PAGE_SIZE);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
   const [newUser, setNewUser] = useState({
@@ -111,12 +112,33 @@ export default function AdminUsersPage({
     password: "",
   });
 
-  async function loadUsers() {
+  const loadUsers = useCallback(async (options: {
+    append?: boolean;
+    search?: string;
+    offset?: number;
+  } = {}) => {
+    const append = options.append === true;
+    const search = options.search ?? "";
+    const offset = options.offset ?? 0;
+
     try {
-      setLoading(true);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
       setMessage("");
 
-      const res = await fetch("/api/admin/users", {
+      const params = new URLSearchParams({
+        limit: String(USER_PAGE_SIZE),
+        offset: String(offset),
+      });
+
+      if (search.trim()) {
+        params.set("q", search.trim());
+      }
+
+      const res = await fetch(`/api/admin/users?${params.toString()}`, {
         cache: "no-store",
       });
       const data = await readApiResponse(res);
@@ -132,11 +154,14 @@ export default function AdminUsersPage({
       }
 
       const loadedUsers = data.users || [];
-      setUsers(loadedUsers);
-      setDrafts({});
-      setPasswordDrafts({});
-      setVisibleLimit(USER_PAGE_SIZE);
-      setExpandedUserId(null);
+      setUsers((current) => (append ? [...current, ...loadedUsers] : loadedUsers));
+      setTotalUsers(Number(data.total || 0));
+
+      if (!append) {
+        setDrafts({});
+        setPasswordDrafts({});
+        setExpandedUserId(null);
+      }
     } catch (error) {
       console.error("LOAD_ADMIN_USERS_ERROR:", error);
       const errorMessage = "Terjadi kesalahan saat memuat daftar user.";
@@ -147,23 +172,23 @@ export default function AdminUsersPage({
       });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }
-
-  useEffect(() => {
-    void loadUsers();
   }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-      setVisibleLimit(USER_PAGE_SIZE);
     }, 1500);
 
     return () => {
       window.clearTimeout(timer);
     };
   }, [searchQuery]);
+
+  useEffect(() => {
+    void loadUsers({ search: debouncedSearchQuery });
+  }, [debouncedSearchQuery, loadUsers]);
 
   async function handleCreateUser() {
     try {
@@ -201,7 +226,7 @@ export default function AdminUsersPage({
         categoryScope: "",
         password: "",
       });
-      await loadUsers();
+      await loadUsers({ search: debouncedSearchQuery });
     } catch (error) {
       console.error("CREATE_ADMIN_USER_ERROR:", error);
       const errorMessage = "Terjadi kesalahan saat membuat user.";
@@ -264,7 +289,7 @@ export default function AdminUsersPage({
         return next;
       });
       setExpandedUserId(null);
-      await loadUsers();
+      await loadUsers({ search: debouncedSearchQuery });
     } catch (error) {
       console.error("UPDATE_ADMIN_USER_ERROR:", error);
       const errorMessage = "Terjadi kesalahan saat memperbarui user.";
@@ -355,6 +380,7 @@ export default function AdminUsersPage({
         description: responseMessage,
       });
       setUsers((current) => current.filter((user) => user.id !== userId));
+      setTotalUsers((current) => Math.max(current - 1, 0));
       setExpandedUserId((current) => (current === userId ? null : current));
       setDrafts((current) => {
         const next = { ...current };
@@ -372,36 +398,7 @@ export default function AdminUsersPage({
     }
   }
 
-  const filteredUsers = useMemo(() => {
-    const query = debouncedSearchQuery.trim().toLowerCase();
-
-    if (!query) {
-      return users;
-    }
-
-    return users.filter((user) =>
-      [
-        user.nama,
-        user.jabatan || "",
-        user.nip || "",
-        user.role,
-        getRoleLabel(user.role),
-        user.isSuperAdmin ? "Super Admin" : "",
-        user.categoryScope || "",
-        getCategoryScopeLabel(user.categoryScope),
-        String(user.id),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query)
-    );
-  }, [debouncedSearchQuery, users]);
-
-  const visibleUsers = useMemo(
-    () => filteredUsers.slice(0, visibleLimit),
-    [filteredUsers, visibleLimit]
-  );
-  const hiddenUserCount = Math.max(filteredUsers.length - visibleUsers.length, 0);
+  const hiddenUserCount = Math.max(totalUsers - users.length, 0);
 
   function getDraftForUser(user: UserItem) {
     return (
@@ -493,7 +490,7 @@ export default function AdminUsersPage({
 
             <button
               type="button"
-              onClick={() => void loadUsers()}
+              onClick={() => void loadUsers({ search: debouncedSearchQuery })}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50"
             >
               <RefreshCcw className="h-4 w-4" />
@@ -655,8 +652,7 @@ export default function AdminUsersPage({
               <div>
                 <h2 className="text-2xl font-bold text-slate-950">Daftar User</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  {visibleUsers.length} dari {filteredUsers.length} user
-                  ditampilkan.
+                  {users.length} dari {totalUsers} user ditampilkan.
                 </p>
               </div>
 
@@ -674,15 +670,15 @@ export default function AdminUsersPage({
 
           {loading ? (
             <div className="px-6 py-8 text-slate-600">Memuat daftar user...</div>
-          ) : users.length === 0 ? (
+          ) : users.length === 0 && !debouncedSearchQuery.trim() ? (
             <div className="px-6 py-8 text-slate-600">Belum ada user.</div>
-          ) : filteredUsers.length === 0 ? (
+          ) : users.length === 0 ? (
             <div className="px-6 py-8 text-slate-600">
               Tidak ada user yang cocok dengan pencarian.
             </div>
           ) : (
             <div className="space-y-2 p-4">
-              {visibleUsers.map((user) => {
+              {users.map((user) => {
                 const draft = getDraftForUser(user);
                 const activeReportCount = user._count.activeReports || 0;
                 const canDeleteUser =
@@ -917,11 +913,18 @@ export default function AdminUsersPage({
                 <button
                   type="button"
                   onClick={() =>
-                    setVisibleLimit((current) => current + USER_PAGE_SIZE)
+                    void loadUsers({
+                      append: true,
+                      search: debouncedSearchQuery,
+                      offset: users.length,
+                    })
                   }
+                  disabled={loadingMore}
                   className="w-full rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
                 >
-                  Tampilkan {Math.min(USER_PAGE_SIZE, hiddenUserCount)} user lagi
+                  {loadingMore
+                    ? "Memuat..."
+                    : `Tampilkan ${Math.min(USER_PAGE_SIZE, hiddenUserCount)} user lagi`}
                 </button>
               ) : null}
             </div>

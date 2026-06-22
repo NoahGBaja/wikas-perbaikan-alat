@@ -70,6 +70,8 @@ type ReportItem = {
   };
 };
 
+const HISTORY_PAGE_SIZE = 50;
+
 function isHistoryStatus(status: ReportStatus) {
   return status === "DISETUJUI_FINAL" || status === "DITOLAK";
 }
@@ -100,6 +102,7 @@ export default function AdminHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState("");
+  const [visibleLimit, setVisibleLimit] = useState(HISTORY_PAGE_SIZE);
 
   async function loadHistory() {
     try {
@@ -135,12 +138,17 @@ export default function AdminHistoryPage() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
+      setVisibleLimit(HISTORY_PAGE_SIZE);
     }, 1500);
 
     return () => {
       window.clearTimeout(timer);
     };
   }, [searchTerm]);
+
+  useEffect(() => {
+    setVisibleLimit(HISTORY_PAGE_SIZE);
+  }, [statusFilter]);
 
   async function handleExportExcel() {
     try {
@@ -214,6 +222,14 @@ export default function AdminHistoryPage() {
   const rejectedCount = reports.filter(
     (report) => report.status === "DITOLAK",
   ).length;
+  const pagedReports = useMemo(
+    () => visibleReports.slice(0, visibleLimit),
+    [visibleReports, visibleLimit],
+  );
+  const hiddenReportCount = Math.max(
+    visibleReports.length - pagedReports.length,
+    0,
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-8 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
@@ -288,7 +304,7 @@ export default function AdminHistoryPage() {
                   Arsip Laporan
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Menampilkan {visibleReports.length} dari {reports.length}{" "}
+                  Menampilkan {pagedReports.length} dari {visibleReports.length}{" "}
                   laporan.
                 </p>
               </div>
@@ -353,7 +369,7 @@ export default function AdminHistoryPage() {
                 </thead>
 
                 <tbody>
-                  {visibleReports.map((report) => (
+                  {pagedReports.map((report) => (
                     <tr
                       key={report.id}
                       className="border-b border-slate-100 transition hover:bg-blue-50/50"
@@ -411,6 +427,20 @@ export default function AdminHistoryPage() {
                   ))}
                 </tbody>
               </table>
+              {hiddenReportCount > 0 ? (
+                <div className="border-t border-slate-100 bg-white p-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVisibleLimit((current) => current + HISTORY_PAGE_SIZE)
+                    }
+                    className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                  >
+                    Tampilkan {Math.min(HISTORY_PAGE_SIZE, hiddenReportCount)}{" "}
+                    laporan lagi
+                  </button>
+                </div>
+              ) : null}
             </div>
           )}
         </section>
