@@ -2,7 +2,14 @@ import ExcelJS from "exceljs";
 import { NextResponse } from "next/server";
 import { listReportsRaw } from "@/src/lib/raw-data";
 import { getApiSessionUser } from "@/src/lib/session";
-import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
+import {
+  ADMIN_ROLES,
+  getCategoryScopeLabel,
+  getRoleLabel,
+  hasAdminAccess,
+  type AppCategoryScope,
+  type AppRole,
+} from "@/src/lib/roles";
 import { canAdminAccessReport } from "@/src/lib/workflow";
 import {
   formatKategori,
@@ -13,6 +20,180 @@ import {
 
 function isHistoryStatus(status: ReportStatus) {
   return status === "DISETUJUI_FINAL" || status === "DITOLAK";
+}
+
+const EXPORTABLE_ROLES: AppRole[] = ["USER", ...ADMIN_ROLES, "SUPER_ADMIN"];
+const EXPORTABLE_CATEGORIES: AppCategoryScope[] = [
+  "FASILITAS_INVENTARIS",
+  "IT_ELEKTRONIK",
+  "LABORATORIUM",
+];
+const EXPORT_COLUMNS = [
+  { header: "ID Laporan", key: "id", width: 14 },
+  { header: "Nama Pelapor", key: "namaPelapor", width: 24 },
+  { header: "NIP Pelapor", key: "nipPelapor", width: 22 },
+  { header: "Jenis Perbaikan", key: "kategori", width: 24 },
+  { header: "Nama Barang", key: "namaBarang", width: 24 },
+  { header: "Kode Ruangan", key: "kodeRuangan", width: 18 },
+  { header: "Lokasi", key: "lokasi", width: 22 },
+  { header: "Kode UAKPB", key: "kodeUakpb", width: 20 },
+  { header: "Kode", key: "kode", width: 18 },
+  { header: "Status", key: "status", width: 20 },
+  { header: "Ditolak Oleh", key: "declinedBy", width: 28 },
+  { header: "Alasan Penolakan", key: "alasanPenolakan", width: 36 },
+  { header: "Catatan Admin", key: "adminNotes", width: 36 },
+  { header: "Tanggal Dibuat", key: "createdAt", width: 18 },
+  { header: "Tanggal Final", key: "finishedAt", width: 18 },
+  { header: "Lampiran", key: "attachmentUrl", width: 34 },
+  { header: "Riwayat Approval", key: "approvalHistory", width: 80 },
+] as const;
+type ExportColumnKey = (typeof EXPORT_COLUMNS)[number]["key"];
+const EXPORT_COLUMN_KEYS = EXPORT_COLUMNS.map((column) => column.key);
+
+type ReportExportFilter = {
+  search: string;
+  status: ReportStatus | "SEMUA";
+  userId: number | null;
+  userQuery: string;
+  category: AppCategoryScope | "SEMUA";
+  rejectedByRole: AppRole | "SEMUA";
+  dateFrom: Date | null;
+  dateTo: Date | null;
+  fields: ExportColumnKey[];
+};
+
+function parseDateStart(value: string | null) {
+  if (!value) return null;
+
+  const date = new Date(`${value}T00:00:00.000`);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parseUserId(value: string | null) {
+  if (!value) return null;
+
+  const parsed = Number(value);
+
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function parseDateEnd(value: string | null) {
+  if (!value) return null;
+
+  const date = new Date(`${value}T23:59:59.999`);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parseRole(value: string | null): AppRole | "SEMUA" {
+  if (!value || value === "SEMUA") return "SEMUA";
+
+  return EXPORTABLE_ROLES.includes(value as AppRole)
+    ? (value as AppRole)
+    : "SEMUA";
+}
+
+function parseCategory(value: string | null): AppCategoryScope | "SEMUA" {
+  if (!value || value === "SEMUA") return "SEMUA";
+
+  return EXPORTABLE_CATEGORIES.includes(value as AppCategoryScope)
+    ? (value as AppCategoryScope)
+    : "SEMUA";
+}
+
+function parseStatus(value: string | null): ReportStatus | "SEMUA" {
+  if (!value || value === "SEMUA") return "SEMUA";
+  if (value === "DISETUJUI_FINAL" || value === "DITOLAK") return value;
+
+  return "SEMUA";
+}
+
+function parseExportFilter(req: Request): ReportExportFilter {
+  const url = new URL(req.url);
+  const requestedFields = (url.searchParams.get("fields") || "")
+    .split(",")
+    .map((field) => field.trim())
+    .filter((field): field is ExportColumnKey =>
+      EXPORT_COLUMN_KEYS.includes(field as ExportColumnKey),
+    );
+
+  return {
+    search: (url.searchParams.get("q") || "").trim().toLowerCase(),
+    status: parseStatus(url.searchParams.get("status")),
+    userId: parseUserId(url.searchParams.get("userId")),
+    userQuery: (url.searchParams.get("userQuery") || "").trim().toLowerCase(),
+    category: parseCategory(url.searchParams.get("category")),
+    rejectedByRole: parseRole(url.searchParams.get("rejectedByRole")),
+    dateFrom: parseDateStart(url.searchParams.get("dateFrom")),
+    dateTo: parseDateEnd(url.searchParams.get("dateTo")),
+    fields: requestedFields.length > 0 ? requestedFields : [...EXPORT_COLUMN_KEYS],
+  };
+}
+
+function getFinalDateValue(
+  report: Awaited<ReturnType<typeof listReportsRaw>>[number],
+) {
+  return report.rejectedAt || report.approvedAt || report.createdAt;
+}
+
+function reportMatchesFilter(
+  report: Awaited<ReturnType<typeof listReportsRaw>>[number],
+  filter: ReportExportFilter,
+) {
+  if (filter.status !== "SEMUA" && report.status !== filter.status) return false;
+  if (filter.userId && report.user.id !== filter.userId) return false;
+  if (
+    !filter.userId &&
+    filter.userQuery &&
+    ![report.user.nama, report.user.nip]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(filter.userQuery)
+  ) {
+    return false;
+  }
+  if (filter.category !== "SEMUA" && report.kategori !== filter.category) {
+    return false;
+  }
+
+  if (filter.rejectedByRole !== "SEMUA") {
+    const rejectingAdmin = report.histories
+      .slice()
+      .reverse()
+      .find((history) => history.action === "TOLAK")?.admin;
+
+    if (rejectingAdmin?.role !== filter.rejectedByRole) return false;
+  }
+
+  const finalDate = getFinalDateValue(report);
+
+  if (filter.dateFrom && finalDate < filter.dateFrom) return false;
+  if (filter.dateTo && finalDate > filter.dateTo) return false;
+
+  if (filter.search) {
+    const haystack = [
+      report.id,
+      report.namaBarang,
+      report.user.nama,
+      report.user.nip,
+      report.namaPelapor,
+      report.nomorRuangan,
+      report.kodeUakpb,
+      report.kode,
+      report.lokasi,
+      formatKategori(report.kategori),
+      getCategoryScopeLabel(report.kategori),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    if (!haystack.includes(filter.search)) return false;
+  }
+
+  return true;
 }
 
 function getHistorySummary(
@@ -48,7 +229,7 @@ function createFileName() {
   return `riwayat-laporan-${datePart}.xlsx`;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const authUser = await getApiSessionUser();
 
@@ -60,6 +241,7 @@ export async function GET() {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
+    const filter = parseExportFilter(req);
     const reports = (await listReportsRaw()).filter(
       (report) =>
         isHistoryStatus(report.status) &&
@@ -68,7 +250,8 @@ export async function GET() {
           isSuperAdmin: authUser.isSuperAdmin,
           categoryScope: authUser.categoryScope,
           reportCategory: report.kategori,
-        }),
+        }) &&
+        reportMatchesFilter(report, filter),
     );
 
     const workbook = new ExcelJS.Workbook();
@@ -79,26 +262,9 @@ export async function GET() {
       views: [{ state: "frozen", ySplit: 1 }],
     });
 
-    worksheet.columns = [
-      { header: "ID Laporan", key: "id", width: 14 },
-      { header: "Nama Pelapor", key: "namaPelapor", width: 24 },
-      { header: "NIP Pelapor", key: "nipPelapor", width: 22 },
-      { header: "Role Pelapor", key: "rolePelapor", width: 30 },
-      { header: "Jenis Perbaikan", key: "kategori", width: 24 },
-      { header: "Nama Barang", key: "namaBarang", width: 24 },
-      { header: "Kode Ruangan", key: "kodeRuangan", width: 18 },
-      { header: "Lokasi", key: "lokasi", width: 22 },
-      { header: "Kode UAKPB", key: "kodeUakpb", width: 20 },
-      { header: "Kode", key: "kode", width: 18 },
-      { header: "Status", key: "status", width: 20 },
-      { header: "Ditolak Oleh", key: "declinedBy", width: 28 },
-      { header: "Alasan Penolakan", key: "alasanPenolakan", width: 36 },
-      { header: "Catatan Admin", key: "adminNotes", width: 36 },
-      { header: "Tanggal Dibuat", key: "createdAt", width: 18 },
-      { header: "Tanggal Final", key: "finishedAt", width: 18 },
-      { header: "Lampiran", key: "attachmentUrl", width: 34 },
-      { header: "Riwayat Approval", key: "approvalHistory", width: 80 },
-    ];
+    worksheet.columns = EXPORT_COLUMNS.filter((column) =>
+      filter.fields.includes(column.key),
+    );
 
     worksheet.getRow(1).font = { bold: true };
     worksheet.getRow(1).alignment = {
@@ -119,7 +285,6 @@ export async function GET() {
         id: `LP-${String(report.id).padStart(4, "0")}`,
         namaPelapor: report.namaPelapor || report.user.nama,
         nipPelapor: report.user.nip || "-",
-        rolePelapor: getRoleLabel(report.user.role),
         kategori: formatKategori(report.kategori),
         namaBarang: report.namaBarang,
         kodeRuangan: report.nomorRuangan || "-",
@@ -150,7 +315,7 @@ export async function GET() {
 
     worksheet.autoFilter = {
       from: "A1",
-      to: "R1",
+      to: `${worksheet.getColumn(filter.fields.length).letter}1`,
     };
 
     const buffer = await workbook.xlsx.writeBuffer();

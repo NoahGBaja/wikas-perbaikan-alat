@@ -10,6 +10,7 @@ import {
   Download,
   Eye,
   FileText,
+  Filter,
   Search,
   X,
   XCircle,
@@ -22,8 +23,13 @@ import {
   type ReportKategori,
   type ReportStatus,
 } from "@/lib/report-helpers";
-import type { AppRole } from "@/src/lib/roles";
-import { getRoleLabel } from "@/src/lib/roles";
+import {
+  ADMIN_ROLES,
+  getCategoryScopeLabel,
+  getRoleLabel,
+  type AppCategoryScope,
+  type AppRole,
+} from "@/src/lib/roles";
 
 type ReportHistoryItem = {
   id: number;
@@ -67,10 +73,44 @@ type ReportItem = {
     nama: string;
     jabatan?: string | null;
     nip: string | null;
+    role: AppRole;
   };
 };
 
+type UserSearchResult = {
+  id: number;
+  nama: string;
+  nip: string | null;
+  role: AppRole;
+};
+
 const HISTORY_PAGE_SIZE = 50;
+const CATEGORY_FILTER_OPTIONS: AppCategoryScope[] = [
+  "FASILITAS_INVENTARIS",
+  "IT_ELEKTRONIK",
+  "LABORATORIUM",
+];
+const EXPORT_FIELD_OPTIONS = [
+  { key: "id", label: "ID Laporan" },
+  { key: "namaPelapor", label: "Nama Pelapor" },
+  { key: "nipPelapor", label: "NIP Pelapor" },
+  { key: "kategori", label: "Jenis Perbaikan" },
+  { key: "namaBarang", label: "Nama Barang" },
+  { key: "kodeRuangan", label: "Kode Ruangan" },
+  { key: "lokasi", label: "Lokasi" },
+  { key: "kodeUakpb", label: "Kode UAKPB" },
+  { key: "kode", label: "Kode" },
+  { key: "status", label: "Status" },
+  { key: "declinedBy", label: "Ditolak Oleh" },
+  { key: "alasanPenolakan", label: "Alasan Penolakan" },
+  { key: "adminNotes", label: "Catatan Admin" },
+  { key: "createdAt", label: "Tanggal Dibuat" },
+  { key: "finishedAt", label: "Tanggal Final" },
+  { key: "attachmentUrl", label: "Lampiran" },
+  { key: "approvalHistory", label: "Riwayat Approval" },
+] as const;
+type ExportFieldKey = (typeof EXPORT_FIELD_OPTIONS)[number]["key"];
+const DEFAULT_EXPORT_FIELDS = EXPORT_FIELD_OPTIONS.map((field) => field.key);
 
 function isHistoryStatus(status: ReportStatus) {
   return status === "DISETUJUI_FINAL" || status === "DITOLAK";
@@ -90,6 +130,10 @@ function getRejectingAdmin(report: ReportItem) {
     .find((history) => history.action === "TOLAK")?.admin;
 }
 
+function formatUserSearchLabel(user: UserSearchResult) {
+  return `${user.nama}${user.nip ? ` - ${user.nip}` : ""}`;
+}
+
 export default function AdminHistoryPage() {
   const router = useRouter();
   const [reports, setReports] = useState<ReportItem[]>([]);
@@ -99,10 +143,29 @@ export default function AdminHistoryPage() {
   const [statusFilter, setStatusFilter] = useState<
     "SEMUA" | "DISETUJUI_FINAL" | "DITOLAK"
   >("SEMUA");
+  const [userQuery, setUserQuery] = useState("");
+  const [debouncedUserQuery, setDebouncedUserQuery] = useState("");
+  const [selectedExportUser, setSelectedExportUser] =
+    useState<UserSearchResult | null>(null);
+  const [userSearchResults, setUserSearchResults] = useState<
+    UserSearchResult[]
+  >([]);
+  const [userSearchLoading, setUserSearchLoading] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<
+    AppCategoryScope | "SEMUA"
+  >("SEMUA");
+  const [rejectedByRoleFilter, setRejectedByRoleFilter] = useState<
+    AppRole | "SEMUA"
+  >("SEMUA");
+  const [dateFromFilter, setDateFromFilter] = useState("");
+  const [dateToFilter, setDateToFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState("");
   const [visibleLimit, setVisibleLimit] = useState(HISTORY_PAGE_SIZE);
+  const [showExportFilters, setShowExportFilters] = useState(false);
+  const [selectedExportFields, setSelectedExportFields] =
+    useState<ExportFieldKey[]>(DEFAULT_EXPORT_FIELDS);
 
   async function loadHistory() {
     try {
@@ -147,15 +210,102 @@ export default function AdminHistoryPage() {
   }, [searchTerm]);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedUserQuery(userQuery);
+      setVisibleLimit(HISTORY_PAGE_SIZE);
+    }, 1500);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [userQuery]);
+
+  useEffect(() => {
+    if (selectedExportUser && userQuery !== formatUserSearchLabel(selectedExportUser)) {
+      setSelectedExportUser(null);
+    }
+  }, [selectedExportUser, userQuery]);
+
+  useEffect(() => {
+    const query = debouncedUserQuery.trim();
+
+    if (query.length < 2 || selectedExportUser) {
+      setUserSearchResults([]);
+      setUserSearchLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function searchUsers() {
+      try {
+        setUserSearchLoading(true);
+
+        const params = new URLSearchParams({ q: query, limit: "8" });
+        const res = await fetch(`/api/admin/users/search?${params.toString()}`, {
+          cache: "no-store",
+        });
+        const data = await res.json();
+
+        if (cancelled) return;
+
+        setUserSearchResults(res.ok ? data.users || [] : []);
+      } catch (error) {
+        console.error("SEARCH_EXPORT_USERS_ERROR:", error);
+
+        if (!cancelled) {
+          setUserSearchResults([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setUserSearchLoading(false);
+        }
+      }
+    }
+
+    void searchUsers();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedUserQuery, selectedExportUser]);
+
+  useEffect(() => {
     setVisibleLimit(HISTORY_PAGE_SIZE);
-  }, [statusFilter]);
+  }, [
+    statusFilter,
+    debouncedUserQuery,
+    selectedExportUser,
+    categoryFilter,
+    rejectedByRoleFilter,
+    dateFromFilter,
+    dateToFilter,
+  ]);
 
   async function handleExportExcel() {
     try {
       setExporting(true);
       setMessage("");
 
-      const res = await fetch("/api/reports/export", {
+      const params = new URLSearchParams();
+
+      if (debouncedSearchTerm.trim()) params.set("q", debouncedSearchTerm.trim());
+      if (statusFilter !== "SEMUA") params.set("status", statusFilter);
+      if (selectedExportUser) {
+        params.set("userId", String(selectedExportUser.id));
+      } else if (debouncedUserQuery.trim()) {
+        params.set("userQuery", debouncedUserQuery.trim());
+      }
+      if (categoryFilter !== "SEMUA") params.set("category", categoryFilter);
+      if (rejectedByRoleFilter !== "SEMUA") {
+        params.set("rejectedByRole", rejectedByRoleFilter);
+      }
+      if (dateFromFilter) params.set("dateFrom", dateFromFilter);
+      if (dateToFilter) params.set("dateTo", dateToFilter);
+      params.set("fields", selectedExportFields.join(","));
+
+      const query = params.toString();
+      const res = await fetch(`/api/reports/export${query ? `?${query}` : ""}`, {
         cache: "no-store",
       });
 
@@ -192,8 +342,38 @@ export default function AdminHistoryPage() {
     return reports.filter((report) => {
       const matchesStatus =
         statusFilter === "SEMUA" || report.status === statusFilter;
+      const normalizedUserQuery = debouncedUserQuery.trim().toLowerCase();
+      const matchesUser =
+        selectedExportUser
+          ? report.user.id === selectedExportUser.id
+          : !normalizedUserQuery ||
+        [report.user.nama, report.user.nip]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedUserQuery);
+      const matchesCategory =
+        categoryFilter === "SEMUA" || report.kategori === categoryFilter;
+      const rejectingAdmin = getRejectingAdmin(report);
+      const matchesRejectedByRole =
+        rejectedByRoleFilter === "SEMUA" ||
+        rejectingAdmin?.role === rejectedByRoleFilter;
+      const finalDate = new Date(getFinalDate(report));
+      const matchesDateFrom =
+        !dateFromFilter || finalDate >= new Date(`${dateFromFilter}T00:00:00`);
+      const matchesDateTo =
+        !dateToFilter || finalDate <= new Date(`${dateToFilter}T23:59:59`);
 
-      if (!matchesStatus) return false;
+      if (
+        !matchesStatus ||
+        !matchesUser ||
+        !matchesCategory ||
+        !matchesRejectedByRole ||
+        !matchesDateFrom ||
+        !matchesDateTo
+      ) {
+        return false;
+      }
 
       if (!normalizedSearch) return true;
 
@@ -207,6 +387,8 @@ export default function AdminHistoryPage() {
         report.kodeUakpb,
         report.kode,
         report.lokasi,
+        formatKategori(report.kategori),
+        getCategoryScopeLabel(report.kategori),
       ]
         .filter(Boolean)
         .join(" ")
@@ -214,7 +396,17 @@ export default function AdminHistoryPage() {
 
       return haystack.includes(normalizedSearch);
     });
-  }, [reports, debouncedSearchTerm, statusFilter]);
+  }, [
+    reports,
+    debouncedSearchTerm,
+    statusFilter,
+    debouncedUserQuery,
+    selectedExportUser,
+    categoryFilter,
+    rejectedByRoleFilter,
+    dateFromFilter,
+    dateToFilter,
+  ]);
 
   const approvedFinalCount = reports.filter(
     (report) => report.status === "DISETUJUI_FINAL",
@@ -230,6 +422,28 @@ export default function AdminHistoryPage() {
     visibleReports.length - pagedReports.length,
     0,
   );
+  const activeExportFilterCount = [
+    selectedExportUser || debouncedUserQuery.trim(),
+    categoryFilter !== "SEMUA",
+    rejectedByRoleFilter !== "SEMUA",
+    dateFromFilter,
+    dateToFilter,
+    selectedExportFields.length !== EXPORT_FIELD_OPTIONS.length,
+  ].filter(Boolean).length;
+  const allExportFieldsSelected =
+    selectedExportFields.length === EXPORT_FIELD_OPTIONS.length;
+
+  function toggleExportField(field: ExportFieldKey) {
+    setSelectedExportFields((current) => {
+      if (current.includes(field)) {
+        return current.length > 1
+          ? current.filter((selectedField) => selectedField !== field)
+          : current;
+      }
+
+      return [...current, field];
+    });
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-8 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
@@ -298,50 +512,227 @@ export default function AdminHistoryPage() {
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-blue-100 bg-blue-50/30 px-5 py-4">
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Arsip Laporan
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Menampilkan {pagedReports.length} dari {visibleReports.length}{" "}
-                  laporan.
-                </p>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">
+                    Arsip Laporan
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Menampilkan {pagedReports.length} dari{" "}
+                    {visibleReports.length} laporan.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row xl:min-w-[720px]">
+                  <label className="flex h-11 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus:ring-blue-100">
+                    <Search className="h-4 w-4 text-slate-400" />
+                    <input
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Cari ID, pelapor, barang, kode"
+                      className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                    />
+                    {searchTerm !== debouncedSearchTerm ? (
+                      <span className="shrink-0 text-xs font-medium text-slate-400">
+                        Menunggu...
+                      </span>
+                    ) : null}
+                  </label>
+
+                  <select
+                    value={statusFilter}
+                    onChange={(event) =>
+                      setStatusFilter(
+                        event.target.value as
+                          | "SEMUA"
+                          | "DISETUJUI_FINAL"
+                          | "DITOLAK",
+                      )
+                    }
+                    className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 sm:min-w-[190px]"
+                  >
+                    <option value="SEMUA">Semua Status</option>
+                    <option value="DISETUJUI_FINAL">Disetujui Final</option>
+                    <option value="DITOLAK">Ditolak</option>
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowExportFilters((current) => !current)}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-blue-100 bg-white px-4 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50"
+                  >
+                    <Filter className="h-4 w-4" />
+                    Filter Export
+                    {activeExportFilterCount > 0 ? (
+                      <span className="rounded-full bg-blue-600 px-2 py-0.5 text-xs text-white">
+                        {activeExportFilterCount}
+                      </span>
+                    ) : null}
+                  </button>
+                </div>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row xl:min-w-[560px]">
-                <label className="flex h-11 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
-                  <Search className="h-4 w-4 text-slate-400" />
+              {showExportFilters ? (
+                <div className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-3 md:grid-cols-2 xl:grid-cols-5">
+                  <div className="relative">
+                    <label className="flex h-11 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
+                    <Search className="h-4 w-4 text-slate-400" />
+                    <input
+                      value={userQuery}
+                      onChange={(event) => setUserQuery(event.target.value)}
+                      placeholder="Cari nama/NIP user"
+                      className="w-full bg-transparent text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400"
+                    />
+                    {selectedExportUser ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedExportUser(null);
+                          setUserQuery("");
+                        }}
+                        className="shrink-0 text-xs font-semibold text-rose-600"
+                      >
+                        Hapus
+                      </button>
+                    ) : userQuery !== debouncedUserQuery ? (
+                      <span className="shrink-0 text-xs font-medium text-slate-400">
+                        Menunggu...
+                      </span>
+                    ) : null}
+                    </label>
+
+                    {debouncedUserQuery.trim().length >= 2 &&
+                    !selectedExportUser ? (
+                      <div className="absolute left-0 right-0 top-12 z-20 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                        {userSearchLoading ? (
+                          <div className="px-3 py-2 text-sm text-slate-500">
+                            Mencari user...
+                          </div>
+                        ) : userSearchResults.length > 0 ? (
+                          userSearchResults.map((user) => (
+                            <button
+                              key={user.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedExportUser(user);
+                                setUserQuery(formatUserSearchLabel(user));
+                                setUserSearchResults([]);
+                              }}
+                              className="block w-full px-3 py-2 text-left text-sm transition hover:bg-blue-50"
+                            >
+                              <span className="block font-semibold text-slate-800">
+                                {user.nama}
+                              </span>
+                              <span className="text-xs text-slate-500">
+                                NIP: {user.nip || "-"} -{" "}
+                                {getRoleLabel(user.role)}
+                              </span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-rose-600">
+                            Tidak ada user cocok.
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <select
+                    value={categoryFilter}
+                    onChange={(event) =>
+                      setCategoryFilter(
+                        event.target.value as AppCategoryScope | "SEMUA",
+                      )
+                    }
+                    className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="SEMUA">Semua Kategori</option>
+                    {CATEGORY_FILTER_OPTIONS.map((category) => (
+                      <option key={category} value={category}>
+                        {formatKategori(category)}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={rejectedByRoleFilter}
+                    onChange={(event) =>
+                      setRejectedByRoleFilter(
+                        event.target.value as AppRole | "SEMUA",
+                      )
+                    }
+                    className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="SEMUA">Penolak: Semua</option>
+                    {ADMIN_ROLES.map((role) => (
+                      <option key={role} value={role}>
+                        {getRoleLabel(role)}
+                      </option>
+                    ))}
+                  </select>
+
                   <input
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder="Cari ID, pelapor, barang, kode"
-                    className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                    type="date"
+                    value={dateFromFilter}
+                    onChange={(event) => setDateFromFilter(event.target.value)}
+                    className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    aria-label="Tanggal final mulai"
                   />
-                  {searchTerm !== debouncedSearchTerm ? (
-                    <span className="shrink-0 text-xs font-medium text-slate-400">
-                      Menunggu...
-                    </span>
-                  ) : null}
-                </label>
 
-                <select
-                  value={statusFilter}
-                  onChange={(event) =>
-                    setStatusFilter(
-                      event.target.value as
-                        | "SEMUA"
-                        | "DISETUJUI_FINAL"
-                        | "DITOLAK",
-                    )
-                  }
-                  className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 sm:min-w-[190px]"
-                >
-                  <option value="SEMUA">Semua Status</option>
-                  <option value="DISETUJUI_FINAL">Disetujui Final</option>
-                  <option value="DITOLAK">Ditolak</option>
-                </select>
-              </div>
+                  <input
+                    type="date"
+                    value={dateToFilter}
+                    onChange={(event) => setDateToFilter(event.target.value)}
+                    className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    aria-label="Tanggal final akhir"
+                  />
+
+                  <div className="md:col-span-2 xl:col-span-5">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-sm font-semibold text-slate-800">
+                          Field Export
+                        </p>
+
+                        <label className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700">
+                          <input
+                            type="checkbox"
+                            checked={allExportFieldsSelected}
+                            onChange={(event) =>
+                              setSelectedExportFields(
+                                event.target.checked
+                                  ? DEFAULT_EXPORT_FIELDS
+                                  : ["id"],
+                              )
+                            }
+                            className="h-4 w-4 accent-blue-600"
+                          />
+                          Pilih Semua
+                        </label>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {EXPORT_FIELD_OPTIONS.map((field) => (
+                          <label
+                            key={field.key}
+                            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedExportFields.includes(field.key)}
+                              onChange={() => toggleExportField(field.key)}
+                              className="h-4 w-4 accent-blue-600"
+                            />
+                            {field.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
 
