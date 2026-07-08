@@ -13,6 +13,7 @@ import {
   UserCog,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   formatKategori,
   formatTanggal,
@@ -201,7 +202,12 @@ export default function AdminDashboard({
     const needsCompletionProof = action === "ACC" && isFinalApprovalStep(selectedReport);
 
     if (needsCompletionProof && !completionProof) {
-      setMessage("Bukti penyelesaian wajib diunggah sebelum laporan diselesaikan.");
+      const errorMessage =
+        'Silakan isi "bukti penyelesaian" sebelum menyelesaikan laporan.';
+      setMessage(errorMessage);
+      toast.error("Bukti penyelesaian wajib diisi", {
+        description: errorMessage,
+      });
       return;
     }
 
@@ -812,9 +818,15 @@ export default function AdminDashboard({
                           />
 
                           {isFinalApprovalStep(selectedReport) ? (
-                            <label className="block rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/70 p-4 text-sm text-slate-700">
+                            <label className="block rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-700">
                               <span className="block font-semibold text-slate-900">
                                 Bukti penyelesaian
+                                <span
+                                  aria-hidden="true"
+                                  className="ml-1 font-bold text-rose-500"
+                                >
+                                  *
+                                </span>
                               </span>
                               <span className="mt-1 block text-xs text-slate-500">
                                 Wajib untuk PP sebelum klik Selesai. Format JPG,
@@ -826,10 +838,10 @@ export default function AdminDashboard({
                                 onChange={(event) =>
                                   setCompletionProof(event.target.files?.[0] || null)
                                 }
-                                className="mt-3 block w-full text-sm text-slate-700 file:mr-3 file:rounded-xl file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-emerald-500"
+                                className="mt-3 block w-full text-sm text-slate-700 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-700 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-slate-600"
                               />
                               {completionProof ? (
-                                <span className="mt-2 block text-xs font-medium text-emerald-700">
+                                <span className="mt-2 block text-xs font-medium text-slate-700">
                                   Dipilih: {completionProof.name}
                                 </span>
                               ) : null}
