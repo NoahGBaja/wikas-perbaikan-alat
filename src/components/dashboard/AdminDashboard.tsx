@@ -39,6 +39,13 @@ type AdminDashboardProps = {
 };
 
 const REPORT_PAGE_SIZE = 50;
+const MAX_COMPLETION_PROOF_SIZE = 2 * 1024 * 1024;
+const ALLOWED_COMPLETION_PROOF_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 
 type ReportHistoryItem = {
   id: number;
@@ -110,6 +117,14 @@ function getRejectingAdmin(report: ReportItem) {
     .find((history) => history.action === "TOLAK")?.admin;
 }
 
+function isFinalApprovalStep(report: ReportItem | null) {
+  return report?.status === "MENUNGGU_ADMIN_5";
+}
+
+function isPdfUrl(url: string) {
+  return url.toLowerCase().split("?")[0].endsWith(".pdf");
+}
+
 export default function AdminDashboard({
   currentUser,
   title = "Dashboard Laporan Kerusakan Barang & Alat",
@@ -120,6 +135,7 @@ export default function AdminDashboard({
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [decisionNote, setDecisionNote] = useState("");
+  const [completionProof, setCompletionProof] = useState<File | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [visibleReportLimit, setVisibleReportLimit] = useState(REPORT_PAGE_SIZE);
@@ -164,12 +180,14 @@ export default function AdminDashboard({
   function openReportDetail(report: ReportItem) {
     setSelectedReport(report);
     setDecisionNote(report.adminNotes || report.alasanPenolakan || "");
+    setCompletionProof(null);
     setMessage("");
   }
 
   function closeReportDetail() {
     setSelectedReport(null);
     setDecisionNote("");
+    setCompletionProof(null);
   }
 
   async function submitDecision(action: "ACC" | "TOLAK") {
@@ -180,18 +198,56 @@ export default function AdminDashboard({
       return;
     }
 
+    const needsCompletionProof = action === "ACC" && isFinalApprovalStep(selectedReport);
+
+    if (needsCompletionProof && !completionProof) {
+      setMessage("Bukti penyelesaian wajib diunggah sebelum laporan diselesaikan.");
+      return;
+    }
+
+    if (
+      needsCompletionProof &&
+      completionProof &&
+      !ALLOWED_COMPLETION_PROOF_TYPES.has(completionProof.type)
+    ) {
+      setMessage("Bukti penyelesaian harus berupa JPG, PNG, WEBP, atau PDF.");
+      return;
+    }
+
+    if (
+      needsCompletionProof &&
+      completionProof &&
+      completionProof.size > MAX_COMPLETION_PROOF_SIZE
+    ) {
+      setMessage("Bukti penyelesaian maksimal 2MB.");
+      return;
+    }
+
     try {
       setSubmitLoading(true);
 
-      const res = await fetch(`/api/reports/${selectedReport.id}/decide`, {
+      const requestInit: RequestInit = {
         method: "POST",
-        headers: {
+      };
+
+      if (needsCompletionProof) {
+        const formData = new FormData();
+        formData.set("action", action);
+        formData.set("note", decisionNote);
+        formData.set("proof", completionProof!);
+        requestInit.body = formData;
+      } else {
+        requestInit.headers = {
           "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+        };
+        requestInit.body = JSON.stringify({
           action,
           note: decisionNote,
-        }),
+        });
+      }
+
+      const res = await fetch(`/api/reports/${selectedReport.id}/decide`, {
+        ...requestInit,
       });
 
       const data = await res.json();
@@ -695,6 +751,38 @@ export default function AdminDashboard({
                     )}
                   </div>
 
+                  {selectedReport.completionPhotoUrl ? (
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
+                      <p className="mb-3 text-sm text-slate-500">
+                        Bukti Penyelesaian
+                      </p>
+                      {isPdfUrl(selectedReport.completionPhotoUrl) ? (
+                        <a
+                          href={selectedReport.completionPhotoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex min-h-32 flex-col items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-center text-emerald-700 transition hover:bg-emerald-100"
+                        >
+                          <FileText className="mb-3 h-8 w-8" />
+                          <span className="font-semibold">
+                            Buka Bukti PDF
+                          </span>
+                        </a>
+                      ) : (
+                        <div className="overflow-hidden rounded-2xl border border-emerald-100">
+                          <Image
+                            src={selectedReport.completionPhotoUrl}
+                            alt="Bukti penyelesaian"
+                            width={1200}
+                            height={800}
+                            className="w-full object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+
                   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <p className="text-sm text-slate-500">Keputusan Admin</p>
 
@@ -723,6 +811,31 @@ export default function AdminDashboard({
                             className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                           />
 
+                          {isFinalApprovalStep(selectedReport) ? (
+                            <label className="block rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/70 p-4 text-sm text-slate-700">
+                              <span className="block font-semibold text-slate-900">
+                                Bukti penyelesaian
+                              </span>
+                              <span className="mt-1 block text-xs text-slate-500">
+                                Wajib untuk PP sebelum klik Selesai. Format JPG,
+                                PNG, WEBP, atau PDF. Maksimal 2MB.
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,application/pdf"
+                                onChange={(event) =>
+                                  setCompletionProof(event.target.files?.[0] || null)
+                                }
+                                className="mt-3 block w-full text-sm text-slate-700 file:mr-3 file:rounded-xl file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-emerald-500"
+                              />
+                              {completionProof ? (
+                                <span className="mt-2 block text-xs font-medium text-emerald-700">
+                                  Dipilih: {completionProof.name}
+                                </span>
+                              ) : null}
+                            </label>
+                          ) : null}
+
                           <div className="flex flex-wrap gap-3">
                             <button
                               type="button"
@@ -730,7 +843,11 @@ export default function AdminDashboard({
                               disabled={submitLoading}
                               className="rounded-2xl bg-emerald-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
                             >
-                              {submitLoading ? "Memproses..." : "ACC"}
+                              {submitLoading
+                                ? "Memproses..."
+                                : isFinalApprovalStep(selectedReport)
+                                  ? "Selesai"
+                                  : "ACC"}
                             </button>
 
                             <button

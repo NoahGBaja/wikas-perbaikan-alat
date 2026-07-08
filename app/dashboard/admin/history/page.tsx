@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -111,6 +111,10 @@ const EXPORT_FIELD_OPTIONS = [
 ] as const;
 type ExportFieldKey = (typeof EXPORT_FIELD_OPTIONS)[number]["key"];
 const DEFAULT_EXPORT_FIELDS = EXPORT_FIELD_OPTIONS.map((field) => field.key);
+const ROW_RENDER_CONTAINMENT: CSSProperties = {
+  contentVisibility: "auto",
+  containIntrinsicSize: "76px",
+};
 
 function isHistoryStatus(status: ReportStatus) {
   return status === "DISETUJUI_FINAL" || status === "DITOLAK";
@@ -510,8 +514,8 @@ export default function AdminHistoryPage() {
           </div>
         ) : null}
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-blue-100 bg-blue-50/30 px-5 py-4">
+        <section className="relative rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="relative z-20 border-b border-blue-100 bg-blue-50/30 px-5 py-4">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 <div>
@@ -574,7 +578,7 @@ export default function AdminHistoryPage() {
               </div>
 
               {showExportFilters ? (
-                <div className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-3 md:grid-cols-2 xl:grid-cols-5">
+                <div className="absolute left-5 right-5 top-full z-40 mt-2 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-xl md:grid-cols-2 xl:grid-cols-5">
                   <div className="relative">
                     <label className="flex h-11 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
                     <Search className="h-4 w-4 text-slate-400" />
@@ -745,7 +749,7 @@ export default function AdminHistoryPage() {
               Tidak ada riwayat laporan yang cocok.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-b-2xl">
               <table className="min-w-[1060px] text-left">
                 <thead>
                   <tr className="border-b border-blue-100 bg-blue-50/40 text-slate-600">
@@ -764,6 +768,7 @@ export default function AdminHistoryPage() {
                     <tr
                       key={report.id}
                       className="border-b border-slate-100 transition hover:bg-blue-50/50"
+                      style={ROW_RENDER_CONTAINMENT}
                     >
                       <td className="px-5 py-4">
                         <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-bold tracking-wide text-blue-700">

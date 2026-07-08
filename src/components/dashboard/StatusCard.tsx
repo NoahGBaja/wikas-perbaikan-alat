@@ -86,6 +86,10 @@ function getRejectingAdmin(report: StatusReportItem) {
     .find((history) => history.action === "TOLAK")?.admin;
 }
 
+function isPdfUrl(url: string) {
+  return url.toLowerCase().split("?")[0].endsWith(".pdf");
+}
+
 export default function StatusCard({
   report,
   onEdit,
@@ -246,6 +250,36 @@ export default function StatusCard({
               <p className="mt-2 leading-7 text-emerald-700">
                 Laporan kamu sudah disetujui sampai {getRoleLabel("ADMIN_5")}.
               </p>
+            </div>
+          ) : null}
+
+          {report.completionPhotoUrl ? (
+            <div className="mt-5 rounded-2xl border border-emerald-200 bg-white p-4">
+              <p className="text-sm font-semibold text-slate-900">
+                Bukti Penyelesaian
+              </p>
+              {isPdfUrl(report.completionPhotoUrl) ? (
+                <a
+                  href={report.completionPhotoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 flex min-h-28 flex-col items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 text-center text-sm text-emerald-700 transition hover:bg-emerald-100"
+                >
+                  <FileText className="mb-2 h-7 w-7" />
+                  <span className="font-semibold">Buka Bukti PDF</span>
+                </a>
+              ) : (
+                <div className="mt-3 overflow-hidden rounded-2xl border border-emerald-100">
+                  <Image
+                    src={report.completionPhotoUrl}
+                    alt="Bukti penyelesaian"
+                    width={1200}
+                    height={900}
+                    className="max-h-[320px] w-full object-cover"
+                    unoptimized
+                  />
+                </div>
+              )}
             </div>
           ) : null}
 
