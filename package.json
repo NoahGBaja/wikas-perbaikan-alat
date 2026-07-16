@@ -11,7 +11,7 @@
     "test": "npm run lint && npm run typecheck && node --test --experimental-strip-types tests/*.test.mts",
     "test:smoke": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types tests/real-life-smoke.mts",
     "change-password": "node --experimental-strip-types scripts/change-password.ts",
-    "db:repair-local": "prisma db execute --file scripts/repair-local-schema.sql",
+    "db:repair-local": "node scripts/repair-local-schema.cjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push"

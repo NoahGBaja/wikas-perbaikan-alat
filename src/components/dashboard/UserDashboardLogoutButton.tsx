@@ -23,14 +23,14 @@ export default function UserDashboardLogoutButton({
       });
 
       if (!response.ok) {
-        throw new Error("Logout gagal");
+        throw new Error("Keluar gagal");
       }
 
       router.push("/login");
       router.refresh();
     } catch (error) {
       console.error("Gagal logout:", error);
-      alert("Logout gagal. Silakan coba lagi.");
+      alert("Keluar gagal. Silakan coba lagi.");
     } finally {
       setIsLoggingOut(false);
     }
@@ -44,7 +44,7 @@ export default function UserDashboardLogoutButton({
       className={className}
     >
       <LogOut className="h-4 w-4" />
-      {isLoggingOut ? "Logout..." : "Logout"}
+      {isLoggingOut ? "Keluar..." : "Keluar"}
     </button>
   );
 }

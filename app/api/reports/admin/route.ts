@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getApiSessionUser } from "@/src/lib/session";
 import { listReportsRaw } from "@/src/lib/raw-data";
-import { hasAdminAccess } from "@/src/lib/roles";
+import { hasAdminAccess, isSuperAdmin as hasSuperAdminAccess } from "@/src/lib/roles";
 import { canAdminAccessReport } from "@/src/lib/workflow";
 
 export async function GET() {
@@ -9,18 +9,19 @@ export async function GET() {
     const authUser = await getApiSessionUser();
 
     if (!authUser) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 });
     }
 
     if (!hasAdminAccess(authUser)) {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
+    const canSeeAllCategories = hasSuperAdminAccess(authUser);
     const reports = (await listReportsRaw()).filter((report) =>
       canAdminAccessReport({
         role: authUser.role,
-        isSuperAdmin: authUser.isSuperAdmin,
-        categoryScope: authUser.categoryScope,
+        isSuperAdmin: canSeeAllCategories,
+        categoryScope: canSeeAllCategories ? null : authUser.categoryScope,
         reportCategory: report.kategori,
       }),
     );

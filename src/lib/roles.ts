@@ -6,7 +6,7 @@ export const ADMIN_ROLES = [
   "ADMIN_5",
 ] as const;
 
-export const ALL_ADMIN_ROLES = ["SUPER_ADMIN", ...ADMIN_ROLES] as const;
+export const ALL_ADMIN_ROLES = ["SUPER_ADMIN", ...ADMIN_ROLES, "EXECUTIVE"] as const;
 
 export const CATEGORY_SCOPED_ROLES = ["ADMIN_1", "ADMIN_4"] as const;
 
@@ -17,6 +17,7 @@ export type AppRole =
   | "ADMIN_3"
   | "ADMIN_4"
   | "ADMIN_5"
+  | "EXECUTIVE"
   | "USER";
 
 export type AppCategoryScope =
@@ -25,13 +26,14 @@ export type AppCategoryScope =
   | "LABORATORIUM";
 
 export const ROLE_LABELS: Record<AppRole, string> = {
-  SUPER_ADMIN: "Super Admin",
+  SUPER_ADMIN: "Admin Utama",
   USER: "PJ Ruangan",
   ADMIN_1: "PJ Perbaikan",
-  ADMIN_2: "KTU",
+  ADMIN_2: "K.TU",
   ADMIN_3: "BMN",
   ADMIN_4: "PPK",
   ADMIN_5: "PP",
+  EXECUTIVE: "Kepala Balai",
 };
 
 export const CATEGORY_SCOPE_LABELS: Record<AppCategoryScope, string> = {
@@ -61,6 +63,10 @@ export function isCategoryScopedRole(role?: string | null) {
 
 export function isAdminRole(role?: string | null) {
   return !!role && ALL_ADMIN_ROLES.some((adminRole) => adminRole === role);
+}
+
+export function isReadOnlyExecutive(role?: string | null) {
+  return role === "EXECUTIVE";
 }
 
 export function hasAdminAccess(input?: {

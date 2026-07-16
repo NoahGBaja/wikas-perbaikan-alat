@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import {
   ArrowLeft,
   Download,
@@ -19,6 +18,14 @@ import {
   getRoleLabel,
   isCategoryScopedRole,
 } from "@/src/lib/roles";
+import PasswordInput from "@/src/components/ui/PasswordInput";
+import {
+  FeedbackBanner,
+  showError,
+  showSuccess,
+  toFeedback,
+  type FeedbackMessage,
+} from "@/src/components/ui/feedback";
 
 const ROLE_OPTIONS: AppRole[] = [
   "USER",
@@ -27,9 +34,12 @@ const ROLE_OPTIONS: AppRole[] = [
   "ADMIN_3",
   "ADMIN_4",
   "ADMIN_5",
+  "EXECUTIVE",
 ];
 
 const USER_PAGE_SIZE = 12;
+const SERVER_SEARCH_DELAY_MS = 1500;
+const MIN_SERVER_SEARCH_LENGTH = 3;
 
 const CATEGORY_SCOPE_OPTIONS: AppCategoryScope[] = [
   "FASILITAS_INVENTARIS",
@@ -96,7 +106,7 @@ export default function AdminUsersPage({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [totalUsers, setTotalUsers] = useState(0);
@@ -127,7 +137,7 @@ export default function AdminUsersPage({
       } else {
         setLoading(true);
       }
-      setMessage("");
+      setMessage(null);
 
       const params = new URLSearchParams({
         limit: String(USER_PAGE_SIZE),
@@ -144,12 +154,10 @@ export default function AdminUsersPage({
       const data = await readApiResponse(res);
 
       if (!res.ok) {
-        const errorMessage = data.message || "Gagal memuat daftar user.";
+        const errorMessage = data.message || "Gagal memuat daftar pengguna.";
 
-        setMessage(errorMessage);
-        toast.error("Gagal memuat user", {
-          description: errorMessage,
-        });
+        setMessage(toFeedback(errorMessage, "error"));
+        showError("Gagal memuat pengguna", errorMessage);
         return;
       }
 
@@ -164,12 +172,10 @@ export default function AdminUsersPage({
       }
     } catch (error) {
       console.error("LOAD_ADMIN_USERS_ERROR:", error);
-      const errorMessage = "Terjadi kesalahan saat memuat daftar user.";
+      const errorMessage = "Terjadi kesalahan saat memuat daftar pengguna.";
 
-      setMessage(errorMessage);
-      toast.error("Gagal memuat user", {
-        description: errorMessage,
-      });
+      setMessage(toFeedback(errorMessage, "error"));
+      showError("Gagal memuat pengguna", errorMessage);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -179,7 +185,7 @@ export default function AdminUsersPage({
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 1500);
+    }, SERVER_SEARCH_DELAY_MS);
 
     return () => {
       window.clearTimeout(timer);
@@ -187,12 +193,21 @@ export default function AdminUsersPage({
   }, [searchQuery]);
 
   useEffect(() => {
+    const search = debouncedSearchQuery.trim();
+
+    if (search && search.length < MIN_SERVER_SEARCH_LENGTH) {
+      setUsers([]);
+      setTotalUsers(0);
+      setLoading(false);
+      return;
+    }
+
     void loadUsers({ search: debouncedSearchQuery });
   }, [debouncedSearchQuery, loadUsers]);
 
   async function handleCreateUser() {
     try {
-      setMessage("");
+      setMessage(null);
 
       const res = await fetch("/api/admin/users", {
         method: "POST",
@@ -203,20 +218,16 @@ export default function AdminUsersPage({
       });
 
       const data = await readApiResponse(res);
-      const responseMessage = data.message || "User berhasil dibuat.";
-
-      setMessage(responseMessage);
+      const responseMessage = data.message || "Pengguna berhasil dibuat.";
 
       if (!res.ok) {
-        toast.error("Gagal membuat user", {
-          description: responseMessage,
-        });
+        setMessage(toFeedback(responseMessage, "error"));
+        showError("Gagal membuat pengguna", responseMessage);
         return;
       }
 
-      toast.success("User dibuat", {
-        description: responseMessage,
-      });
+      setMessage(toFeedback(responseMessage, "success"));
+      showSuccess("Pengguna dibuat", responseMessage);
       setNewUser({
         nama: "",
         jabatan: "",
@@ -229,12 +240,10 @@ export default function AdminUsersPage({
       await loadUsers({ search: debouncedSearchQuery });
     } catch (error) {
       console.error("CREATE_ADMIN_USER_ERROR:", error);
-      const errorMessage = "Terjadi kesalahan saat membuat user.";
+      const errorMessage = "Terjadi kesalahan saat membuat pengguna.";
 
-      setMessage(errorMessage);
-      toast.error("Gagal membuat user", {
-        description: errorMessage,
-      });
+      setMessage(toFeedback(errorMessage, "error"));
+      showError("Gagal membuat pengguna", errorMessage);
     }
   }
 
@@ -258,7 +267,7 @@ export default function AdminUsersPage({
     }
 
     try {
-      setMessage("");
+      setMessage(null);
 
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
@@ -269,20 +278,16 @@ export default function AdminUsersPage({
       });
 
       const data = await readApiResponse(res);
-      const responseMessage = data.message || "User berhasil diperbarui.";
-
-      setMessage(responseMessage);
+      const responseMessage = data.message || "Pengguna berhasil diperbarui.";
 
       if (!res.ok) {
-        toast.error("Gagal memperbarui user", {
-          description: responseMessage,
-        });
+        setMessage(toFeedback(responseMessage, "error"));
+        showError("Gagal memperbarui pengguna", responseMessage);
         return;
       }
 
-      toast.success("User diperbarui", {
-        description: responseMessage,
-      });
+      setMessage(toFeedback(responseMessage, "success"));
+      showSuccess("Pengguna diperbarui", responseMessage);
       setDrafts((current) => {
         const next = { ...current };
         delete next[userId];
@@ -292,12 +297,10 @@ export default function AdminUsersPage({
       await loadUsers({ search: debouncedSearchQuery });
     } catch (error) {
       console.error("UPDATE_ADMIN_USER_ERROR:", error);
-      const errorMessage = "Terjadi kesalahan saat memperbarui user.";
+      const errorMessage = "Terjadi kesalahan saat memperbarui pengguna.";
 
-      setMessage(errorMessage);
-      toast.error("Gagal memperbarui user", {
-        description: errorMessage,
-      });
+      setMessage(toFeedback(errorMessage, "error"));
+      showError("Gagal memperbarui pengguna", errorMessage);
     }
   }
 
@@ -305,7 +308,7 @@ export default function AdminUsersPage({
     const password = passwordDrafts[userId] || "";
 
     try {
-      setMessage("");
+      setMessage(null);
 
       const res = await fetch(`/api/admin/users/${userId}/password`, {
         method: "POST",
@@ -316,32 +319,26 @@ export default function AdminUsersPage({
       });
 
       const data = await readApiResponse(res);
-      const responseMessage = data.message || "Password user berhasil direset.";
-
-      setMessage(responseMessage);
+      const responseMessage = data.message || "Kata sandi pengguna berhasil direset.";
 
       if (!res.ok) {
-        toast.error("Reset password gagal", {
-          description: responseMessage,
-        });
+        setMessage(toFeedback(responseMessage, "error"));
+        showError("Reset kata sandi gagal", responseMessage);
         return;
       }
 
-      toast.success("Password direset", {
-        description: responseMessage,
-      });
+      setMessage(toFeedback(responseMessage, "success"));
+      showSuccess("Kata sandi direset", responseMessage);
       setPasswordDrafts((current) => ({
         ...current,
         [userId]: "",
       }));
     } catch (error) {
       console.error("RESET_ADMIN_USER_PASSWORD_ERROR:", error);
-      const errorMessage = "Terjadi kesalahan saat mereset password user.";
+      const errorMessage = "Terjadi kesalahan saat mereset kata sandi pengguna.";
 
-      setMessage(errorMessage);
-      toast.error("Reset password gagal", {
-        description: errorMessage,
-      });
+      setMessage(toFeedback(errorMessage, "error"));
+      showError("Reset kata sandi gagal", errorMessage);
     }
   }
 
@@ -349,8 +346,8 @@ export default function AdminUsersPage({
     const user = users.find((item) => item.id === userId);
     const confirmed = window.confirm(
       user && user._count.reports > 0
-        ? "Hapus user ini? Akun akan dinonaktifkan, tetapi riwayat laporan tetap tersimpan."
-        : "Hapus user ini? Akun akan dinonaktifkan."
+        ? "Hapus pengguna ini? Akun akan dinonaktifkan, tetapi riwayat laporan tetap tersimpan."
+        : "Hapus pengguna ini? Akun akan dinonaktifkan."
     );
 
     if (!confirmed) {
@@ -358,27 +355,23 @@ export default function AdminUsersPage({
     }
 
     try {
-      setMessage("");
+      setMessage(null);
 
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: "DELETE",
       });
 
       const data = await readApiResponse(res);
-      const responseMessage = data.message || "User berhasil dihapus.";
-
-      setMessage(responseMessage);
+      const responseMessage = data.message || "Pengguna berhasil dihapus.";
 
       if (!res.ok) {
-        toast.error("Gagal menghapus user", {
-          description: responseMessage,
-        });
+        setMessage(toFeedback(responseMessage, "error"));
+        showError("Gagal menghapus pengguna", responseMessage);
         return;
       }
 
-      toast.success("User dihapus", {
-        description: responseMessage,
-      });
+      setMessage(toFeedback(responseMessage, "success"));
+      showSuccess("Pengguna dihapus", responseMessage);
       setUsers((current) => current.filter((user) => user.id !== userId));
       setTotalUsers((current) => Math.max(current - 1, 0));
       setExpandedUserId((current) => (current === userId ? null : current));
@@ -389,12 +382,10 @@ export default function AdminUsersPage({
       });
     } catch (error) {
       console.error("DELETE_ADMIN_USER_ERROR:", error);
-      const errorMessage = "Terjadi kesalahan saat menghapus user.";
+      const errorMessage = "Terjadi kesalahan saat menghapus pengguna.";
 
-      setMessage(errorMessage);
-      toast.error("Gagal menghapus user", {
-        description: errorMessage,
-      });
+      setMessage(toFeedback(errorMessage, "error"));
+      showError("Gagal menghapus pengguna", errorMessage);
     }
   }
 
@@ -416,7 +407,7 @@ export default function AdminUsersPage({
   async function handleExportUsers() {
     try {
       setExporting(true);
-      setMessage("");
+      setMessage(null);
 
       const res = await fetch("/api/admin/users/export", {
         cache: "no-store",
@@ -424,7 +415,9 @@ export default function AdminUsersPage({
 
       if (!res.ok) {
         const data = await readApiResponse(res);
-        setMessage(data.message || "Gagal mengekspor daftar user.");
+        const text = data.message || "Gagal mengekspor daftar pengguna.";
+        setMessage(toFeedback(text, "error"));
+        showError("Gagal mengekspor pengguna", text);
         return;
       }
 
@@ -443,7 +436,9 @@ export default function AdminUsersPage({
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error("EXPORT_ADMIN_USERS_ERROR:", error);
-      setMessage("Terjadi kesalahan saat mengekspor daftar user.");
+      const text = "Terjadi kesalahan saat mengekspor daftar pengguna.";
+      setMessage(toFeedback(text, "error"));
+      showError("Gagal mengekspor pengguna", text);
     } finally {
       setExporting(false);
     }
@@ -470,11 +465,11 @@ export default function AdminUsersPage({
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
-              Admin Panel
+              Panel Admin
             </p>
-            <h1 className="mt-2 text-3xl font-bold md:text-5xl">Kelola User</h1>
+            <h1 className="mt-2 text-3xl font-bold md:text-5xl">Kelola Pengguna</h1>
             <p className="mt-3 max-w-3xl text-slate-600">
-              Buat akun, atur role, dan reset password tanpa memakai script manual.
+              Buat akun, atur peran, dan reset kata sandi tanpa memakai skrip manual.
             </p>
           </div>
 
@@ -485,7 +480,7 @@ export default function AdminUsersPage({
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50"
             >
               <ArrowLeft className="h-4 w-4" />
-              Kembali ke Dashboard
+              Kembali ke Dasbor
             </button>
 
             <button
@@ -504,16 +499,12 @@ export default function AdminUsersPage({
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Download className="h-4 w-4" />
-              {exporting ? "Mengekspor..." : "Export Excel"}
+              {exporting ? "Mengekspor..." : "Ekspor Excel"}
             </button>
           </div>
         </div>
 
-        {message ? (
-          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-            {message}
-          </div>
-        ) : null}
+        <FeedbackBanner message={message} className="mb-6" />
 
         <section className="mb-5 rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -522,7 +513,7 @@ export default function AdminUsersPage({
                 <UserPlus className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-950">Tambah User</h2>
+                <h2 className="text-lg font-bold text-slate-950">Tambah Pengguna</h2>
                 <p className="text-xs text-slate-500">
                   Form dibuka hanya saat dibutuhkan.
                 </p>
@@ -535,7 +526,7 @@ export default function AdminUsersPage({
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
             >
               <UserPlus className="h-4 w-4" />
-              {showCreateForm ? "Tutup Form" : "Tambah User"}
+              {showCreateForm ? "Tutup Form" : "Tambah Pengguna"}
             </button>
           </div>
 
@@ -605,8 +596,7 @@ export default function AdminUsersPage({
                   ))}
                 </select>
 
-                <input
-                  type="password"
+                <PasswordInput
                   value={newUser.password}
                   onChange={(event) =>
                     setNewUser((current) => ({
@@ -614,7 +604,7 @@ export default function AdminUsersPage({
                       password: event.target.value,
                     }))
                   }
-                  placeholder="Password"
+                  placeholder="Kata sandi"
                   className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
 
@@ -630,7 +620,7 @@ export default function AdminUsersPage({
                     }
                     className="h-4 w-4 accent-blue-600"
                   />
-                  Super Admin
+                  Admin Utama
                 </label>
               </div>
 
@@ -640,7 +630,7 @@ export default function AdminUsersPage({
                 className="mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
               >
                 <UserPlus className="h-4 w-4" />
-                Buat User
+                Buat Pengguna
               </button>
             </>
           ) : null}
@@ -650,9 +640,9 @@ export default function AdminUsersPage({
           <div className="border-b border-blue-100 bg-blue-50/30 px-6 py-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-slate-950">Daftar User</h2>
+                <h2 className="text-2xl font-bold text-slate-950">Daftar Pengguna</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  {users.length} dari {totalUsers} user ditampilkan.
+                  {users.length} dari {totalUsers} pengguna ditampilkan.
                 </p>
               </div>
 
@@ -661,7 +651,7 @@ export default function AdminUsersPage({
                 <input
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Cari nama, NIP, atau role"
+                  placeholder="Cari nama, NIP, atau peran minimal 3 karakter"
                   className="h-12 w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
               </label>
@@ -669,12 +659,17 @@ export default function AdminUsersPage({
           </div>
 
           {loading ? (
-            <div className="px-6 py-8 text-slate-600">Memuat daftar user...</div>
+            <div className="px-6 py-8 text-slate-600">Memuat daftar pengguna...</div>
+          ) : searchQuery.trim().length > 0 &&
+            searchQuery.trim().length < MIN_SERVER_SEARCH_LENGTH ? (
+            <div className="px-6 py-8 text-slate-600">
+              Ketik minimal {MIN_SERVER_SEARCH_LENGTH} karakter untuk mulai mencari.
+            </div>
           ) : users.length === 0 && !debouncedSearchQuery.trim() ? (
-            <div className="px-6 py-8 text-slate-600">Belum ada user.</div>
+            <div className="px-6 py-8 text-slate-600">Belum ada pengguna.</div>
           ) : users.length === 0 ? (
             <div className="px-6 py-8 text-slate-600">
-              Tidak ada user yang cocok dengan pencarian.
+              Tidak ada pengguna yang cocok dengan pencarian.
             </div>
           ) : (
             <div className="space-y-2 p-4">
@@ -714,7 +709,7 @@ export default function AdminUsersPage({
                         </span>
                         {user.isSuperAdmin ? (
                           <span className="rounded-full border border-violet-100 bg-violet-50 px-3 py-1 font-semibold text-violet-700">
-                            Super Admin
+                            Admin Utama
                           </span>
                         ) : null}
                         {isCategoryScopedRole(user.role) ? (
@@ -777,7 +772,7 @@ export default function AdminUsersPage({
                           </label>
 
                           <label className="grid gap-1 text-xs font-medium text-slate-500">
-                            Role
+                            Peran
                             <select
                               value={draft.role}
                               onChange={(event) =>
@@ -831,9 +826,8 @@ export default function AdminUsersPage({
                           </label>
 
                           <label className="grid gap-1 text-xs font-medium text-slate-500">
-                            Password Baru
-                            <input
-                              type="password"
+                            Kata Sandi Baru
+                            <PasswordInput
                               value={passwordDrafts[user.id] || ""}
                               onChange={(event) =>
                                 setPasswordDrafts((current) => ({
@@ -862,7 +856,7 @@ export default function AdminUsersPage({
                                 }
                                 className="h-4 w-4 accent-blue-600"
                               />
-                              Super Admin
+                              Admin Utama
                             </span>
                           </label>
                         </div>
@@ -889,7 +883,7 @@ export default function AdminUsersPage({
                               className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               <KeyRound className="h-4 w-4" />
-                              Reset Password
+                              Reset Kata Sandi
                             </button>
 
                             <button
@@ -924,7 +918,7 @@ export default function AdminUsersPage({
                 >
                   {loadingMore
                     ? "Memuat..."
-                    : `Tampilkan ${Math.min(USER_PAGE_SIZE, hiddenUserCount)} user lagi`}
+                    : `Tampilkan ${Math.min(USER_PAGE_SIZE, hiddenUserCount)} pengguna lagi`}
                 </button>
               ) : null}
             </div>

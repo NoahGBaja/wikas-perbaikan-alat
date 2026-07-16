@@ -10,6 +10,13 @@
  */
 export type * from './models/User.ts'
 export type * from './models/Report.ts'
+export type * from './models/ReportAttachment.ts'
 export type * from './models/ReportApprovalHistory.ts'
 export type * from './models/PasswordResetToken.ts'
+export type * from './models/MasterCategory.ts'
+export type * from './models/MasterSubcategory.ts'
+export type * from './models/MasterItemType.ts'
+export type * from './models/MasterRoom.ts'
+export type * from './models/MessageTemplate.ts'
+export type * from './models/Notification.ts'
 export type * from './commonInputTypes.ts'

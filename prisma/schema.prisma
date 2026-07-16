@@ -14,6 +14,7 @@ enum Role {
   ADMIN_3
   ADMIN_4
   ADMIN_5
+  EXECUTIVE
   USER
 }
 
@@ -36,6 +37,9 @@ enum ReportStatus {
   MENUNGGU_ADMIN_4
   MENUNGGU_ADMIN_5
   DISETUJUI_FINAL
+  MENUNGGU_KONFIRMASI
+  TELAH_BERFUNGSI
+  TIDAK_DAPAT_DIGUNAKAN
   DITOLAK
 }
 
@@ -48,31 +52,40 @@ model User {
   id           Int      @id @default(autoincrement())
   nama         String
   jabatan      String?
-  nip          String?  @unique
+  nip          String?
+  activeNip    String?  @unique
   passwordHash String
   role         Role     @default(USER)
   isSuperAdmin Boolean  @default(false)
   categoryScope ReportCategory?
+  deletedAt    DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   reports             Report[]
   passwordResetTokens PasswordResetToken[]
   approvalHistories   ReportApprovalHistory[]
+  notifications       Notification[]
 }
 
 model Report {
   id                 Int            @id @default(autoincrement())
+  ticket             String?        @unique
   userId             Int
   namaPelapor        String?
   nomorRuangan       String?
+  namaRuangan        String?
   kodeUakpb          String?
   kode               String?
+  nup                String?
   kategori           ReportCategory
+  subcategory        String?
+  itemType           String?
   namaBarang         String
   lokasi             String
   deskripsi          String
   severity           ReportSeverity
+  repairCost         Decimal?       @db.Decimal(14, 2)
   fotoUrl            String?
   attachmentUrl      String?
   attachmentType     String?
@@ -83,6 +96,9 @@ model Report {
   adminNotes         String?
   completionNotes    String?
   completionPhotoUrl String?
+  reporterConfirmed  Boolean        @default(false)
+  reporterConfirmedAt DateTime?
+  reporterConfirmationStatus String?
   approvedAt         DateTime?
   rejectedAt         DateTime?
   processedAt        DateTime?
@@ -91,11 +107,29 @@ model Report {
   updatedAt          DateTime       @updatedAt
 
   user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  histories ReportApprovalHistory[]
+  histories      ReportApprovalHistory[]
+  attachments    ReportAttachment[]
+  notifications  Notification[]
 
   @@index([userId])
   @@index([userId, createdAt])
   @@index([status, createdAt])
+  @@index([ticket])
+  @@index([kategori, createdAt])
+}
+
+model ReportAttachment {
+  id        Int      @id @default(autoincrement())
+  reportId  Int
+  url       String
+  fileType  String
+  fileName  String
+  fileSize  Int
+  createdAt DateTime @default(now())
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
 }
 
 model ReportApprovalHistory {
@@ -128,4 +162,81 @@ model PasswordResetToken {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model MasterCategory {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subcategories MasterSubcategory[]
+}
+
+model MasterSubcategory {
+  id         Int      @id @default(autoincrement())
+  categoryId Int
+  code       String
+  name       String
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category MasterCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  itemTypes MasterItemType[]
+
+  @@unique([categoryId, code])
+}
+
+model MasterItemType {
+  id            Int      @id @default(autoincrement())
+  subcategoryId Int
+  code          String
+  name          String
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  subcategory MasterSubcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([subcategoryId, code])
+}
+
+model MasterRoom {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MessageTemplate {
+  id        Int      @id @default(autoincrement())
+  type      String
+  title     String
+  body      String   @db.Text
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type, active])
+}
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  reportId  Int?
+  title     String
+  message   String   @db.Text
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  report Report? @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@index([reportId])
 }

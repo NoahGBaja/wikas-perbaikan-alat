@@ -6,6 +6,7 @@ import {
   validatePasswordStrength,
 } from "@/src/lib/passwords";
 import { validateMutationRequest } from "@/src/lib/request-security";
+import { isSuperAdmin as hasSuperAdminAccess } from "@/src/lib/roles";
 
 function parseUserId(id: string) {
   const userId = Number(id);
@@ -22,14 +23,14 @@ async function requireSuperAdmin() {
 
   if (!authUser) {
     return {
-      error: NextResponse.json({ message: "Unauthorized" }, { status: 401 }),
+      error: NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 }),
     };
   }
 
-  if (!authUser.isSuperAdmin) {
+  if (!hasSuperAdminAccess(authUser)) {
     return {
       error: NextResponse.json(
-        { message: "Hanya Super Admin yang boleh reset password user." },
+        { message: "Hanya Admin Utama yang boleh mereset kata sandi pengguna." },
         { status: 403 }
       ),
     };
@@ -60,7 +61,7 @@ export async function POST(
 
     if (!userId) {
       return NextResponse.json(
-        { message: "ID user tidak valid." },
+        { message: "ID pengguna tidak valid." },
         { status: 400 }
       );
     }
@@ -74,7 +75,7 @@ export async function POST(
 
     if (!targetUser) {
       return NextResponse.json(
-        { message: "User tidak ditemukan." },
+        { message: "Pengguna tidak ditemukan." },
         { status: 404 }
       );
     }
@@ -84,7 +85,7 @@ export async function POST(
 
     if (!password) {
       return NextResponse.json(
-        { message: "Password baru wajib diisi." },
+        { message: "Kata sandi baru wajib diisi." },
         { status: 400 }
       );
     }
@@ -112,7 +113,7 @@ export async function POST(
     });
 
     return NextResponse.json({
-      message: "Password user berhasil direset.",
+      message: "Kata sandi pengguna berhasil direset.",
       user: updatedUser,
     });
   } catch (error) {

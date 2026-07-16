@@ -10,8 +10,12 @@ import {
   listUsersWithReportCountRaw,
 } from "@/src/lib/raw-data";
 import { validateMutationRequest } from "@/src/lib/request-security";
+import { consumeRateLimitBucket, getClientIp } from "@/src/lib/rate-limit";
 import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
-import { isCategoryScopedRole } from "@/src/lib/roles";
+import {
+  isCategoryScopedRole,
+  isSuperAdmin as hasSuperAdminAccess,
+} from "@/src/lib/roles";
 
 const VALID_ROLES: AppRole[] = [
   "ADMIN_1",
@@ -19,6 +23,7 @@ const VALID_ROLES: AppRole[] = [
   "ADMIN_3",
   "ADMIN_4",
   "ADMIN_5",
+  "EXECUTIVE",
   "USER",
 ];
 
@@ -27,6 +32,7 @@ const VALID_CATEGORY_SCOPES: AppCategoryScope[] = [
   "IT_ELEKTRONIK",
   "LABORATORIUM",
 ];
+const MIN_SEARCH_LENGTH = 3;
 
 function isValidRole(role: unknown): role is AppRole {
   return typeof role === "string" && VALID_ROLES.includes(role as AppRole);
@@ -44,14 +50,14 @@ async function requireSuperAdmin() {
 
   if (!authUser) {
     return {
-      error: NextResponse.json({ message: "Unauthorized" }, { status: 401 }),
+      error: NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 }),
     };
   }
 
-  if (!authUser.isSuperAdmin) {
+  if (!hasSuperAdminAccess(authUser)) {
     return {
       error: NextResponse.json(
-        { message: "Hanya Super Admin yang boleh mengelola user." },
+        { message: "Hanya Admin Utama yang boleh mengelola pengguna." },
         { status: 403 }
       ),
     };
@@ -79,9 +85,28 @@ export async function GET(req: Request) {
     }
 
     const url = new URL(req.url);
-    const search = url.searchParams.get("q") || "";
+    const search = (url.searchParams.get("q") || "").trim();
     const limit = parsePositiveInt(url.searchParams.get("limit"), 12);
     const offset = parsePositiveInt(url.searchParams.get("offset"), 0);
+
+    if (search && search.length < MIN_SEARCH_LENGTH) {
+      return NextResponse.json({ users: [], total: 0 });
+    }
+
+    if (search) {
+      const rateLimit = await consumeRateLimitBucket(
+        `admin-users-list-search:${access.authUser.id}:${getClientIp(req)}`,
+        { limit: 30, windowMs: 60 * 1000 },
+      );
+
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          { message: "Terlalu banyak pencarian. Tunggu sebentar lalu coba lagi." },
+          { status: 429 },
+        );
+      }
+    }
+
     const result = await listUsersWithReportCountRaw({
       search,
       take: limit,
@@ -191,7 +216,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({
-      message: "User berhasil dibuat.",
+      message: "Pengguna berhasil dibuat.",
       user: createdUser,
     });
   } catch (error) {

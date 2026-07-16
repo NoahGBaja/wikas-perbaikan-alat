@@ -19,6 +19,7 @@ const USER_SEARCH_ROLES: AppRole[] = [
   "ADMIN_3",
   "ADMIN_4",
   "ADMIN_5",
+  "EXECUTIVE",
   "USER",
 ];
 
@@ -66,16 +67,22 @@ export type ReportApprovalHistoryRow = {
 
 export type ReportRow = {
   id: number;
+  ticket: string | null;
   userId: number;
   namaPelapor: string | null;
   nomorRuangan: string | null;
+  namaRuangan: string | null;
   kodeUakpb: string | null;
   kode: string | null;
+  nup: string | null;
   kategori: ReportKategori;
+  subcategory: string | null;
+  itemType: string | null;
   namaBarang: string;
   lokasi: string;
   deskripsi: string;
   severity: ReportSeverity;
+  repairCost: string | null;
   fotoUrl: string | null;
   attachmentUrl: string | null;
   attachmentType: string | null;
@@ -87,6 +94,8 @@ export type ReportRow = {
   adminNotes: string | null;
   completionNotes: string | null;
   completionPhotoUrl: string | null;
+  reporterConfirmedAt: Date | null;
+  reporterConfirmationStatus: string | null;
   approvedAt: Date | null;
   rejectedAt: Date | null;
   processedAt: Date | null;
@@ -106,6 +115,15 @@ export type ReportRow = {
   };
 
   histories: ReportApprovalHistoryRow[];
+  attachments: {
+    id: number;
+    reportId: number;
+    url: string;
+    fileType: string;
+    fileName: string;
+    fileSize: number;
+    createdAt: Date;
+  }[];
 };
 
 export type PasswordResetTokenRow = {
@@ -147,6 +165,11 @@ const reportInclude = {
       createdAt: "asc",
     },
   },
+  attachments: {
+    orderBy: {
+      createdAt: "asc",
+    },
+  },
 } as const;
 
 type ReportWithUser = Prisma.ReportGetPayload<{
@@ -156,16 +179,22 @@ type ReportWithUser = Prisma.ReportGetPayload<{
 function normalizeReportRow(row: ReportWithUser): ReportRow {
   return {
     id: row.id,
+    ticket: row.ticket,
     userId: row.userId,
     namaPelapor: row.namaPelapor,
     nomorRuangan: row.nomorRuangan,
+    namaRuangan: row.namaRuangan,
     kodeUakpb: row.kodeUakpb,
     kode: row.kode,
+    nup: row.nup,
     kategori: row.kategori,
+    subcategory: row.subcategory,
+    itemType: row.itemType,
     namaBarang: row.namaBarang,
     lokasi: row.lokasi,
     deskripsi: row.deskripsi,
     severity: row.severity,
+    repairCost: row.repairCost?.toString() || null,
     fotoUrl: row.fotoUrl,
     attachmentUrl: row.attachmentUrl,
     attachmentType: row.attachmentType,
@@ -177,6 +206,8 @@ function normalizeReportRow(row: ReportWithUser): ReportRow {
     adminNotes: row.adminNotes,
     completionNotes: row.completionNotes,
     completionPhotoUrl: row.completionPhotoUrl,
+    reporterConfirmedAt: row.reporterConfirmedAt,
+    reporterConfirmationStatus: row.reporterConfirmationStatus,
     approvedAt: row.approvedAt,
     rejectedAt: row.rejectedAt,
     processedAt: row.processedAt,
@@ -213,6 +244,15 @@ function normalizeReportRow(row: ReportWithUser): ReportRow {
         isSuperAdmin: history.admin.isSuperAdmin,
         categoryScope: history.admin.categoryScope,
       },
+    })),
+    attachments: row.attachments.map((attachment) => ({
+      id: attachment.id,
+      reportId: attachment.reportId,
+      url: attachment.url,
+      fileType: attachment.fileType,
+      fileName: attachment.fileName,
+      fileSize: attachment.fileSize,
+      createdAt: attachment.createdAt,
     })),
   };
 }
@@ -276,7 +316,7 @@ export async function findUserByNipRaw(
   includePassword = false
 ): Promise<SessionUserRow | SessionUserWithPasswordRow | null> {
   if (includePassword) {
-    return prisma.user.findUnique({
+    return prisma.user.findFirst({
       where: { nip },
       select: {
         id: true,
@@ -293,7 +333,7 @@ export async function findUserByNipRaw(
     });
   }
 
-  return prisma.user.findUnique({
+  return prisma.user.findFirst({
     where: { nip },
     select: {
       id: true,
@@ -369,7 +409,7 @@ export async function listUsersWithReportCountRaw(options: {
             in: userIds,
           },
           status: {
-            notIn: ["DISETUJUI_FINAL", "DITOLAK"],
+            notIn: ["TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN", "DITOLAK"],
           },
         },
         _count: {
@@ -397,8 +437,15 @@ export async function listUsersWithReportCountRaw(options: {
 }
 
 export async function listReportsRaw(userId?: number) {
+  const where = userId ? { userId } : undefined;
+  const reportCount = await prisma.report.count({ where });
+
+  if (reportCount === 0) {
+    return [];
+  }
+
   const rows = await prisma.report.findMany({
-    where: userId ? { userId } : undefined,
+    where,
     include: reportInclude,
     orderBy: {
       createdAt: "desc",

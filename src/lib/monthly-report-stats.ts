@@ -30,6 +30,9 @@ const REPORT_STATUSES: ReportStatus[] = [
   "MENUNGGU_ADMIN_4",
   "MENUNGGU_ADMIN_5",
   "DISETUJUI_FINAL",
+  "MENUNGGU_KONFIRMASI",
+  "TELAH_BERFUNGSI",
+  "TIDAK_DAPAT_DIGUNAKAN",
   "DITOLAK",
 ];
 
@@ -88,6 +91,9 @@ function createEmptyStatusCounts(): Record<ReportStatus, number> {
     MENUNGGU_ADMIN_4: 0,
     MENUNGGU_ADMIN_5: 0,
     DISETUJUI_FINAL: 0,
+    MENUNGGU_KONFIRMASI: 0,
+    TELAH_BERFUNGSI: 0,
+    TIDAK_DAPAT_DIGUNAKAN: 0,
     DITOLAK: 0,
   };
 }

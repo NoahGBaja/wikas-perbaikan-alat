@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { formatTanggal } from "@/lib/report-helpers";
 import { listUsersWithReportCountRaw } from "@/src/lib/raw-data";
 import { getApiSessionUser } from "@/src/lib/session";
-import { getCategoryScopeLabel, getRoleLabel } from "@/src/lib/roles";
+import {
+  getCategoryScopeLabel,
+  getRoleLabel,
+  isSuperAdmin as hasSuperAdminAccess,
+} from "@/src/lib/roles";
 
 function createFileName() {
   const now = new Date();
@@ -17,11 +21,11 @@ export async function GET() {
     const authUser = await getApiSessionUser();
 
     if (!authUser) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 });
     }
 
-    if (!authUser.isSuperAdmin) {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    if (!hasSuperAdminAccess(authUser)) {
+      return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
     const { users } = await listUsersWithReportCountRaw({ take: 10000 });
@@ -29,16 +33,16 @@ export async function GET() {
     workbook.creator = "WIKAS Perbaikan Alat";
     workbook.created = new Date();
 
-    const worksheet = workbook.addWorksheet("Daftar User", {
+    const worksheet = workbook.addWorksheet("Daftar Pengguna", {
       views: [{ state: "frozen", ySplit: 1 }],
     });
 
     worksheet.columns = [
-      { header: "ID User", key: "id", width: 12 },
+      { header: "ID Pengguna", key: "id", width: 12 },
       { header: "Nama", key: "nama", width: 28 },
       { header: "NIP", key: "nip", width: 22 },
       { header: "Role", key: "role", width: 28 },
-      { header: "Super Admin", key: "isSuperAdmin", width: 16 },
+      { header: "Admin Utama", key: "isSuperAdmin", width: 16 },
       { header: "Kategori Role", key: "categoryScope", width: 20 },
       { header: "Total Laporan", key: "totalReports", width: 16 },
       { header: "Laporan Aktif", key: "activeReports", width: 16 },

@@ -9,8 +9,8 @@ import {
   getRejectedStatus,
   getRequiredAdminRole,
   getWorkflowMessage,
-  type ReportDecisionInput,
 } from "@/src/lib/workflow";
+import type { ReportDecisionInput } from "@/src/lib/workflow";
 import {
   enforceJsonBodySize,
   enforceMultipartBodySize,
@@ -21,11 +21,15 @@ import {
   saveReportAttachmentUpload,
   validateReportAttachmentUpload,
 } from "@/src/lib/uploads";
+import { findWorkflowRecipientIds, notifyUsers } from "@/src/lib/notifications";
+import { formatTicketFallback } from "@/src/lib/tickets";
+import { parseRupiahInput } from "@/src/lib/formatting";
 
 type DecisionPayload = {
-  action: ReportDecisionInput;
+  action: ReportDecisionInput | "SELESAI";
   note: string;
   proofFile: File | null;
+  repairCost: string;
 };
 
 function parseReportId(id: string) {
@@ -38,13 +42,14 @@ function parseReportId(id: string) {
   return reportId;
 }
 
-function normalizeAction(action: unknown): ReportDecisionInput | null {
+function normalizeAction(action: unknown): DecisionPayload["action"] | null {
   if (typeof action !== "string") return null;
 
   const normalized = action.trim().toUpperCase();
 
   if (normalized === "ACC") return "ACC";
   if (normalized === "TOLAK") return "TOLAK";
+  if (normalized === "SELESAI" || normalized === "COMPLETE") return "SELESAI";
 
   // Biar UI lama yang masih kirim APPROVE/REJECT tidak langsung rusak.
   if (normalized === "APPROVE") return "ACC";
@@ -66,11 +71,14 @@ async function parseDecisionPayload(req: Request): Promise<DecisionPayload | nul
 
     const noteValue = formData.get("note") || formData.get("adminNotes");
     const proofValue = formData.get("proof");
+    const repairCostValue = formData.get("repairCost");
 
     return {
       action,
       note: typeof noteValue === "string" ? noteValue.trim() : "",
       proofFile: proofValue instanceof File ? proofValue : null,
+      repairCost:
+        typeof repairCostValue === "string" ? repairCostValue.trim() : "",
     };
   }
 
@@ -98,6 +106,7 @@ async function parseDecisionPayload(req: Request): Promise<DecisionPayload | nul
     action,
     note,
     proofFile: null,
+    repairCost: typeof body.repairCost === "string" ? body.repairCost.trim() : "",
   };
 }
 
@@ -124,18 +133,18 @@ export async function POST(
     const authUser = await getApiSessionUser();
 
     if (!authUser) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 });
     }
 
     if (!hasAdminAccess(authUser)) {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
     if (authUser.role === "SUPER_ADMIN") {
       return NextResponse.json(
         {
           message:
-            "Super Admin hanya monitoring. Fitur override ACC/TOLAK belum diaktifkan.",
+            "Admin Utama hanya memantau. Fitur override ACC/TOLAK belum diaktifkan.",
         },
         { status: 403 }
       );
@@ -176,16 +185,20 @@ export async function POST(
       );
     }
 
-    if (report.status === "DISETUJUI_FINAL") {
+    if (report.status === "DISETUJUI_FINAL" || report.status === "MENUNGGU_KONFIRMASI") {
       return NextResponse.json(
-        { message: "Laporan sudah disetujui final." },
+        { message: "Laporan sudah selesai dan menunggu konfirmasi pelapor." },
         { status: 400 }
       );
     }
 
-    if (report.status === "DITOLAK") {
+    if (
+      ["DITOLAK", "TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN"].includes(
+        report.status,
+      )
+    ) {
       return NextResponse.json(
-        { message: "Laporan sudah ditolak dan alur berhenti permanen." },
+        { message: "Laporan sudah final." },
         { status: 400 }
       );
     }
@@ -230,14 +243,28 @@ export async function POST(
       );
     }
 
-    const isFinalApproval =
-      payload.action === "ACC" && report.status === "MENUNGGU_ADMIN_5";
+    if (payload.action === "TOLAK" && authUser.role === "ADMIN_1") {
+      return NextResponse.json(
+        { message: "PJ Ruangan hanya dapat Lanjut atau Selesai." },
+        { status: 403 },
+      );
+    }
+
+    if (payload.action === "SELESAI" && !payload.note) {
+      return NextResponse.json(
+        { message: "Deskripsi penyelesaian wajib diisi." },
+        { status: 400 },
+      );
+    }
+
+    const isCompletion = payload.action === "SELESAI";
+    const repairCost =
+      authUser.role === "ADMIN_5" ? parseRupiahInput(payload.repairCost) : null;
     let completionProofUrl: string | null = null;
 
-    if (isFinalApproval) {
+    if (isCompletion && payload.proofFile) {
       const proofValidationError = validateReportAttachmentUpload(
         payload.proofFile,
-        { required: true },
       );
 
       if (proofValidationError) {
@@ -266,13 +293,15 @@ export async function POST(
 
     const fromStatus = report.status;
     const toStatus =
-      payload.action === "ACC"
+      payload.action === "SELESAI"
+        ? "MENUNGGU_KONFIRMASI"
+        : payload.action === "ACC"
         ? getNextApprovedStatus(report.status)
         : getRejectedStatus();
 
     try {
       await prisma.$transaction(async (tx) => {
-        const finalDate = toStatus === "DISETUJUI_FINAL" ? new Date() : null;
+        const finalDate = toStatus === "MENUNGGU_KONFIRMASI" ? new Date() : null;
 
         await tx.report.update({
           where: { id: reportId },
@@ -282,10 +311,7 @@ export async function POST(
 
             approvedAt: finalDate || report.approvedAt,
 
-            rejectedAt:
-              payload.action === "TOLAK"
-                ? new Date()
-                : null,
+            rejectedAt: payload.action === "TOLAK" ? new Date() : null,
 
             adminNotes: payload.note || report.adminNotes || null,
 
@@ -293,8 +319,9 @@ export async function POST(
             assignedTechnician: null,
             processedAt: null,
             finishedAt: finalDate,
-            completionNotes: finalDate ? payload.note || null : null,
-            completionPhotoUrl: finalDate ? completionProofUrl : null,
+            completionNotes: isCompletion ? payload.note : null,
+            completionPhotoUrl: isCompletion ? completionProofUrl : null,
+            ...(authUser.role === "ADMIN_5" ? { repairCost } : {}),
           },
         });
 
@@ -302,7 +329,7 @@ export async function POST(
           data: {
             reportId,
             adminId: authUser.id,
-            action: payload.action,
+            action: payload.action === "SELESAI" ? "ACC" : payload.action,
             fromStatus,
             toStatus,
             note: payload.note || null,
@@ -315,14 +342,45 @@ export async function POST(
     }
 
     const updated = await findReportByIdRaw(reportId);
+    const ticket = updated ? formatTicketFallback(updated) : `LP-${reportId}`;
+
+    if (updated) {
+      if (payload.action === "ACC") {
+        const nextRole = getRequiredAdminRole(updated.status);
+        const nextRecipientIds = await findWorkflowRecipientIds({
+          role: nextRole,
+          reportCategory: updated.kategori,
+        });
+
+        await notifyUsers({
+          userIds: nextRecipientIds,
+          reportId,
+          title: "Laporan perlu ditindaklanjuti",
+          message: `${ticket} menunggu tindakan ${nextRole ? getRoleLabel(nextRole) : "role berikutnya"}.`,
+        });
+      } else {
+        await notifyUsers({
+          userIds: [updated.userId],
+          reportId,
+          title:
+            payload.action === "SELESAI"
+              ? "Laporan selesai, perlu konfirmasi"
+              : "Laporan ditolak",
+          message:
+            payload.action === "SELESAI"
+              ? `${ticket} telah diselesaikan. Mohon konfirmasi penerimaan barang.`
+              : `${ticket} ditolak. Silakan cek detail laporan.`,
+        });
+      }
+    }
 
     return NextResponse.json({
       message:
-        payload.action === "ACC"
-          ? toStatus === "DISETUJUI_FINAL"
-            ? "Laporan berhasil diselesaikan."
-            : `Laporan berhasil di-ACC dan diteruskan ke ${toStatus}.`
-          : "Laporan berhasil ditolak dan alur berhenti permanen.",
+        payload.action === "SELESAI"
+          ? "Laporan berhasil diselesaikan dan dikirim ke pelapor untuk konfirmasi."
+          : payload.action === "ACC"
+            ? `Laporan berhasil diterima dan diteruskan ke ${toStatus}.`
+            : "Laporan berhasil ditolak.",
       report: updated,
     });
   } catch (error) {

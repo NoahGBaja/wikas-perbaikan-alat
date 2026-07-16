@@ -8,19 +8,19 @@ export function validatePasswordStrength(password: string) {
   const errors: string[] = [];
 
   if (password.length < MIN_PASSWORD_LENGTH) {
-    errors.push("Password minimal 8 karakter.");
+    errors.push("Kata sandi minimal 8 karakter.");
   }
 
   if (!/[A-Za-z]/.test(password)) {
-    errors.push("Password harus mengandung huruf.");
+    errors.push("Kata sandi harus mengandung huruf.");
   }
 
   if (!/[0-9]/.test(password)) {
-    errors.push("Password harus mengandung angka.");
+    errors.push("Kata sandi harus mengandung angka.");
   }
 
   if (!/[^A-Za-z0-9]/.test(password)) {
-    errors.push("Password harus mengandung simbol.");
+    errors.push("Kata sandi harus mengandung simbol.");
   }
 
   return errors;

@@ -28,6 +28,11 @@ export type User = Prisma.UserModel
  */
 export type Report = Prisma.ReportModel
 /**
+ * Model ReportAttachment
+ * 
+ */
+export type ReportAttachment = Prisma.ReportAttachmentModel
+/**
  * Model ReportApprovalHistory
  * 
  */
@@ -37,3 +42,33 @@ export type ReportApprovalHistory = Prisma.ReportApprovalHistoryModel
  * 
  */
 export type PasswordResetToken = Prisma.PasswordResetTokenModel
+/**
+ * Model MasterCategory
+ * 
+ */
+export type MasterCategory = Prisma.MasterCategoryModel
+/**
+ * Model MasterSubcategory
+ * 
+ */
+export type MasterSubcategory = Prisma.MasterSubcategoryModel
+/**
+ * Model MasterItemType
+ * 
+ */
+export type MasterItemType = Prisma.MasterItemTypeModel
+/**
+ * Model MasterRoom
+ * 
+ */
+export type MasterRoom = Prisma.MasterRoomModel
+/**
+ * Model MessageTemplate
+ * 
+ */
+export type MessageTemplate = Prisma.MessageTemplateModel
+/**
+ * Model Notification
+ * 
+ */
+export type Notification = Prisma.NotificationModel

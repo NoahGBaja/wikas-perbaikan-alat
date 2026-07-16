@@ -3,18 +3,33 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import StatusList from "@/src/components/dashboard/StatusList";
+import {
+  FeedbackBanner,
+  showError,
+  showSuccess,
+  toFeedback,
+  type FeedbackMessage,
+} from "@/src/components/ui/feedback";
 import { getRoleLabel } from "@/src/lib/roles";
 import type {
   StatusReportItem,
   StatusReportStatus,
 } from "@/src/components/dashboard/StatusCard";
 
-type StatusFilter = "SEMUA" | "PENDING" | "DISETUJUI_FINAL" | "DITOLAK";
+type StatusFilter =
+  | "SEMUA"
+  | "PENDING"
+  | "MENUNGGU_KONFIRMASI"
+  | "TELAH_BERFUNGSI"
+  | "TIDAK_DAPAT_DIGUNAKAN"
+  | "DITOLAK";
 
 const FILTERS: StatusFilter[] = [
   "SEMUA",
   "PENDING",
-  "DISETUJUI_FINAL",
+  "MENUNGGU_KONFIRMASI",
+  "TELAH_BERFUNGSI",
+  "TIDAK_DAPAT_DIGUNAKAN",
   "DITOLAK",
 ];
 const STATUS_PAGE_SIZE = 8;
@@ -23,7 +38,9 @@ function formatFilterLabel(filter: StatusFilter) {
   const labels: Record<StatusFilter, string> = {
     SEMUA: "SEMUA",
     PENDING: "PENDING",
-    DISETUJUI_FINAL: "DISETUJUI FINAL",
+    MENUNGGU_KONFIRMASI: "PERLU KONFIRMASI",
+    TELAH_BERFUNGSI: "TELAH BERFUNGSI",
+    TIDAK_DAPAT_DIGUNAKAN: "TIDAK DAPAT DIGUNAKAN",
     DITOLAK: "DITOLAK",
   };
 
@@ -39,14 +56,14 @@ export default function UserStatusPage() {
   const [reports, setReports] = useState<StatusReportItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingReportId, setDeletingReportId] = useState<number | null>(null);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const [filter, setFilter] = useState<StatusFilter>("SEMUA");
   const [visibleLimit, setVisibleLimit] = useState(STATUS_PAGE_SIZE);
 
   async function loadReports() {
     try {
       setLoading(true);
-      setMessage("");
+      setMessage(null);
 
       const res = await fetch("/api/reports", {
         method: "GET",
@@ -56,14 +73,18 @@ export default function UserStatusPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(data.message || "Gagal memuat status laporan.");
+        const text = data.message || "Gagal memuat status laporan.";
+        setMessage(toFeedback(text, "error"));
+        showError("Gagal memuat status laporan", text);
         return;
       }
 
       setReports(data.reports || []);
     } catch (error) {
       console.error("LOAD_USER_STATUS_ERROR:", error);
-      setMessage("Terjadi kesalahan saat memuat status laporan.");
+      const text = "Terjadi kesalahan saat memuat status laporan.";
+      setMessage(toFeedback(text, "error"));
+      showError("Gagal memuat status laporan", text);
     } finally {
       setLoading(false);
     }
@@ -86,7 +107,7 @@ export default function UserStatusPage() {
 
     try {
       setDeletingReportId(reportId);
-      setMessage("");
+      setMessage(null);
 
       const res = await fetch(`/api/reports/${reportId}`, {
         method: "DELETE",
@@ -95,15 +116,21 @@ export default function UserStatusPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(data.message || "Gagal menghapus laporan.");
+        const text = data.message || "Gagal menghapus laporan.";
+        setMessage(toFeedback(text, "error"));
+        showError("Gagal menghapus laporan", text);
         return;
       }
 
-      setMessage(data.message || "Laporan berhasil dihapus.");
+      const text = data.message || "Laporan berhasil dihapus.";
+      setMessage(toFeedback(text, "success"));
+      showSuccess("Laporan dihapus", text);
       await loadReports();
     } catch (error) {
       console.error("DELETE_REPORT_ERROR:", error);
-      setMessage("Terjadi kesalahan saat menghapus laporan.");
+      const text = "Terjadi kesalahan saat menghapus laporan.";
+      setMessage(toFeedback(text, "error"));
+      showError("Gagal menghapus laporan", text);
     } finally {
       setDeletingReportId(null);
     }
@@ -130,7 +157,7 @@ export default function UserStatusPage() {
   const totalReports = reports.length;
   const waitingReports = reports.filter((r) => isWaitingStatus(r.status)).length;
   const approvedReports = reports.filter(
-    (r) => r.status === "DISETUJUI_FINAL"
+    (r) => r.status === "TELAH_BERFUNGSI"
   ).length;
   const rejectedReports = reports.filter((r) => r.status === "DITOLAK").length;
 
@@ -140,7 +167,7 @@ export default function UserStatusPage() {
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
-              Dashboard Pegawai
+              Dasbor Pegawai
             </p>
             <h1 className="mt-2 text-3xl font-bold md:text-5xl">
               Cek Status Laporan
@@ -244,11 +271,7 @@ export default function UserStatusPage() {
           </div>
         </section>
 
-        {message ? (
-          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-            {message}
-          </div>
-        ) : null}
+        <FeedbackBanner message={message} className="mb-6" />
 
         {loading ? (
           <div className="rounded-[28px] border border-slate-200 bg-white/90 p-10 text-center text-slate-600 shadow-sm">

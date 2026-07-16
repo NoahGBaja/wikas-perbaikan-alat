@@ -2,10 +2,17 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { ArrowLeft, KeyRound, Save, ShieldCheck, UserRound } from "lucide-react";
 import type { AppRole } from "@/src/lib/roles";
 import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
+import PasswordInput from "@/src/components/ui/PasswordInput";
+import {
+  FeedbackBanner,
+  showError,
+  showSuccess,
+  toFeedback,
+  type FeedbackMessage,
+} from "@/src/components/ui/feedback";
 
 type AccountUser = {
   id: number;
@@ -48,7 +55,7 @@ export default function AccountSettingsPage({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordMessageType, setPasswordMessageType] = useState<
     "success" | "error"
@@ -58,12 +65,14 @@ export default function AccountSettingsPage({
     event.preventDefault();
 
     if (!canEditProfile) {
-      setMessage("Nama hanya dapat diubah oleh admin.");
+      const text = "Nama hanya dapat diubah oleh admin.";
+      setMessage(toFeedback(text, "error"));
+      showError("Profil tidak dapat diubah", text);
       return;
     }
 
     setProfileLoading(true);
-    setMessage("");
+    setMessage(null);
 
     try {
       const res = await fetch("/api/account", {
@@ -78,14 +87,22 @@ export default function AccountSettingsPage({
       });
 
       const data = await res.json();
-      setMessage(data.message || "Profil berhasil diperbarui.");
+      const responseMessage = data.message || "Profil berhasil diperbarui.";
 
-      if (res.ok) {
-        router.refresh();
+      if (!res.ok) {
+        setMessage(toFeedback(responseMessage, "error"));
+        showError("Gagal memperbarui profil", responseMessage);
+        return;
       }
+
+      setMessage(toFeedback(responseMessage, "success"));
+      showSuccess("Profil diperbarui", responseMessage);
+      router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat memperbarui profil.");
+      const text = "Terjadi kesalahan saat memperbarui profil.";
+      setMessage(toFeedback(text, "error"));
+      showError("Gagal memperbarui profil", text);
     } finally {
       setProfileLoading(false);
     }
@@ -111,34 +128,28 @@ export default function AccountSettingsPage({
       });
 
       const data = await readApiResponse(res);
-      const responseMessage = data.message || "Password berhasil diperbarui.";
+      const responseMessage = data.message || "Kata sandi berhasil diperbarui.";
 
       setPasswordMessage(responseMessage);
 
       if (!res.ok) {
         setPasswordMessageType("error");
-        toast.error("Password gagal diperbarui", {
-          description: responseMessage,
-        });
+        showError("Kata sandi gagal diperbarui", responseMessage);
         return;
       }
 
       setPasswordMessageType("success");
-      toast.success("Password berhasil diperbarui", {
-        description: responseMessage,
-      });
+      showSuccess("Kata sandi berhasil diperbarui", responseMessage);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
       console.error(error);
-      const errorMessage = "Terjadi kesalahan saat memperbarui password.";
+      const errorMessage = "Terjadi kesalahan saat memperbarui kata sandi.";
 
       setPasswordMessage(errorMessage);
       setPasswordMessageType("error");
-      toast.error("Password gagal diperbarui", {
-        description: errorMessage,
-      });
+      showError("Kata sandi gagal diperbarui", errorMessage);
     } finally {
       setPasswordLoading(false);
     }
@@ -159,8 +170,8 @@ export default function AccountSettingsPage({
 
             <p className="mt-3 max-w-2xl text-slate-600">
               {canEditProfile
-                ? "Perbarui identitas yang tampil di dashboard dan ubah password akunmu."
-                : "Lihat identitas akunmu dan ubah password. Nama dikelola oleh admin."}
+                ? "Perbarui identitas yang tampil di dasbor dan ubah kata sandi akunmu."
+                : "Lihat identitas akunmu dan ubah kata sandi. Nama dikelola oleh admin."}
             </p>
           </div>
 
@@ -177,7 +188,7 @@ export default function AccountSettingsPage({
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
             >
               <ArrowLeft className="h-4 w-4 text-blue-600" />
-              Kembali ke Dashboard
+              Kembali ke Dasbor
             </button>
           </div>
         </div>
@@ -198,7 +209,7 @@ export default function AccountSettingsPage({
             </div>
 
             <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">NIP Login</p>
+              <p className="text-sm text-slate-500">NIP Masuk</p>
 
               <p className="mt-1 font-semibold text-slate-900">
                 {currentUser.nip || "-"}
@@ -207,7 +218,7 @@ export default function AccountSettingsPage({
               <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
                 <ShieldCheck className="h-4 w-4" />
                 {getRoleLabel(currentUser.role)}
-                {currentUser.isSuperAdmin ? " + Super Admin" : ""}
+                {currentUser.isSuperAdmin ? " + Admin Utama" : ""}
               </div>
             </div>
 
@@ -232,11 +243,7 @@ export default function AccountSettingsPage({
                 </div>
               ) : null}
 
-              {message ? (
-                <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                  {message}
-                </div>
-              ) : null}
+              <FeedbackBanner message={message} />
 
               {canEditProfile ? (
                 <button
@@ -262,7 +269,7 @@ export default function AccountSettingsPage({
                   Keamanan
                 </h2>
                 <p className="text-sm text-slate-500">
-                  Gunakan password baru yang kuat dan mudah diingat.
+                  Gunakan kata sandi baru yang kuat dan mudah diingat.
                 </p>
               </div>
             </div>
@@ -270,11 +277,10 @@ export default function AccountSettingsPage({
             <form onSubmit={handlePasswordSubmit} className="mt-6 space-y-5">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-800">
-                  Password Saat Ini
+                  Kata Sandi Saat Ini
                 </label>
 
-                <input
-                  type="password"
+                <PasswordInput
                   value={currentPassword}
                   onChange={(event) => setCurrentPassword(event.target.value)}
                   required
@@ -284,11 +290,10 @@ export default function AccountSettingsPage({
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-800">
-                  Password Baru
+                  Kata Sandi Baru
                 </label>
 
-                <input
-                  type="password"
+                <PasswordInput
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
                   required
@@ -298,11 +303,10 @@ export default function AccountSettingsPage({
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-800">
-                  Konfirmasi Password Baru
+                  Konfirmasi Kata Sandi Baru
                 </label>
 
-                <input
-                  type="password"
+                <PasswordInput
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   required
@@ -311,7 +315,7 @@ export default function AccountSettingsPage({
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                Password minimal 8 karakter dan harus mengandung huruf, angka,
+                Kata sandi minimal 8 karakter dan harus mengandung huruf, angka,
                 dan simbol.
               </div>
 
@@ -334,7 +338,7 @@ export default function AccountSettingsPage({
                 className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 font-semibold text-white shadow-sm transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <KeyRound className="h-4 w-4" />
-                {passwordLoading ? "Memperbarui..." : "Ubah Password"}
+                {passwordLoading ? "Memperbarui..." : "Ubah Kata Sandi"}
               </button>
             </form>
           </section>

@@ -15,6 +15,9 @@ export type ReportStatus =
   | "MENUNGGU_ADMIN_4"
   | "MENUNGGU_ADMIN_5"
   | "DISETUJUI_FINAL"
+  | "MENUNGGU_KONFIRMASI"
+  | "TELAH_BERFUNGSI"
+  | "TIDAK_DAPAT_DIGUNAKAN"
   | "DITOLAK";
 
 export const WAITING_STATUSES = [
@@ -25,7 +28,11 @@ export const WAITING_STATUSES = [
   "MENUNGGU_ADMIN_5",
 ] as const;
 
-export const FINAL_STATUSES = ["DISETUJUI_FINAL", "DITOLAK"] as const;
+export const FINAL_STATUSES = [
+  "TELAH_BERFUNGSI",
+  "TIDAK_DAPAT_DIGUNAKAN",
+  "DITOLAK",
+] as const;
 
 export type ReportDecisionInput = "ACC" | "TOLAK";
 
@@ -64,7 +71,7 @@ export function canRoleDecide(
 
   if (!requiredRole) return false;
 
-  if (role === "SUPER_ADMIN") return false;
+  if (role === "SUPER_ADMIN" || role === "EXECUTIVE") return false;
 
   if (role !== requiredRole) return false;
 
@@ -82,7 +89,7 @@ export function getNextApprovedStatus(status: ReportStatus): ReportStatus {
     MENUNGGU_ADMIN_2: "MENUNGGU_ADMIN_3",
     MENUNGGU_ADMIN_3: "MENUNGGU_ADMIN_4",
     MENUNGGU_ADMIN_4: "MENUNGGU_ADMIN_5",
-    MENUNGGU_ADMIN_5: "DISETUJUI_FINAL",
+    MENUNGGU_ADMIN_5: "MENUNGGU_KONFIRMASI",
   };
 
   const nextStatus = map[status];
@@ -114,8 +121,16 @@ export function getWorkflowMessage(
 ) {
   const requiredRole = getRequiredAdminRole(status);
 
-  if (status === "DISETUJUI_FINAL") {
-    return "Laporan sudah disetujui final.";
+  if (status === "DISETUJUI_FINAL" || status === "MENUNGGU_KONFIRMASI") {
+    return "Laporan sudah selesai dan menunggu konfirmasi pelapor.";
+  }
+
+  if (status === "TELAH_BERFUNGSI") {
+    return "Pelapor sudah mengonfirmasi barang telah berfungsi.";
+  }
+
+  if (status === "TIDAK_DAPAT_DIGUNAKAN") {
+    return "Pelapor mengonfirmasi barang tidak dapat digunakan atau tidak dapat diperbaiki.";
   }
 
   if (status === "DITOLAK") {
@@ -123,7 +138,11 @@ export function getWorkflowMessage(
   }
 
   if (role === "SUPER_ADMIN") {
-    return "Super Admin hanya monitoring. Fitur override belum diaktifkan.";
+    return "Admin Utama hanya memantau. Fitur override belum diaktifkan.";
+  }
+
+  if (role === "EXECUTIVE") {
+    return "Kepala Balai memiliki akses baca untuk monitoring eksekutif.";
   }
 
   if (!requiredRole) {
@@ -141,5 +160,7 @@ export function getWorkflowMessage(
     return `Belum giliran Anda. Laporan ini sedang menunggu ${getRoleLabel(requiredRole)}.`;
   }
 
-  return "Giliran Anda untuk melakukan ACC atau TOLAK.";
+  return role === "ADMIN_1"
+    ? "Giliran Anda untuk melanjutkan atau menyelesaikan laporan."
+    : "Giliran Anda untuk melakukan Terima atau Tolak.";
 }

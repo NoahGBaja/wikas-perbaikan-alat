@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { message: "Reset password mandiri dinonaktifkan. Hubungi admin." },
+      { message: "Reset kata sandi mandiri dinonaktifkan. Hubungi admin." },
       { status: 410 }
     );
   } catch (error) {

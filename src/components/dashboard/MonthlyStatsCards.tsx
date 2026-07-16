@@ -309,7 +309,7 @@ function MonthlyStatsCards({
 
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-right">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600">
-              Approval
+              Persetujuan
             </p>
             <p className="mt-1 text-xl font-black tracking-[-0.03em] text-emerald-700 sm:text-2xl">
               {approvalRate}%

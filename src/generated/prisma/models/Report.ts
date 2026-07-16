@@ -29,25 +29,33 @@ export type AggregateReport = {
 export type ReportAvgAggregateOutputType = {
   id: number | null
   userId: number | null
+  repairCost: runtime.Decimal | null
 }
 
 export type ReportSumAggregateOutputType = {
   id: number | null
   userId: number | null
+  repairCost: runtime.Decimal | null
 }
 
 export type ReportMinAggregateOutputType = {
   id: number | null
+  ticket: string | null
   userId: number | null
   namaPelapor: string | null
   nomorRuangan: string | null
+  namaRuangan: string | null
   kodeUakpb: string | null
   kode: string | null
+  nup: string | null
   kategori: $Enums.ReportCategory | null
+  subcategory: string | null
+  itemType: string | null
   namaBarang: string | null
   lokasi: string | null
   deskripsi: string | null
   severity: $Enums.ReportSeverity | null
+  repairCost: runtime.Decimal | null
   fotoUrl: string | null
   attachmentUrl: string | null
   attachmentType: string | null
@@ -58,6 +66,9 @@ export type ReportMinAggregateOutputType = {
   adminNotes: string | null
   completionNotes: string | null
   completionPhotoUrl: string | null
+  reporterConfirmed: boolean | null
+  reporterConfirmedAt: Date | null
+  reporterConfirmationStatus: string | null
   approvedAt: Date | null
   rejectedAt: Date | null
   processedAt: Date | null
@@ -68,16 +79,22 @@ export type ReportMinAggregateOutputType = {
 
 export type ReportMaxAggregateOutputType = {
   id: number | null
+  ticket: string | null
   userId: number | null
   namaPelapor: string | null
   nomorRuangan: string | null
+  namaRuangan: string | null
   kodeUakpb: string | null
   kode: string | null
+  nup: string | null
   kategori: $Enums.ReportCategory | null
+  subcategory: string | null
+  itemType: string | null
   namaBarang: string | null
   lokasi: string | null
   deskripsi: string | null
   severity: $Enums.ReportSeverity | null
+  repairCost: runtime.Decimal | null
   fotoUrl: string | null
   attachmentUrl: string | null
   attachmentType: string | null
@@ -88,6 +105,9 @@ export type ReportMaxAggregateOutputType = {
   adminNotes: string | null
   completionNotes: string | null
   completionPhotoUrl: string | null
+  reporterConfirmed: boolean | null
+  reporterConfirmedAt: Date | null
+  reporterConfirmationStatus: string | null
   approvedAt: Date | null
   rejectedAt: Date | null
   processedAt: Date | null
@@ -98,16 +118,22 @@ export type ReportMaxAggregateOutputType = {
 
 export type ReportCountAggregateOutputType = {
   id: number
+  ticket: number
   userId: number
   namaPelapor: number
   nomorRuangan: number
+  namaRuangan: number
   kodeUakpb: number
   kode: number
+  nup: number
   kategori: number
+  subcategory: number
+  itemType: number
   namaBarang: number
   lokasi: number
   deskripsi: number
   severity: number
+  repairCost: number
   fotoUrl: number
   attachmentUrl: number
   attachmentType: number
@@ -118,6 +144,9 @@ export type ReportCountAggregateOutputType = {
   adminNotes: number
   completionNotes: number
   completionPhotoUrl: number
+  reporterConfirmed: number
+  reporterConfirmedAt: number
+  reporterConfirmationStatus: number
   approvedAt: number
   rejectedAt: number
   processedAt: number
@@ -131,25 +160,33 @@ export type ReportCountAggregateOutputType = {
 export type ReportAvgAggregateInputType = {
   id?: true
   userId?: true
+  repairCost?: true
 }
 
 export type ReportSumAggregateInputType = {
   id?: true
   userId?: true
+  repairCost?: true
 }
 
 export type ReportMinAggregateInputType = {
   id?: true
+  ticket?: true
   userId?: true
   namaPelapor?: true
   nomorRuangan?: true
+  namaRuangan?: true
   kodeUakpb?: true
   kode?: true
+  nup?: true
   kategori?: true
+  subcategory?: true
+  itemType?: true
   namaBarang?: true
   lokasi?: true
   deskripsi?: true
   severity?: true
+  repairCost?: true
   fotoUrl?: true
   attachmentUrl?: true
   attachmentType?: true
@@ -160,6 +197,9 @@ export type ReportMinAggregateInputType = {
   adminNotes?: true
   completionNotes?: true
   completionPhotoUrl?: true
+  reporterConfirmed?: true
+  reporterConfirmedAt?: true
+  reporterConfirmationStatus?: true
   approvedAt?: true
   rejectedAt?: true
   processedAt?: true
@@ -170,16 +210,22 @@ export type ReportMinAggregateInputType = {
 
 export type ReportMaxAggregateInputType = {
   id?: true
+  ticket?: true
   userId?: true
   namaPelapor?: true
   nomorRuangan?: true
+  namaRuangan?: true
   kodeUakpb?: true
   kode?: true
+  nup?: true
   kategori?: true
+  subcategory?: true
+  itemType?: true
   namaBarang?: true
   lokasi?: true
   deskripsi?: true
   severity?: true
+  repairCost?: true
   fotoUrl?: true
   attachmentUrl?: true
   attachmentType?: true
@@ -190,6 +236,9 @@ export type ReportMaxAggregateInputType = {
   adminNotes?: true
   completionNotes?: true
   completionPhotoUrl?: true
+  reporterConfirmed?: true
+  reporterConfirmedAt?: true
+  reporterConfirmationStatus?: true
   approvedAt?: true
   rejectedAt?: true
   processedAt?: true
@@ -200,16 +249,22 @@ export type ReportMaxAggregateInputType = {
 
 export type ReportCountAggregateInputType = {
   id?: true
+  ticket?: true
   userId?: true
   namaPelapor?: true
   nomorRuangan?: true
+  namaRuangan?: true
   kodeUakpb?: true
   kode?: true
+  nup?: true
   kategori?: true
+  subcategory?: true
+  itemType?: true
   namaBarang?: true
   lokasi?: true
   deskripsi?: true
   severity?: true
+  repairCost?: true
   fotoUrl?: true
   attachmentUrl?: true
   attachmentType?: true
@@ -220,6 +275,9 @@ export type ReportCountAggregateInputType = {
   adminNotes?: true
   completionNotes?: true
   completionPhotoUrl?: true
+  reporterConfirmed?: true
+  reporterConfirmedAt?: true
+  reporterConfirmationStatus?: true
   approvedAt?: true
   rejectedAt?: true
   processedAt?: true
@@ -317,16 +375,22 @@ export type ReportGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 
 export type ReportGroupByOutputType = {
   id: number
+  ticket: string | null
   userId: number
   namaPelapor: string | null
   nomorRuangan: string | null
+  namaRuangan: string | null
   kodeUakpb: string | null
   kode: string | null
+  nup: string | null
   kategori: $Enums.ReportCategory
+  subcategory: string | null
+  itemType: string | null
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
+  repairCost: runtime.Decimal | null
   fotoUrl: string | null
   attachmentUrl: string | null
   attachmentType: string | null
@@ -337,6 +401,9 @@ export type ReportGroupByOutputType = {
   adminNotes: string | null
   completionNotes: string | null
   completionPhotoUrl: string | null
+  reporterConfirmed: boolean
+  reporterConfirmedAt: Date | null
+  reporterConfirmationStatus: string | null
   approvedAt: Date | null
   rejectedAt: Date | null
   processedAt: Date | null
@@ -370,16 +437,22 @@ export type ReportWhereInput = {
   OR?: Prisma.ReportWhereInput[]
   NOT?: Prisma.ReportWhereInput | Prisma.ReportWhereInput[]
   id?: Prisma.IntFilter<"Report"> | number
+  ticket?: Prisma.StringNullableFilter<"Report"> | string | null
   userId?: Prisma.IntFilter<"Report"> | number
   namaPelapor?: Prisma.StringNullableFilter<"Report"> | string | null
   nomorRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
+  namaRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
   kodeUakpb?: Prisma.StringNullableFilter<"Report"> | string | null
   kode?: Prisma.StringNullableFilter<"Report"> | string | null
+  nup?: Prisma.StringNullableFilter<"Report"> | string | null
   kategori?: Prisma.EnumReportCategoryFilter<"Report"> | $Enums.ReportCategory
+  subcategory?: Prisma.StringNullableFilter<"Report"> | string | null
+  itemType?: Prisma.StringNullableFilter<"Report"> | string | null
   namaBarang?: Prisma.StringFilter<"Report"> | string
   lokasi?: Prisma.StringFilter<"Report"> | string
   deskripsi?: Prisma.StringFilter<"Report"> | string
   severity?: Prisma.EnumReportSeverityFilter<"Report"> | $Enums.ReportSeverity
+  repairCost?: Prisma.DecimalNullableFilter<"Report"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.StringNullableFilter<"Report"> | string | null
   attachmentUrl?: Prisma.StringNullableFilter<"Report"> | string | null
   attachmentType?: Prisma.StringNullableFilter<"Report"> | string | null
@@ -390,6 +463,9 @@ export type ReportWhereInput = {
   adminNotes?: Prisma.StringNullableFilter<"Report"> | string | null
   completionNotes?: Prisma.StringNullableFilter<"Report"> | string | null
   completionPhotoUrl?: Prisma.StringNullableFilter<"Report"> | string | null
+  reporterConfirmed?: Prisma.BoolFilter<"Report"> | boolean
+  reporterConfirmedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
+  reporterConfirmationStatus?: Prisma.StringNullableFilter<"Report"> | string | null
   approvedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
   rejectedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
   processedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
@@ -398,20 +474,28 @@ export type ReportWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   histories?: Prisma.ReportApprovalHistoryListRelationFilter
+  attachments?: Prisma.ReportAttachmentListRelationFilter
+  notifications?: Prisma.NotificationListRelationFilter
 }
 
 export type ReportOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  ticket?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   namaPelapor?: Prisma.SortOrderInput | Prisma.SortOrder
   nomorRuangan?: Prisma.SortOrderInput | Prisma.SortOrder
+  namaRuangan?: Prisma.SortOrderInput | Prisma.SortOrder
   kodeUakpb?: Prisma.SortOrderInput | Prisma.SortOrder
   kode?: Prisma.SortOrderInput | Prisma.SortOrder
+  nup?: Prisma.SortOrderInput | Prisma.SortOrder
   kategori?: Prisma.SortOrder
+  subcategory?: Prisma.SortOrderInput | Prisma.SortOrder
+  itemType?: Prisma.SortOrderInput | Prisma.SortOrder
   namaBarang?: Prisma.SortOrder
   lokasi?: Prisma.SortOrder
   deskripsi?: Prisma.SortOrder
   severity?: Prisma.SortOrder
+  repairCost?: Prisma.SortOrderInput | Prisma.SortOrder
   fotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   attachmentUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   attachmentType?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -422,6 +506,9 @@ export type ReportOrderByWithRelationInput = {
   adminNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   completionNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   completionPhotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  reporterConfirmed?: Prisma.SortOrder
+  reporterConfirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  reporterConfirmationStatus?: Prisma.SortOrderInput | Prisma.SortOrder
   approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   rejectedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   processedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -430,24 +517,32 @@ export type ReportOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   histories?: Prisma.ReportApprovalHistoryOrderByRelationAggregateInput
+  attachments?: Prisma.ReportAttachmentOrderByRelationAggregateInput
+  notifications?: Prisma.NotificationOrderByRelationAggregateInput
   _relevance?: Prisma.ReportOrderByRelevanceInput
 }
 
 export type ReportWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  ticket?: string
   AND?: Prisma.ReportWhereInput | Prisma.ReportWhereInput[]
   OR?: Prisma.ReportWhereInput[]
   NOT?: Prisma.ReportWhereInput | Prisma.ReportWhereInput[]
   userId?: Prisma.IntFilter<"Report"> | number
   namaPelapor?: Prisma.StringNullableFilter<"Report"> | string | null
   nomorRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
+  namaRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
   kodeUakpb?: Prisma.StringNullableFilter<"Report"> | string | null
   kode?: Prisma.StringNullableFilter<"Report"> | string | null
+  nup?: Prisma.StringNullableFilter<"Report"> | string | null
   kategori?: Prisma.EnumReportCategoryFilter<"Report"> | $Enums.ReportCategory
+  subcategory?: Prisma.StringNullableFilter<"Report"> | string | null
+  itemType?: Prisma.StringNullableFilter<"Report"> | string | null
   namaBarang?: Prisma.StringFilter<"Report"> | string
   lokasi?: Prisma.StringFilter<"Report"> | string
   deskripsi?: Prisma.StringFilter<"Report"> | string
   severity?: Prisma.EnumReportSeverityFilter<"Report"> | $Enums.ReportSeverity
+  repairCost?: Prisma.DecimalNullableFilter<"Report"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.StringNullableFilter<"Report"> | string | null
   attachmentUrl?: Prisma.StringNullableFilter<"Report"> | string | null
   attachmentType?: Prisma.StringNullableFilter<"Report"> | string | null
@@ -458,6 +553,9 @@ export type ReportWhereUniqueInput = Prisma.AtLeast<{
   adminNotes?: Prisma.StringNullableFilter<"Report"> | string | null
   completionNotes?: Prisma.StringNullableFilter<"Report"> | string | null
   completionPhotoUrl?: Prisma.StringNullableFilter<"Report"> | string | null
+  reporterConfirmed?: Prisma.BoolFilter<"Report"> | boolean
+  reporterConfirmedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
+  reporterConfirmationStatus?: Prisma.StringNullableFilter<"Report"> | string | null
   approvedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
   rejectedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
   processedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
@@ -466,20 +564,28 @@ export type ReportWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   histories?: Prisma.ReportApprovalHistoryListRelationFilter
-}, "id">
+  attachments?: Prisma.ReportAttachmentListRelationFilter
+  notifications?: Prisma.NotificationListRelationFilter
+}, "id" | "ticket">
 
 export type ReportOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  ticket?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   namaPelapor?: Prisma.SortOrderInput | Prisma.SortOrder
   nomorRuangan?: Prisma.SortOrderInput | Prisma.SortOrder
+  namaRuangan?: Prisma.SortOrderInput | Prisma.SortOrder
   kodeUakpb?: Prisma.SortOrderInput | Prisma.SortOrder
   kode?: Prisma.SortOrderInput | Prisma.SortOrder
+  nup?: Prisma.SortOrderInput | Prisma.SortOrder
   kategori?: Prisma.SortOrder
+  subcategory?: Prisma.SortOrderInput | Prisma.SortOrder
+  itemType?: Prisma.SortOrderInput | Prisma.SortOrder
   namaBarang?: Prisma.SortOrder
   lokasi?: Prisma.SortOrder
   deskripsi?: Prisma.SortOrder
   severity?: Prisma.SortOrder
+  repairCost?: Prisma.SortOrderInput | Prisma.SortOrder
   fotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   attachmentUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   attachmentType?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -490,6 +596,9 @@ export type ReportOrderByWithAggregationInput = {
   adminNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   completionNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   completionPhotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  reporterConfirmed?: Prisma.SortOrder
+  reporterConfirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  reporterConfirmationStatus?: Prisma.SortOrderInput | Prisma.SortOrder
   approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   rejectedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   processedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -508,16 +617,22 @@ export type ReportScalarWhereWithAggregatesInput = {
   OR?: Prisma.ReportScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ReportScalarWhereWithAggregatesInput | Prisma.ReportScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Report"> | number
+  ticket?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   userId?: Prisma.IntWithAggregatesFilter<"Report"> | number
   namaPelapor?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   nomorRuangan?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  namaRuangan?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   kodeUakpb?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   kode?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  nup?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   kategori?: Prisma.EnumReportCategoryWithAggregatesFilter<"Report"> | $Enums.ReportCategory
+  subcategory?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  itemType?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   namaBarang?: Prisma.StringWithAggregatesFilter<"Report"> | string
   lokasi?: Prisma.StringWithAggregatesFilter<"Report"> | string
   deskripsi?: Prisma.StringWithAggregatesFilter<"Report"> | string
   severity?: Prisma.EnumReportSeverityWithAggregatesFilter<"Report"> | $Enums.ReportSeverity
+  repairCost?: Prisma.DecimalNullableWithAggregatesFilter<"Report"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   attachmentUrl?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   attachmentType?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
@@ -528,6 +643,9 @@ export type ReportScalarWhereWithAggregatesInput = {
   adminNotes?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   completionNotes?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   completionPhotoUrl?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  reporterConfirmed?: Prisma.BoolWithAggregatesFilter<"Report"> | boolean
+  reporterConfirmedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Report"> | Date | string | null
+  reporterConfirmationStatus?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   approvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Report"> | Date | string | null
   rejectedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Report"> | Date | string | null
   processedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Report"> | Date | string | null
@@ -537,15 +655,21 @@ export type ReportScalarWhereWithAggregatesInput = {
 }
 
 export type ReportCreateInput = {
+  ticket?: string | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
+  namaRuangan?: string | null
   kodeUakpb?: string | null
   kode?: string | null
+  nup?: string | null
   kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: string | null
   attachmentUrl?: string | null
   attachmentType?: string | null
@@ -556,6 +680,9 @@ export type ReportCreateInput = {
   adminNotes?: string | null
   completionNotes?: string | null
   completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
   approvedAt?: Date | string | null
   rejectedAt?: Date | string | null
   processedAt?: Date | string | null
@@ -564,20 +691,28 @@ export type ReportCreateInput = {
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReportsInput
   histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
+  attachments?: Prisma.ReportAttachmentCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutReportInput
 }
 
 export type ReportUncheckedCreateInput = {
   id?: number
+  ticket?: string | null
   userId: number
   namaPelapor?: string | null
   nomorRuangan?: string | null
+  namaRuangan?: string | null
   kodeUakpb?: string | null
   kode?: string | null
+  nup?: string | null
   kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: string | null
   attachmentUrl?: string | null
   attachmentType?: string | null
@@ -588,6 +723,9 @@ export type ReportUncheckedCreateInput = {
   adminNotes?: string | null
   completionNotes?: string | null
   completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
   approvedAt?: Date | string | null
   rejectedAt?: Date | string | null
   processedAt?: Date | string | null
@@ -595,18 +733,26 @@ export type ReportUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
+  attachments?: Prisma.ReportAttachmentUncheckedCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutReportInput
 }
 
 export type ReportUpdateInput = {
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -617,6 +763,9 @@ export type ReportUpdateInput = {
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -625,20 +774,28 @@ export type ReportUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
   histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
+  attachments?: Prisma.ReportAttachmentUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutReportNestedInput
 }
 
 export type ReportUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -649,6 +806,9 @@ export type ReportUncheckedUpdateInput = {
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -656,20 +816,28 @@ export type ReportUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
+  attachments?: Prisma.ReportAttachmentUncheckedUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutReportNestedInput
 }
 
 export type ReportCreateManyInput = {
   id?: number
+  ticket?: string | null
   userId: number
   namaPelapor?: string | null
   nomorRuangan?: string | null
+  namaRuangan?: string | null
   kodeUakpb?: string | null
   kode?: string | null
+  nup?: string | null
   kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: string | null
   attachmentUrl?: string | null
   attachmentType?: string | null
@@ -680,6 +848,9 @@ export type ReportCreateManyInput = {
   adminNotes?: string | null
   completionNotes?: string | null
   completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
   approvedAt?: Date | string | null
   rejectedAt?: Date | string | null
   processedAt?: Date | string | null
@@ -689,15 +860,21 @@ export type ReportCreateManyInput = {
 }
 
 export type ReportUpdateManyMutationInput = {
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -708,6 +885,9 @@ export type ReportUpdateManyMutationInput = {
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -718,16 +898,22 @@ export type ReportUpdateManyMutationInput = {
 
 export type ReportUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -738,6 +924,9 @@ export type ReportUncheckedUpdateManyInput = {
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -764,16 +953,22 @@ export type ReportOrderByRelevanceInput = {
 
 export type ReportCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  ticket?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   namaPelapor?: Prisma.SortOrder
   nomorRuangan?: Prisma.SortOrder
+  namaRuangan?: Prisma.SortOrder
   kodeUakpb?: Prisma.SortOrder
   kode?: Prisma.SortOrder
+  nup?: Prisma.SortOrder
   kategori?: Prisma.SortOrder
+  subcategory?: Prisma.SortOrder
+  itemType?: Prisma.SortOrder
   namaBarang?: Prisma.SortOrder
   lokasi?: Prisma.SortOrder
   deskripsi?: Prisma.SortOrder
   severity?: Prisma.SortOrder
+  repairCost?: Prisma.SortOrder
   fotoUrl?: Prisma.SortOrder
   attachmentUrl?: Prisma.SortOrder
   attachmentType?: Prisma.SortOrder
@@ -784,6 +979,9 @@ export type ReportCountOrderByAggregateInput = {
   adminNotes?: Prisma.SortOrder
   completionNotes?: Prisma.SortOrder
   completionPhotoUrl?: Prisma.SortOrder
+  reporterConfirmed?: Prisma.SortOrder
+  reporterConfirmedAt?: Prisma.SortOrder
+  reporterConfirmationStatus?: Prisma.SortOrder
   approvedAt?: Prisma.SortOrder
   rejectedAt?: Prisma.SortOrder
   processedAt?: Prisma.SortOrder
@@ -795,20 +993,27 @@ export type ReportCountOrderByAggregateInput = {
 export type ReportAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  repairCost?: Prisma.SortOrder
 }
 
 export type ReportMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  ticket?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   namaPelapor?: Prisma.SortOrder
   nomorRuangan?: Prisma.SortOrder
+  namaRuangan?: Prisma.SortOrder
   kodeUakpb?: Prisma.SortOrder
   kode?: Prisma.SortOrder
+  nup?: Prisma.SortOrder
   kategori?: Prisma.SortOrder
+  subcategory?: Prisma.SortOrder
+  itemType?: Prisma.SortOrder
   namaBarang?: Prisma.SortOrder
   lokasi?: Prisma.SortOrder
   deskripsi?: Prisma.SortOrder
   severity?: Prisma.SortOrder
+  repairCost?: Prisma.SortOrder
   fotoUrl?: Prisma.SortOrder
   attachmentUrl?: Prisma.SortOrder
   attachmentType?: Prisma.SortOrder
@@ -819,6 +1024,9 @@ export type ReportMaxOrderByAggregateInput = {
   adminNotes?: Prisma.SortOrder
   completionNotes?: Prisma.SortOrder
   completionPhotoUrl?: Prisma.SortOrder
+  reporterConfirmed?: Prisma.SortOrder
+  reporterConfirmedAt?: Prisma.SortOrder
+  reporterConfirmationStatus?: Prisma.SortOrder
   approvedAt?: Prisma.SortOrder
   rejectedAt?: Prisma.SortOrder
   processedAt?: Prisma.SortOrder
@@ -829,16 +1037,22 @@ export type ReportMaxOrderByAggregateInput = {
 
 export type ReportMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  ticket?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   namaPelapor?: Prisma.SortOrder
   nomorRuangan?: Prisma.SortOrder
+  namaRuangan?: Prisma.SortOrder
   kodeUakpb?: Prisma.SortOrder
   kode?: Prisma.SortOrder
+  nup?: Prisma.SortOrder
   kategori?: Prisma.SortOrder
+  subcategory?: Prisma.SortOrder
+  itemType?: Prisma.SortOrder
   namaBarang?: Prisma.SortOrder
   lokasi?: Prisma.SortOrder
   deskripsi?: Prisma.SortOrder
   severity?: Prisma.SortOrder
+  repairCost?: Prisma.SortOrder
   fotoUrl?: Prisma.SortOrder
   attachmentUrl?: Prisma.SortOrder
   attachmentType?: Prisma.SortOrder
@@ -849,6 +1063,9 @@ export type ReportMinOrderByAggregateInput = {
   adminNotes?: Prisma.SortOrder
   completionNotes?: Prisma.SortOrder
   completionPhotoUrl?: Prisma.SortOrder
+  reporterConfirmed?: Prisma.SortOrder
+  reporterConfirmedAt?: Prisma.SortOrder
+  reporterConfirmationStatus?: Prisma.SortOrder
   approvedAt?: Prisma.SortOrder
   rejectedAt?: Prisma.SortOrder
   processedAt?: Prisma.SortOrder
@@ -860,11 +1077,17 @@ export type ReportMinOrderByAggregateInput = {
 export type ReportSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  repairCost?: Prisma.SortOrder
 }
 
 export type ReportScalarRelationFilter = {
   is?: Prisma.ReportWhereInput
   isNot?: Prisma.ReportWhereInput
+}
+
+export type ReportNullableScalarRelationFilter = {
+  is?: Prisma.ReportWhereInput | null
+  isNot?: Prisma.ReportWhereInput | null
 }
 
 export type ReportCreateNestedManyWithoutUserInput = {
@@ -917,12 +1140,30 @@ export type EnumReportSeverityFieldUpdateOperationsInput = {
   set?: $Enums.ReportSeverity
 }
 
+export type NullableDecimalFieldUpdateOperationsInput = {
+  set?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
+}
+
 export type EnumReportStatusFieldUpdateOperationsInput = {
   set?: $Enums.ReportStatus
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
+export type ReportCreateNestedOneWithoutAttachmentsInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutAttachmentsInput, Prisma.ReportUncheckedCreateWithoutAttachmentsInput>
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutAttachmentsInput
+  connect?: Prisma.ReportWhereUniqueInput
+}
+
+export type ReportUpdateOneRequiredWithoutAttachmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutAttachmentsInput, Prisma.ReportUncheckedCreateWithoutAttachmentsInput>
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutAttachmentsInput
+  upsert?: Prisma.ReportUpsertWithoutAttachmentsInput
+  connect?: Prisma.ReportWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ReportUpdateToOneWithWhereWithoutAttachmentsInput, Prisma.ReportUpdateWithoutAttachmentsInput>, Prisma.ReportUncheckedUpdateWithoutAttachmentsInput>
 }
 
 export type ReportCreateNestedOneWithoutHistoriesInput = {
@@ -939,16 +1180,38 @@ export type ReportUpdateOneRequiredWithoutHistoriesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ReportUpdateToOneWithWhereWithoutHistoriesInput, Prisma.ReportUpdateWithoutHistoriesInput>, Prisma.ReportUncheckedUpdateWithoutHistoriesInput>
 }
 
+export type ReportCreateNestedOneWithoutNotificationsInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutNotificationsInput, Prisma.ReportUncheckedCreateWithoutNotificationsInput>
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutNotificationsInput
+  connect?: Prisma.ReportWhereUniqueInput
+}
+
+export type ReportUpdateOneWithoutNotificationsNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutNotificationsInput, Prisma.ReportUncheckedCreateWithoutNotificationsInput>
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutNotificationsInput
+  upsert?: Prisma.ReportUpsertWithoutNotificationsInput
+  disconnect?: Prisma.ReportWhereInput | boolean
+  delete?: Prisma.ReportWhereInput | boolean
+  connect?: Prisma.ReportWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ReportUpdateToOneWithWhereWithoutNotificationsInput, Prisma.ReportUpdateWithoutNotificationsInput>, Prisma.ReportUncheckedUpdateWithoutNotificationsInput>
+}
+
 export type ReportCreateWithoutUserInput = {
+  ticket?: string | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
+  namaRuangan?: string | null
   kodeUakpb?: string | null
   kode?: string | null
+  nup?: string | null
   kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: string | null
   attachmentUrl?: string | null
   attachmentType?: string | null
@@ -959,6 +1222,9 @@ export type ReportCreateWithoutUserInput = {
   adminNotes?: string | null
   completionNotes?: string | null
   completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
   approvedAt?: Date | string | null
   rejectedAt?: Date | string | null
   processedAt?: Date | string | null
@@ -966,19 +1232,27 @@ export type ReportCreateWithoutUserInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
+  attachments?: Prisma.ReportAttachmentCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutReportInput
 }
 
 export type ReportUncheckedCreateWithoutUserInput = {
   id?: number
+  ticket?: string | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
+  namaRuangan?: string | null
   kodeUakpb?: string | null
   kode?: string | null
+  nup?: string | null
   kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: string | null
   attachmentUrl?: string | null
   attachmentType?: string | null
@@ -989,6 +1263,9 @@ export type ReportUncheckedCreateWithoutUserInput = {
   adminNotes?: string | null
   completionNotes?: string | null
   completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
   approvedAt?: Date | string | null
   rejectedAt?: Date | string | null
   processedAt?: Date | string | null
@@ -996,6 +1273,8 @@ export type ReportUncheckedCreateWithoutUserInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
+  attachments?: Prisma.ReportAttachmentUncheckedCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutReportInput
 }
 
 export type ReportCreateOrConnectWithoutUserInput = {
@@ -1029,16 +1308,22 @@ export type ReportScalarWhereInput = {
   OR?: Prisma.ReportScalarWhereInput[]
   NOT?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
   id?: Prisma.IntFilter<"Report"> | number
+  ticket?: Prisma.StringNullableFilter<"Report"> | string | null
   userId?: Prisma.IntFilter<"Report"> | number
   namaPelapor?: Prisma.StringNullableFilter<"Report"> | string | null
   nomorRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
+  namaRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
   kodeUakpb?: Prisma.StringNullableFilter<"Report"> | string | null
   kode?: Prisma.StringNullableFilter<"Report"> | string | null
+  nup?: Prisma.StringNullableFilter<"Report"> | string | null
   kategori?: Prisma.EnumReportCategoryFilter<"Report"> | $Enums.ReportCategory
+  subcategory?: Prisma.StringNullableFilter<"Report"> | string | null
+  itemType?: Prisma.StringNullableFilter<"Report"> | string | null
   namaBarang?: Prisma.StringFilter<"Report"> | string
   lokasi?: Prisma.StringFilter<"Report"> | string
   deskripsi?: Prisma.StringFilter<"Report"> | string
   severity?: Prisma.EnumReportSeverityFilter<"Report"> | $Enums.ReportSeverity
+  repairCost?: Prisma.DecimalNullableFilter<"Report"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.StringNullableFilter<"Report"> | string | null
   attachmentUrl?: Prisma.StringNullableFilter<"Report"> | string | null
   attachmentType?: Prisma.StringNullableFilter<"Report"> | string | null
@@ -1049,6 +1334,9 @@ export type ReportScalarWhereInput = {
   adminNotes?: Prisma.StringNullableFilter<"Report"> | string | null
   completionNotes?: Prisma.StringNullableFilter<"Report"> | string | null
   completionPhotoUrl?: Prisma.StringNullableFilter<"Report"> | string | null
+  reporterConfirmed?: Prisma.BoolFilter<"Report"> | boolean
+  reporterConfirmedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
+  reporterConfirmationStatus?: Prisma.StringNullableFilter<"Report"> | string | null
   approvedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
   rejectedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
   processedAt?: Prisma.DateTimeNullableFilter<"Report"> | Date | string | null
@@ -1057,16 +1345,22 @@ export type ReportScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
 }
 
-export type ReportCreateWithoutHistoriesInput = {
+export type ReportCreateWithoutAttachmentsInput = {
+  ticket?: string | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
+  namaRuangan?: string | null
   kodeUakpb?: string | null
   kode?: string | null
+  nup?: string | null
   kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: string | null
   attachmentUrl?: string | null
   attachmentType?: string | null
@@ -1077,6 +1371,9 @@ export type ReportCreateWithoutHistoriesInput = {
   adminNotes?: string | null
   completionNotes?: string | null
   completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
   approvedAt?: Date | string | null
   rejectedAt?: Date | string | null
   processedAt?: Date | string | null
@@ -1084,20 +1381,28 @@ export type ReportCreateWithoutHistoriesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReportsInput
+  histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutReportInput
 }
 
-export type ReportUncheckedCreateWithoutHistoriesInput = {
+export type ReportUncheckedCreateWithoutAttachmentsInput = {
   id?: number
+  ticket?: string | null
   userId: number
   namaPelapor?: string | null
   nomorRuangan?: string | null
+  namaRuangan?: string | null
   kodeUakpb?: string | null
   kode?: string | null
+  nup?: string | null
   kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: string | null
   attachmentUrl?: string | null
   attachmentType?: string | null
@@ -1108,12 +1413,195 @@ export type ReportUncheckedCreateWithoutHistoriesInput = {
   adminNotes?: string | null
   completionNotes?: string | null
   completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
   approvedAt?: Date | string | null
   rejectedAt?: Date | string | null
   processedAt?: Date | string | null
   finishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutReportInput
+}
+
+export type ReportCreateOrConnectWithoutAttachmentsInput = {
+  where: Prisma.ReportWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReportCreateWithoutAttachmentsInput, Prisma.ReportUncheckedCreateWithoutAttachmentsInput>
+}
+
+export type ReportUpsertWithoutAttachmentsInput = {
+  update: Prisma.XOR<Prisma.ReportUpdateWithoutAttachmentsInput, Prisma.ReportUncheckedUpdateWithoutAttachmentsInput>
+  create: Prisma.XOR<Prisma.ReportCreateWithoutAttachmentsInput, Prisma.ReportUncheckedCreateWithoutAttachmentsInput>
+  where?: Prisma.ReportWhereInput
+}
+
+export type ReportUpdateToOneWithWhereWithoutAttachmentsInput = {
+  where?: Prisma.ReportWhereInput
+  data: Prisma.XOR<Prisma.ReportUpdateWithoutAttachmentsInput, Prisma.ReportUncheckedUpdateWithoutAttachmentsInput>
+}
+
+export type ReportUpdateWithoutAttachmentsInput = {
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
+  lokasi?: Prisma.StringFieldUpdateOperationsInput | string
+  deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutReportNestedInput
+}
+
+export type ReportUncheckedUpdateWithoutAttachmentsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
+  lokasi?: Prisma.StringFieldUpdateOperationsInput | string
+  deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutReportNestedInput
+}
+
+export type ReportCreateWithoutHistoriesInput = {
+  ticket?: string | null
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  namaRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
+  nup?: string | null
+  kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
+  namaBarang: string
+  lokasi: string
+  deskripsi: string
+  severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
+  status?: $Enums.ReportStatus
+  alasanPenolakan?: string | null
+  assignedTechnician?: string | null
+  adminNotes?: string | null
+  completionNotes?: string | null
+  completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  processedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutReportsInput
+  attachments?: Prisma.ReportAttachmentCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutReportInput
+}
+
+export type ReportUncheckedCreateWithoutHistoriesInput = {
+  id?: number
+  ticket?: string | null
+  userId: number
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  namaRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
+  nup?: string | null
+  kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
+  namaBarang: string
+  lokasi: string
+  deskripsi: string
+  severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
+  status?: $Enums.ReportStatus
+  alasanPenolakan?: string | null
+  assignedTechnician?: string | null
+  adminNotes?: string | null
+  completionNotes?: string | null
+  completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  processedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  attachments?: Prisma.ReportAttachmentUncheckedCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutReportInput
 }
 
 export type ReportCreateOrConnectWithoutHistoriesInput = {
@@ -1133,15 +1621,21 @@ export type ReportUpdateToOneWithWhereWithoutHistoriesInput = {
 }
 
 export type ReportUpdateWithoutHistoriesInput = {
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1152,6 +1646,9 @@ export type ReportUpdateWithoutHistoriesInput = {
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1159,20 +1656,28 @@ export type ReportUpdateWithoutHistoriesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  attachments?: Prisma.ReportAttachmentUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutReportNestedInput
 }
 
 export type ReportUncheckedUpdateWithoutHistoriesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1183,25 +1688,35 @@ export type ReportUncheckedUpdateWithoutHistoriesInput = {
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  attachments?: Prisma.ReportAttachmentUncheckedUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutReportNestedInput
 }
 
-export type ReportCreateManyUserInput = {
-  id?: number
+export type ReportCreateWithoutNotificationsInput = {
+  ticket?: string | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
+  namaRuangan?: string | null
   kodeUakpb?: string | null
   kode?: string | null
+  nup?: string | null
   kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
   namaBarang: string
   lokasi: string
   deskripsi: string
   severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: string | null
   attachmentUrl?: string | null
   attachmentType?: string | null
@@ -1212,6 +1727,188 @@ export type ReportCreateManyUserInput = {
   adminNotes?: string | null
   completionNotes?: string | null
   completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  processedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutReportsInput
+  histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
+  attachments?: Prisma.ReportAttachmentCreateNestedManyWithoutReportInput
+}
+
+export type ReportUncheckedCreateWithoutNotificationsInput = {
+  id?: number
+  ticket?: string | null
+  userId: number
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  namaRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
+  nup?: string | null
+  kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
+  namaBarang: string
+  lokasi: string
+  deskripsi: string
+  severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
+  status?: $Enums.ReportStatus
+  alasanPenolakan?: string | null
+  assignedTechnician?: string | null
+  adminNotes?: string | null
+  completionNotes?: string | null
+  completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  processedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
+  attachments?: Prisma.ReportAttachmentUncheckedCreateNestedManyWithoutReportInput
+}
+
+export type ReportCreateOrConnectWithoutNotificationsInput = {
+  where: Prisma.ReportWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReportCreateWithoutNotificationsInput, Prisma.ReportUncheckedCreateWithoutNotificationsInput>
+}
+
+export type ReportUpsertWithoutNotificationsInput = {
+  update: Prisma.XOR<Prisma.ReportUpdateWithoutNotificationsInput, Prisma.ReportUncheckedUpdateWithoutNotificationsInput>
+  create: Prisma.XOR<Prisma.ReportCreateWithoutNotificationsInput, Prisma.ReportUncheckedCreateWithoutNotificationsInput>
+  where?: Prisma.ReportWhereInput
+}
+
+export type ReportUpdateToOneWithWhereWithoutNotificationsInput = {
+  where?: Prisma.ReportWhereInput
+  data: Prisma.XOR<Prisma.ReportUpdateWithoutNotificationsInput, Prisma.ReportUncheckedUpdateWithoutNotificationsInput>
+}
+
+export type ReportUpdateWithoutNotificationsInput = {
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
+  lokasi?: Prisma.StringFieldUpdateOperationsInput | string
+  deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
+  attachments?: Prisma.ReportAttachmentUpdateManyWithoutReportNestedInput
+}
+
+export type ReportUncheckedUpdateWithoutNotificationsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
+  lokasi?: Prisma.StringFieldUpdateOperationsInput | string
+  deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
+  attachments?: Prisma.ReportAttachmentUncheckedUpdateManyWithoutReportNestedInput
+}
+
+export type ReportCreateManyUserInput = {
+  id?: number
+  ticket?: string | null
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  namaRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
+  nup?: string | null
+  kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
+  namaBarang: string
+  lokasi: string
+  deskripsi: string
+  severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
+  status?: $Enums.ReportStatus
+  alasanPenolakan?: string | null
+  assignedTechnician?: string | null
+  adminNotes?: string | null
+  completionNotes?: string | null
+  completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
   approvedAt?: Date | string | null
   rejectedAt?: Date | string | null
   processedAt?: Date | string | null
@@ -1221,15 +1918,21 @@ export type ReportCreateManyUserInput = {
 }
 
 export type ReportUpdateWithoutUserInput = {
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1240,6 +1943,9 @@ export type ReportUpdateWithoutUserInput = {
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1247,19 +1953,27 @@ export type ReportUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
+  attachments?: Prisma.ReportAttachmentUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutReportNestedInput
 }
 
 export type ReportUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1270,6 +1984,9 @@ export type ReportUncheckedUpdateWithoutUserInput = {
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1277,19 +1994,27 @@ export type ReportUncheckedUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
+  attachments?: Prisma.ReportAttachmentUncheckedUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutReportNestedInput
 }
 
 export type ReportUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
   lokasi?: Prisma.StringFieldUpdateOperationsInput | string
   deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1300,6 +2025,9 @@ export type ReportUncheckedUpdateManyWithoutUserInput = {
   adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1315,10 +2043,14 @@ export type ReportUncheckedUpdateManyWithoutUserInput = {
 
 export type ReportCountOutputType = {
   histories: number
+  attachments: number
+  notifications: number
 }
 
 export type ReportCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   histories?: boolean | ReportCountOutputTypeCountHistoriesArgs
+  attachments?: boolean | ReportCountOutputTypeCountAttachmentsArgs
+  notifications?: boolean | ReportCountOutputTypeCountNotificationsArgs
 }
 
 /**
@@ -1338,19 +2070,39 @@ export type ReportCountOutputTypeCountHistoriesArgs<ExtArgs extends runtime.Type
   where?: Prisma.ReportApprovalHistoryWhereInput
 }
 
+/**
+ * ReportCountOutputType without action
+ */
+export type ReportCountOutputTypeCountAttachmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReportAttachmentWhereInput
+}
+
+/**
+ * ReportCountOutputType without action
+ */
+export type ReportCountOutputTypeCountNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.NotificationWhereInput
+}
+
 
 export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  ticket?: boolean
   userId?: boolean
   namaPelapor?: boolean
   nomorRuangan?: boolean
+  namaRuangan?: boolean
   kodeUakpb?: boolean
   kode?: boolean
+  nup?: boolean
   kategori?: boolean
+  subcategory?: boolean
+  itemType?: boolean
   namaBarang?: boolean
   lokasi?: boolean
   deskripsi?: boolean
   severity?: boolean
+  repairCost?: boolean
   fotoUrl?: boolean
   attachmentUrl?: boolean
   attachmentType?: boolean
@@ -1361,6 +2113,9 @@ export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   adminNotes?: boolean
   completionNotes?: boolean
   completionPhotoUrl?: boolean
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: boolean
+  reporterConfirmationStatus?: boolean
   approvedAt?: boolean
   rejectedAt?: boolean
   processedAt?: boolean
@@ -1369,6 +2124,8 @@ export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   histories?: boolean | Prisma.Report$historiesArgs<ExtArgs>
+  attachments?: boolean | Prisma.Report$attachmentsArgs<ExtArgs>
+  notifications?: boolean | Prisma.Report$notificationsArgs<ExtArgs>
   _count?: boolean | Prisma.ReportCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["report"]>
 
@@ -1376,16 +2133,22 @@ export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
 
 export type ReportSelectScalar = {
   id?: boolean
+  ticket?: boolean
   userId?: boolean
   namaPelapor?: boolean
   nomorRuangan?: boolean
+  namaRuangan?: boolean
   kodeUakpb?: boolean
   kode?: boolean
+  nup?: boolean
   kategori?: boolean
+  subcategory?: boolean
+  itemType?: boolean
   namaBarang?: boolean
   lokasi?: boolean
   deskripsi?: boolean
   severity?: boolean
+  repairCost?: boolean
   fotoUrl?: boolean
   attachmentUrl?: boolean
   attachmentType?: boolean
@@ -1396,6 +2159,9 @@ export type ReportSelectScalar = {
   adminNotes?: boolean
   completionNotes?: boolean
   completionPhotoUrl?: boolean
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: boolean
+  reporterConfirmationStatus?: boolean
   approvedAt?: boolean
   rejectedAt?: boolean
   processedAt?: boolean
@@ -1404,10 +2170,12 @@ export type ReportSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "namaPelapor" | "nomorRuangan" | "kodeUakpb" | "kode" | "kategori" | "namaBarang" | "lokasi" | "deskripsi" | "severity" | "fotoUrl" | "attachmentUrl" | "attachmentType" | "attachmentName" | "status" | "alasanPenolakan" | "assignedTechnician" | "adminNotes" | "completionNotes" | "completionPhotoUrl" | "approvedAt" | "rejectedAt" | "processedAt" | "finishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["report"]>
+export type ReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ticket" | "userId" | "namaPelapor" | "nomorRuangan" | "namaRuangan" | "kodeUakpb" | "kode" | "nup" | "kategori" | "subcategory" | "itemType" | "namaBarang" | "lokasi" | "deskripsi" | "severity" | "repairCost" | "fotoUrl" | "attachmentUrl" | "attachmentType" | "attachmentName" | "status" | "alasanPenolakan" | "assignedTechnician" | "adminNotes" | "completionNotes" | "completionPhotoUrl" | "reporterConfirmed" | "reporterConfirmedAt" | "reporterConfirmationStatus" | "approvedAt" | "rejectedAt" | "processedAt" | "finishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["report"]>
 export type ReportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   histories?: boolean | Prisma.Report$historiesArgs<ExtArgs>
+  attachments?: boolean | Prisma.Report$attachmentsArgs<ExtArgs>
+  notifications?: boolean | Prisma.Report$notificationsArgs<ExtArgs>
   _count?: boolean | Prisma.ReportCountOutputTypeDefaultArgs<ExtArgs>
 }
 
@@ -1416,19 +2184,27 @@ export type $ReportPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
     histories: Prisma.$ReportApprovalHistoryPayload<ExtArgs>[]
+    attachments: Prisma.$ReportAttachmentPayload<ExtArgs>[]
+    notifications: Prisma.$NotificationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    ticket: string | null
     userId: number
     namaPelapor: string | null
     nomorRuangan: string | null
+    namaRuangan: string | null
     kodeUakpb: string | null
     kode: string | null
+    nup: string | null
     kategori: $Enums.ReportCategory
+    subcategory: string | null
+    itemType: string | null
     namaBarang: string
     lokasi: string
     deskripsi: string
     severity: $Enums.ReportSeverity
+    repairCost: runtime.Decimal | null
     fotoUrl: string | null
     attachmentUrl: string | null
     attachmentType: string | null
@@ -1439,6 +2215,9 @@ export type $ReportPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     adminNotes: string | null
     completionNotes: string | null
     completionPhotoUrl: string | null
+    reporterConfirmed: boolean
+    reporterConfirmedAt: Date | null
+    reporterConfirmationStatus: string | null
     approvedAt: Date | null
     rejectedAt: Date | null
     processedAt: Date | null
@@ -1787,6 +2566,8 @@ export interface Prisma__ReportClient<T, Null = never, ExtArgs extends runtime.T
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   histories<T extends Prisma.Report$historiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Report$historiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportApprovalHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  attachments<T extends Prisma.Report$attachmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Report$attachmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportAttachmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  notifications<T extends Prisma.Report$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Report$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1817,16 +2598,22 @@ export interface Prisma__ReportClient<T, Null = never, ExtArgs extends runtime.T
  */
 export interface ReportFieldRefs {
   readonly id: Prisma.FieldRef<"Report", 'Int'>
+  readonly ticket: Prisma.FieldRef<"Report", 'String'>
   readonly userId: Prisma.FieldRef<"Report", 'Int'>
   readonly namaPelapor: Prisma.FieldRef<"Report", 'String'>
   readonly nomorRuangan: Prisma.FieldRef<"Report", 'String'>
+  readonly namaRuangan: Prisma.FieldRef<"Report", 'String'>
   readonly kodeUakpb: Prisma.FieldRef<"Report", 'String'>
   readonly kode: Prisma.FieldRef<"Report", 'String'>
+  readonly nup: Prisma.FieldRef<"Report", 'String'>
   readonly kategori: Prisma.FieldRef<"Report", 'ReportCategory'>
+  readonly subcategory: Prisma.FieldRef<"Report", 'String'>
+  readonly itemType: Prisma.FieldRef<"Report", 'String'>
   readonly namaBarang: Prisma.FieldRef<"Report", 'String'>
   readonly lokasi: Prisma.FieldRef<"Report", 'String'>
   readonly deskripsi: Prisma.FieldRef<"Report", 'String'>
   readonly severity: Prisma.FieldRef<"Report", 'ReportSeverity'>
+  readonly repairCost: Prisma.FieldRef<"Report", 'Decimal'>
   readonly fotoUrl: Prisma.FieldRef<"Report", 'String'>
   readonly attachmentUrl: Prisma.FieldRef<"Report", 'String'>
   readonly attachmentType: Prisma.FieldRef<"Report", 'String'>
@@ -1837,6 +2624,9 @@ export interface ReportFieldRefs {
   readonly adminNotes: Prisma.FieldRef<"Report", 'String'>
   readonly completionNotes: Prisma.FieldRef<"Report", 'String'>
   readonly completionPhotoUrl: Prisma.FieldRef<"Report", 'String'>
+  readonly reporterConfirmed: Prisma.FieldRef<"Report", 'Boolean'>
+  readonly reporterConfirmedAt: Prisma.FieldRef<"Report", 'DateTime'>
+  readonly reporterConfirmationStatus: Prisma.FieldRef<"Report", 'String'>
   readonly approvedAt: Prisma.FieldRef<"Report", 'DateTime'>
   readonly rejectedAt: Prisma.FieldRef<"Report", 'DateTime'>
   readonly processedAt: Prisma.FieldRef<"Report", 'DateTime'>
@@ -2212,6 +3002,54 @@ export type Report$historiesArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.ReportApprovalHistoryScalarFieldEnum | Prisma.ReportApprovalHistoryScalarFieldEnum[]
+}
+
+/**
+ * Report.attachments
+ */
+export type Report$attachmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ReportAttachment
+   */
+  select?: Prisma.ReportAttachmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ReportAttachment
+   */
+  omit?: Prisma.ReportAttachmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReportAttachmentInclude<ExtArgs> | null
+  where?: Prisma.ReportAttachmentWhereInput
+  orderBy?: Prisma.ReportAttachmentOrderByWithRelationInput | Prisma.ReportAttachmentOrderByWithRelationInput[]
+  cursor?: Prisma.ReportAttachmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReportAttachmentScalarFieldEnum | Prisma.ReportAttachmentScalarFieldEnum[]
+}
+
+/**
+ * Report.notifications
+ */
+export type Report$notificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Notification
+   */
+  select?: Prisma.NotificationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Notification
+   */
+  omit?: Prisma.NotificationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationInclude<ExtArgs> | null
+  where?: Prisma.NotificationWhereInput
+  orderBy?: Prisma.NotificationOrderByWithRelationInput | Prisma.NotificationOrderByWithRelationInput[]
+  cursor?: Prisma.NotificationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
 }
 
 /**

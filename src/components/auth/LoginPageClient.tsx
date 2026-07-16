@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
+import PasswordInput from "@/src/components/ui/PasswordInput";
+import { showError, showSuccess } from "@/src/components/ui/feedback";
 
 const ParticlesBackground = dynamic(
   () => import("@/components/particleBackground"),
@@ -25,9 +27,7 @@ export default function LoginPageClient() {
     const password = String(formData.get("password") ?? "");
 
     if (!nip || !password) {
-      toast.error("Login gagal", {
-        description: "NIP dan password wajib diisi.",
-      });
+      showError("Masuk gagal", "NIP dan kata sandi wajib diisi.");
       return;
     }
 
@@ -48,10 +48,10 @@ export default function LoginPageClient() {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error("Login gagal", {
-          description:
-            data?.message || "Periksa kembali NIP dan password Anda.",
-        });
+        showError(
+          "Masuk gagal",
+          data?.message || "Periksa kembali NIP dan kata sandi Anda.",
+        );
         setLoading(false);
         return;
       }
@@ -60,16 +60,15 @@ export default function LoginPageClient() {
         data?.redirectTo ||
         (data?.user?.role === "USER" ? "/dashboard/user" : "/dashboard/admin");
 
-      toast.success("Login berhasil", {
-        description: "Anda akan diarahkan ke dashboard.",
-      });
+      showSuccess("Masuk berhasil", "Anda akan diarahkan ke dasbor.");
       router.replace(redirectTo);
       router.refresh();
     } catch (err) {
       console.error(err);
-      toast.error("Terjadi kesalahan saat login", {
-        description: "Silakan coba lagi dalam beberapa saat.",
-      });
+      showError(
+        "Terjadi kesalahan saat masuk",
+        "Silakan coba lagi dalam beberapa saat.",
+      );
       setLoading(false);
     }
   }
@@ -96,7 +95,7 @@ export default function LoginPageClient() {
           />
 
           <h1 className="mt-5 text-2xl font-semibold text-slate-900">
-            Login ke akun anda
+            Masuk ke akun Anda
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-500">
             Sistem internal Lembar Kerja Perbaikan Alat
@@ -127,13 +126,12 @@ export default function LoginPageClient() {
                 htmlFor="password"
                 className="text-sm font-medium text-slate-700"
               >
-                Password
+                Kata Sandi
               </label>
-              <input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
-                placeholder="Masukkan password"
+                placeholder="Masukkan kata sandi"
                 required
                 className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#004282] focus:ring-2 focus:ring-[#004282]/15"
               />
@@ -147,7 +145,7 @@ export default function LoginPageClient() {
                 onClick={handleForgotPasswordClick}
                 className="font-medium text-[#004282] transition hover:text-[#00386f]"
               >
-                Lupa password?
+                Lupa kata sandi?
               </button>
 
               <p className="text-slate-500">
@@ -160,7 +158,7 @@ export default function LoginPageClient() {
               disabled={loading}
               className="h-11 w-full rounded-xl bg-[#004282] text-sm font-semibold text-white transition hover:bg-[#004282]/90 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {loading ? "Memproses..." : "Login"}
+              {loading ? "Memproses..." : "Masuk"}
             </button>
           </div>
         </form>

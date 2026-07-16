@@ -25,8 +25,14 @@ export default async function EditReportPage({
       kategori: true,
       namaPelapor: true,
       nomorRuangan: true,
+      namaRuangan: true,
       kodeUakpb: true,
       kode: true,
+      nup: true,
+      subcategory: true,
+      itemType: true,
+      namaBarang: true,
+      repairCost: true,
       deskripsi: true,
     },
   });
@@ -34,7 +40,9 @@ export default async function EditReportPage({
   if (
     !report ||
     report.userId !== currentUser.id ||
-    report.status !== "MENUNGGU_ADMIN_1"
+    ["DITOLAK", "TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN"].includes(
+      report.status,
+    )
   ) {
     redirect("/dashboard/user/status");
   }
@@ -47,8 +55,14 @@ export default async function EditReportPage({
         kategori: report.kategori,
         namaPelapor: report.namaPelapor,
         nomorRuangan: report.nomorRuangan,
+        namaRuangan: report.namaRuangan,
         kodeUakpb: report.kodeUakpb,
         kode: report.kode,
+        nup: report.nup,
+        subcategory: report.subcategory,
+        itemType: report.itemType,
+        namaBarang: report.namaBarang,
+        repairCost: report.repairCost?.toString() || null,
         deskripsi: report.deskripsi,
       }}
     />

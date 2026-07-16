@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   }
 
   const response = NextResponse.json({
-    message: "Logout berhasil.",
+    message: "Keluar berhasil.",
   });
 
   response.cookies.set(AUTH_COOKIE_NAME, "", {

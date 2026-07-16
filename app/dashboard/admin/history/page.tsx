@@ -30,6 +30,12 @@ import {
   type AppCategoryScope,
   type AppRole,
 } from "@/src/lib/roles";
+import {
+  FeedbackBanner,
+  showError,
+  toFeedback,
+  type FeedbackMessage,
+} from "@/src/components/ui/feedback";
 
 type ReportHistoryItem = {
   id: number;
@@ -49,6 +55,7 @@ type ReportHistoryItem = {
 
 type ReportItem = {
   id: number;
+  ticket?: string | null;
   namaPelapor?: string | null;
   nomorRuangan?: string | null;
   kodeUakpb?: string | null;
@@ -61,6 +68,13 @@ type ReportItem = {
   attachmentUrl?: string | null;
   attachmentType?: string | null;
   attachmentName?: string | null;
+  attachments?: {
+    id: number;
+    url: string;
+    fileType: string;
+    fileName: string;
+    fileSize: number;
+  }[];
   status: ReportStatus;
   alasanPenolakan: string | null;
   adminNotes?: string | null;
@@ -85,21 +99,23 @@ type UserSearchResult = {
 };
 
 const HISTORY_PAGE_SIZE = 50;
+const SERVER_SEARCH_DELAY_MS = 1500;
+const MIN_SERVER_SEARCH_LENGTH = 3;
 const CATEGORY_FILTER_OPTIONS: AppCategoryScope[] = [
   "FASILITAS_INVENTARIS",
   "IT_ELEKTRONIK",
   "LABORATORIUM",
 ];
 const EXPORT_FIELD_OPTIONS = [
-  { key: "id", label: "ID Laporan" },
+  { key: "id", label: "Tiket" },
   { key: "namaPelapor", label: "Nama Pelapor" },
   { key: "nipPelapor", label: "NIP Pelapor" },
   { key: "kategori", label: "Jenis Perbaikan" },
   { key: "namaBarang", label: "Nama Barang" },
   { key: "kodeRuangan", label: "Kode Ruangan" },
   { key: "lokasi", label: "Lokasi" },
-  { key: "kodeUakpb", label: "Kode UAKPB" },
-  { key: "kode", label: "Kode" },
+  { key: "kodeUakpb", label: "Nama Barang" },
+  { key: "kode", label: "Kode Barang" },
   { key: "status", label: "Status" },
   { key: "declinedBy", label: "Ditolak Oleh" },
   { key: "alasanPenolakan", label: "Alasan Penolakan" },
@@ -107,7 +123,7 @@ const EXPORT_FIELD_OPTIONS = [
   { key: "createdAt", label: "Tanggal Dibuat" },
   { key: "finishedAt", label: "Tanggal Final" },
   { key: "attachmentUrl", label: "Lampiran" },
-  { key: "approvalHistory", label: "Riwayat Approval" },
+  { key: "approvalHistory", label: "Riwayat Persetujuan" },
 ] as const;
 type ExportFieldKey = (typeof EXPORT_FIELD_OPTIONS)[number]["key"];
 const DEFAULT_EXPORT_FIELDS = EXPORT_FIELD_OPTIONS.map((field) => field.key);
@@ -126,6 +142,90 @@ function getFinalDate(report: ReportItem) {
 
 function isPdfAttachment(report: ReportItem) {
   return report.attachmentType === "application/pdf";
+}
+
+function getAttachmentExtension(url: string, fileType?: string | null) {
+  if (fileType?.includes("/")) {
+    const extension = fileType.split("/")[1]?.replace("jpeg", "jpg");
+
+    if (extension) return extension;
+  }
+
+  const cleanPath = url.split("?")[0] || "";
+  const extension = cleanPath.split(".").pop();
+
+  return extension && extension.length <= 5 ? extension : "file";
+}
+
+function sanitizeFileName(value: string) {
+  return value
+    .trim()
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function getHistoryTicket(report: ReportItem) {
+  return report.ticket || `LP-${String(report.id).padStart(4, "0")}`;
+}
+
+function getReportAttachments(report: ReportItem) {
+  const attachments = (report.attachments || [])
+    .filter((attachment) => attachment.url)
+    .map((attachment, index) => ({
+      id: attachment.id,
+      url: attachment.url,
+      fileType: attachment.fileType,
+      fileName:
+        attachment.fileName ||
+        `${getHistoryTicket(report)}-lampiran-${index + 1}.${getAttachmentExtension(
+          attachment.url,
+          attachment.fileType,
+        )}`,
+    }));
+
+  if (attachments.length > 0) {
+    return attachments;
+  }
+
+  const legacyUrl = report.attachmentUrl || report.fotoUrl;
+
+  if (!legacyUrl) {
+    return [];
+  }
+
+  return [
+    {
+      id: 0,
+      url: legacyUrl,
+      fileType: report.attachmentType || "image/*",
+      fileName:
+        report.attachmentName ||
+        `${getHistoryTicket(report)}-lampiran.${getAttachmentExtension(
+          legacyUrl,
+          report.attachmentType,
+        )}`,
+    },
+  ];
+}
+
+function downloadAttachment(url: string, fileName: string) {
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = sanitizeFileName(fileName) || "lampiran-laporan";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+function downloadReportAttachments(report: ReportItem) {
+  getReportAttachments(report).forEach((attachment, index) => {
+    window.setTimeout(() => {
+      downloadAttachment(attachment.url, attachment.fileName);
+    }, index * 150);
+  });
 }
 
 function getRejectingAdmin(report: ReportItem) {
@@ -165,7 +265,7 @@ export default function AdminHistoryPage() {
   const [dateToFilter, setDateToFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const [visibleLimit, setVisibleLimit] = useState(HISTORY_PAGE_SIZE);
   const [showExportFilters, setShowExportFilters] = useState(false);
   const [selectedExportFields, setSelectedExportFields] =
@@ -174,7 +274,7 @@ export default function AdminHistoryPage() {
   async function loadHistory() {
     try {
       setLoading(true);
-      setMessage("");
+      setMessage(null);
 
       const res = await fetch("/api/reports/admin", {
         cache: "no-store",
@@ -183,7 +283,9 @@ export default function AdminHistoryPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(data.message || "Gagal memuat riwayat laporan.");
+        const text = data.message || "Gagal memuat riwayat laporan.";
+        setMessage(toFeedback(text, "error"));
+        showError("Gagal memuat riwayat", text);
         return;
       }
 
@@ -192,7 +294,9 @@ export default function AdminHistoryPage() {
       ));
     } catch (error) {
       console.error("LOAD_ADMIN_HISTORY_ERROR:", error);
-      setMessage("Terjadi kesalahan saat memuat riwayat laporan.");
+      const text = "Terjadi kesalahan saat memuat riwayat laporan.";
+      setMessage(toFeedback(text, "error"));
+      showError("Gagal memuat riwayat", text);
     } finally {
       setLoading(false);
     }
@@ -206,7 +310,7 @@ export default function AdminHistoryPage() {
     const timer = window.setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
       setVisibleLimit(HISTORY_PAGE_SIZE);
-    }, 1500);
+    }, SERVER_SEARCH_DELAY_MS);
 
     return () => {
       window.clearTimeout(timer);
@@ -217,7 +321,7 @@ export default function AdminHistoryPage() {
     const timer = window.setTimeout(() => {
       setDebouncedUserQuery(userQuery);
       setVisibleLimit(HISTORY_PAGE_SIZE);
-    }, 1500);
+    }, SERVER_SEARCH_DELAY_MS);
 
     return () => {
       window.clearTimeout(timer);
@@ -233,7 +337,7 @@ export default function AdminHistoryPage() {
   useEffect(() => {
     const query = debouncedUserQuery.trim();
 
-    if (query.length < 2 || selectedExportUser) {
+    if (query.length < MIN_SERVER_SEARCH_LENGTH || selectedExportUser) {
       setUserSearchResults([]);
       setUserSearchLoading(false);
       return;
@@ -289,10 +393,11 @@ export default function AdminHistoryPage() {
   async function handleExportExcel() {
     try {
       setExporting(true);
-      setMessage("");
+      setMessage(null);
 
       const params = new URLSearchParams();
 
+      params.set("historyOnly", "true");
       if (debouncedSearchTerm.trim()) params.set("q", debouncedSearchTerm.trim());
       if (statusFilter !== "SEMUA") params.set("status", statusFilter);
       if (selectedExportUser) {
@@ -315,7 +420,9 @@ export default function AdminHistoryPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        setMessage(data?.message || "Gagal mengekspor riwayat laporan.");
+        const text = data?.message || "Gagal mengekspor riwayat laporan.";
+        setMessage(toFeedback(text, "error"));
+        showError("Gagal mengekspor riwayat", text);
         return;
       }
 
@@ -334,7 +441,9 @@ export default function AdminHistoryPage() {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error("EXPORT_ADMIN_HISTORY_ERROR:", error);
-      setMessage("Terjadi kesalahan saat mengekspor riwayat laporan.");
+      const text = "Terjadi kesalahan saat mengekspor riwayat laporan.";
+      setMessage(toFeedback(text, "error"));
+      showError("Gagal mengekspor riwayat", text);
     } finally {
       setExporting(false);
     }
@@ -482,7 +591,7 @@ export default function AdminHistoryPage() {
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Download className="h-4 w-4" />
-              {exporting ? "Mengekspor..." : "Export Excel"}
+              {exporting ? "Mengekspor..." : "Ekspor Excel"}
             </button>
           </div>
         </div>
@@ -508,11 +617,7 @@ export default function AdminHistoryPage() {
           />
         </section>
 
-        {message ? (
-          <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-            {message}
-          </div>
-        ) : null}
+        <FeedbackBanner message={message} className="mb-5" />
 
         <section className="relative rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="relative z-20 border-b border-blue-100 bg-blue-50/30 px-5 py-4">
@@ -534,7 +639,7 @@ export default function AdminHistoryPage() {
                     <input
                       value={searchTerm}
                       onChange={(event) => setSearchTerm(event.target.value)}
-                      placeholder="Cari ID, pelapor, barang, kode"
+                      placeholder="Cari tiket, pelapor, barang, kode"
                       className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                     />
                     {searchTerm !== debouncedSearchTerm ? (
@@ -567,7 +672,7 @@ export default function AdminHistoryPage() {
                     className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-blue-100 bg-white px-4 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50"
                   >
                     <Filter className="h-4 w-4" />
-                    Filter Export
+                    Filter Ekspor
                     {activeExportFilterCount > 0 ? (
                       <span className="rounded-full bg-blue-600 px-2 py-0.5 text-xs text-white">
                         {activeExportFilterCount}
@@ -585,7 +690,7 @@ export default function AdminHistoryPage() {
                     <input
                       value={userQuery}
                       onChange={(event) => setUserQuery(event.target.value)}
-                      placeholder="Cari nama/NIP user"
+                      placeholder="Cari nama/NIP pengguna"
                       className="w-full bg-transparent text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400"
                     />
                     {selectedExportUser ? (
@@ -611,7 +716,7 @@ export default function AdminHistoryPage() {
                       <div className="absolute left-0 right-0 top-12 z-20 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
                         {userSearchLoading ? (
                           <div className="px-3 py-2 text-sm text-slate-500">
-                            Mencari user...
+                            Mencari pengguna...
                           </div>
                         ) : userSearchResults.length > 0 ? (
                           userSearchResults.map((user) => (
@@ -636,7 +741,7 @@ export default function AdminHistoryPage() {
                           ))
                         ) : (
                           <div className="px-3 py-2 text-sm text-rose-600">
-                            Tidak ada user cocok.
+                            Tidak ada pengguna cocok.
                           </div>
                         )}
                       </div>
@@ -697,7 +802,7 @@ export default function AdminHistoryPage() {
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-sm font-semibold text-slate-800">
-                          Field Export
+                          Kolom Ekspor
                         </p>
 
                         <label className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700">
@@ -750,10 +855,19 @@ export default function AdminHistoryPage() {
             </div>
           ) : (
             <div className="overflow-x-auto rounded-b-2xl">
-              <table className="min-w-[1060px] text-left">
+              <table className="w-full min-w-[1120px] table-fixed text-left">
+                <colgroup>
+                  <col className="w-[12%]" />
+                  <col className="w-[19%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[15%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[10%]" />
+                </colgroup>
                 <thead>
                   <tr className="border-b border-blue-100 bg-blue-50/40 text-slate-600">
-                    <TableHead>ID</TableHead>
+                    <TableHead>Tiket</TableHead>
                     <TableHead>Pelapor</TableHead>
                     <TableHead>Barang</TableHead>
                     <TableHead>Kode Ruangan</TableHead>
@@ -792,7 +906,9 @@ export default function AdminHistoryPage() {
                         </p>
                       </td>
                       <td className="px-5 py-4 text-slate-700">
-                        {report.nomorRuangan || report.lokasi || "-"}
+                        <p className="truncate">
+                          {report.nomorRuangan || report.lokasi || "-"}
+                        </p>
                       </td>
                       <td className="px-5 py-4">
                         <span
@@ -859,7 +975,9 @@ function ReportDetailModal({
   report: ReportItem;
   onClose: () => void;
 }) {
-  const mainAttachmentUrl = report.attachmentUrl || report.fotoUrl;
+  const attachments = getReportAttachments(report);
+  const mainAttachment = attachments[0] || null;
+  const mainAttachmentUrl = mainAttachment?.url || null;
   const rejectingAdmin = getRejectingAdmin(report);
 
   return (
@@ -957,7 +1075,7 @@ function ReportDetailModal({
 
             <div className="rounded-xl border border-slate-200 bg-white p-4">
               <p className="text-sm font-semibold text-slate-900">
-                Riwayat Approval
+                Riwayat Persetujuan
               </p>
               {report.histories?.length ? (
                 <div className="mt-3 space-y-3">
@@ -988,7 +1106,7 @@ function ReportDetailModal({
                 </div>
               ) : (
                 <p className="mt-3 text-sm text-slate-500">
-                  Belum ada log approval.
+                  Belum ada log persetujuan.
                 </p>
               )}
             </div>
@@ -996,10 +1114,24 @@ function ReportDetailModal({
 
           <aside className="space-y-4">
             <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="mb-3 text-sm font-semibold text-slate-900">
-                Lampiran
-              </p>
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm font-semibold text-slate-900">
+                  Lampiran
+                </p>
+
+                {attachments.length > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => downloadReportAttachments(report)}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Unduh Semua
+                  </button>
+                ) : null}
+              </div>
               {mainAttachmentUrl ? (
+                mainAttachment?.fileType === "application/pdf" ||
                 isPdfAttachment(report) ? (
                   <a
                     href={mainAttachmentUrl}
@@ -1008,7 +1140,7 @@ function ReportDetailModal({
                     className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
                   >
                     <FileText className="h-5 w-5 text-blue-600" />
-                    {report.attachmentName || "Buka PDF"}
+                    {mainAttachment?.fileName || report.attachmentName || "Buka PDF"}
                   </a>
                 ) : (
                   <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
@@ -1027,6 +1159,37 @@ function ReportDetailModal({
                   Tidak ada lampiran
                 </div>
               )}
+
+              {attachments.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {attachments.map((attachment, index) => (
+                    <div
+                      key={`${attachment.id}-${attachment.url}-${index}`}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-800">
+                          {attachment.fileName}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {attachment.fileType || "Lampiran"}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          downloadAttachment(attachment.url, attachment.fileName)
+                        }
+                        className="inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-lg border border-blue-100 bg-white px-3 text-xs font-semibold text-blue-700 transition hover:bg-blue-50"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Unduh
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
 
             <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">

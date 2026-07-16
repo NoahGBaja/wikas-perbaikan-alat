@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { formatStatus, formatTanggal } from "@/lib/report-helpers";
 import { getMonthlyReportStats } from "@/src/lib/monthly-report-stats";
 import { getApiSessionUser } from "@/src/lib/session";
-import { hasAdminAccess, isCategoryScopedRole } from "@/src/lib/roles";
+import {
+  hasAdminAccess,
+  isCategoryScopedRole,
+  isSuperAdmin as hasSuperAdminAccess,
+} from "@/src/lib/roles";
 
 function createFileName(month: string) {
   const normalizedMonth = month
@@ -33,19 +37,20 @@ export async function GET(request: NextRequest) {
     const authUser = await getApiSessionUser();
 
     if (!authUser) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 });
     }
 
     if (!hasAdminAccess(authUser)) {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
     const searchParams = request.nextUrl.searchParams;
+    const canSeeAllCategories = hasSuperAdminAccess(authUser);
     const stats = await getMonthlyReportStats({
       month: searchParams.get("month"),
       year: searchParams.get("year"),
       status: searchParams.get("status"),
-      categoryScope: !authUser.isSuperAdmin && isCategoryScopedRole(authUser.role)
+      categoryScope: !canSeeAllCategories && isCategoryScopedRole(authUser.role)
         ? authUser.categoryScope
         : null,
     });
@@ -92,7 +97,7 @@ export async function GET(request: NextRequest) {
     });
 
     reporterSheet.columns = [
-      { header: "ID User", key: "userId", width: 12 },
+      { header: "ID Pengguna", key: "userId", width: 12 },
       { header: "Nama Pelapor", key: "nama", width: 28 },
       { header: "NIP", key: "nip", width: 22 },
       { header: "Total Laporan", key: "totalReports", width: 16 },

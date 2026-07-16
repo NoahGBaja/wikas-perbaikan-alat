@@ -88,7 +88,7 @@ export async function POST(req: Request) {
     });
 
     const response = NextResponse.json({
-      message: "Login berhasil",
+      message: "Masuk berhasil",
       user: {
         id: user.id,
         nama: user.nama,

@@ -19,7 +19,7 @@ async function main() {
     throw new Error(passwordErrors[0]);
   }
 
-  const user = await prisma.user.findUnique({
+  const user = await prisma.user.findFirst({
     where: { nip },
   });
 

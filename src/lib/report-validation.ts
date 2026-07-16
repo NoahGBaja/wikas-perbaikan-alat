@@ -7,11 +7,15 @@ export const VALID_KATEGORI = [
 export const VALID_SEVERITY = ["RINGAN", "SEDANG", "BERAT"] as const;
 
 export const VALID_REPORT_STATUS = [
-  "MENUNGGU",
-  "DISETUJUI",
+  "MENUNGGU_ADMIN_1",
+  "MENUNGGU_ADMIN_2",
+  "MENUNGGU_ADMIN_3",
+  "MENUNGGU_ADMIN_4",
+  "MENUNGGU_ADMIN_5",
+  "MENUNGGU_KONFIRMASI",
+  "TELAH_BERFUNGSI",
+  "TIDAK_DAPAT_DIGUNAKAN",
   "DITOLAK",
-  "DIPROSES",
-  "SELESAI",
 ] as const;
 
 export type ValidKategori = (typeof VALID_KATEGORI)[number];
@@ -30,8 +34,14 @@ export type ModalReportInput = {
   kategori: string;
   namaPelapor: string;
   nomorRuangan: string;
+  namaRuangan: string;
   kodeUakpb: string;
   kode: string;
+  nup: string;
+  subcategory: string;
+  itemType: string;
+  namaBarang: string;
+  repairCost: string;
   deskripsi: string;
 };
 
@@ -54,8 +64,14 @@ export function parseModalReportFormData(formData: FormData): ModalReportInput {
     kategori: trimmedValue(formData.get("kategori")),
     namaPelapor: trimmedValue(formData.get("namaPelapor")),
     nomorRuangan: trimmedValue(formData.get("nomorRuangan")),
+    namaRuangan: trimmedValue(formData.get("namaRuangan")),
     kodeUakpb: trimmedValue(formData.get("kodeUakpb")),
     kode: trimmedValue(formData.get("kode")),
+    nup: trimmedValue(formData.get("nup")),
+    subcategory: trimmedValue(formData.get("subcategory")),
+    itemType: trimmedValue(formData.get("itemType")),
+    namaBarang: trimmedValue(formData.get("namaBarang")),
+    repairCost: trimmedValue(formData.get("repairCost")),
     deskripsi: trimmedValue(formData.get("deskripsi")),
   };
 }
@@ -64,12 +80,16 @@ export function validateModalReportInput(input: ModalReportInput) {
   if (
     !input.namaPelapor ||
     !input.kategori ||
-    !input.nomorRuangan ||
+    !input.namaRuangan ||
     !input.kodeUakpb ||
     !input.kode ||
+    !input.nup ||
+    !input.subcategory ||
+    !input.itemType ||
+    !input.namaBarang ||
     !input.deskripsi
   ) {
-    return "Jenis perbaikan, nama pelapor, kode ruangan, kode UAKPB, kode, dan deskripsi wajib diisi.";
+    return "Jenis perbaikan, nama pelapor, nama ruangan, nama barang, kode barang, NUP, hierarki barang, dan deskripsi wajib diisi.";
   }
 
   if (!VALID_KATEGORI.includes(input.kategori as ValidKategori)) {
@@ -80,16 +100,28 @@ export function validateModalReportInput(input: ModalReportInput) {
     return "Nama pelapor maksimal 120 karakter.";
   }
 
-  if (input.nomorRuangan.length > 120) {
-    return "Kode ruangan maksimal 120 karakter.";
+  if (input.namaRuangan.length > 120 || input.nomorRuangan.length > 120) {
+    return "Nama atau kode ruangan maksimal 120 karakter.";
   }
 
   if (input.kodeUakpb.length > 120) {
-    return "Kode UAKPB maksimal 120 karakter.";
+    return "Nama barang maksimal 120 karakter.";
+  }
+
+  if (input.namaBarang.length > 120 || input.itemType.length > 120) {
+    return "Nama barang atau tipe barang maksimal 120 karakter.";
+  }
+
+  if (input.nup.length > 80) {
+    return "NUP maksimal 80 karakter.";
   }
 
   if (!/^\d{12}$/.test(input.kode)) {
-    return "Kode harus berisi tepat 12 digit angka.";
+    return "Kode barang harus berisi tepat 12 digit angka.";
+  }
+
+  if (input.repairCost && !/^\d+$/.test(input.repairCost.replace(/\D/g, ""))) {
+    return "Biaya perbaikan harus berupa angka Rupiah.";
   }
 
   if (input.deskripsi.length > 2000) {

@@ -12,6 +12,9 @@ export type ReportStatus =
   | "MENUNGGU_ADMIN_4"
   | "MENUNGGU_ADMIN_5"
   | "DISETUJUI_FINAL"
+  | "MENUNGGU_KONFIRMASI"
+  | "TELAH_BERFUNGSI"
+  | "TIDAK_DAPAT_DIGUNAKAN"
   | "DITOLAK";
 
 export type ReportSeverity = "RINGAN" | "SEDANG" | "BERAT";
@@ -29,6 +32,9 @@ export function formatStatus(status: ReportStatus) {
   if (status === "MENUNGGU_ADMIN_4") return `Menunggu ${getRoleLabel("ADMIN_4")}`;
   if (status === "MENUNGGU_ADMIN_5") return `Menunggu ${getRoleLabel("ADMIN_5")}`;
   if (status === "DISETUJUI_FINAL") return "Disetujui Final";
+  if (status === "MENUNGGU_KONFIRMASI") return "Menunggu Konfirmasi Pelapor";
+  if (status === "TELAH_BERFUNGSI") return "Telah Berfungsi";
+  if (status === "TIDAK_DAPAT_DIGUNAKAN") return "Tidak Dapat Digunakan";
   return "Ditolak";
 }
 
@@ -43,8 +49,16 @@ export function getStatusClass(status: ReportStatus) {
     return "border border-cyan-200 bg-cyan-50 text-cyan-700";
   }
 
-  if (status === "DISETUJUI_FINAL") {
+  if (status === "DISETUJUI_FINAL" || status === "MENUNGGU_KONFIRMASI") {
     return "border border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  if (status === "TELAH_BERFUNGSI") {
+    return "border border-green-200 bg-green-50 text-green-700";
+  }
+
+  if (status === "TIDAK_DAPAT_DIGUNAKAN") {
+    return "border border-orange-200 bg-orange-50 text-orange-700";
   }
 
   if (status === "DITOLAK") {
@@ -79,11 +93,27 @@ export function getStatusDescription(status: ReportStatus) {
     return "Laporan sudah disetujui final oleh seluruh penanggung jawab.";
   }
 
+  if (status === "MENUNGGU_KONFIRMASI") {
+    return "Laporan sudah selesai dan menunggu konfirmasi pelapor.";
+  }
+
+  if (status === "TELAH_BERFUNGSI") {
+    return "Pelapor mengonfirmasi barang telah diterima dan berfungsi.";
+  }
+
+  if (status === "TIDAK_DAPAT_DIGUNAKAN") {
+    return "Pelapor mengonfirmasi barang tidak dapat digunakan atau tidak dapat diperbaiki.";
+  }
+
   return "Laporan ditolak dan alur berhenti permanen.";
 }
 
 export function isApprovedFinalStatus(status: ReportStatus) {
-  return status === "DISETUJUI_FINAL";
+  return (
+    status === "DISETUJUI_FINAL" ||
+    status === "MENUNGGU_KONFIRMASI" ||
+    status === "TELAH_BERFUNGSI"
+  );
 }
 
 export function isRejectedStatus(status: ReportStatus) {

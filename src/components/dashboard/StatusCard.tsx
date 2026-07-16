@@ -1,7 +1,10 @@
 "use client";
 
+"use client";
+
 import Image from "next/image";
-import { FileText } from "lucide-react";
+import { useState } from "react";
+import { Download, FileText } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import {
   formatKategori,
@@ -11,16 +14,23 @@ import {
   type ReportStatus,
 } from "@/lib/report-helpers";
 import { getRoleLabel } from "@/src/lib/roles";
+import { formatRupiah } from "@/src/lib/formatting";
+import { formatTicketFallback } from "@/src/lib/tickets";
 
 export type StatusReportStatus = ReportStatus;
 
 export type StatusReportItem = {
   id: number;
+  ticket?: string | null;
   namaPelapor?: string | null;
   nomorRuangan?: string | null;
+  namaRuangan?: string | null;
   kodeUakpb?: string | null;
   kode?: string | null;
+  nup?: string | null;
   kategori: ReportKategori;
+  subcategory?: string | null;
+  itemType?: string | null;
   namaBarang: string;
   lokasi: string;
   deskripsi: string;
@@ -28,6 +38,14 @@ export type StatusReportItem = {
   attachmentUrl?: string | null;
   attachmentType?: string | null;
   attachmentName?: string | null;
+  attachments?: {
+    id: number;
+    url: string;
+    fileType: string;
+    fileName: string;
+    fileSize: number;
+  }[];
+  repairCost?: string | null;
   completionPhotoUrl?: string | null;
   status: StatusReportStatus;
   alasanPenolakan: string | null;
@@ -74,7 +92,7 @@ function getStatusUpdateLabel(report: StatusReportItem) {
   }
 
   if (isWaitingStatus(report.status)) {
-    return `Sedang menunggu approval ${formatStatus(report.status)}`;
+    return `Sedang menunggu persetujuan ${formatStatus(report.status)}`;
   }
 
   return "Status laporan tidak diketahui";
@@ -96,12 +114,63 @@ export default function StatusCard({
   onDelete,
   deleting = false,
 }: StatusCardProps) {
+  const [confirmChecked, setConfirmChecked] = useState(false);
+  const [finalStatus, setFinalStatus] = useState<
+    "TELAH_BERFUNGSI" | "TIDAK_DAPAT_DIGUNAKAN"
+  >("TELAH_BERFUNGSI");
+  const [confirming, setConfirming] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState("");
   const canEditOrDelete = report.status === "MENUNGGU_ADMIN_1";
   const displayAttachmentUrl = report.attachmentUrl || report.fotoUrl;
+  const ticket = formatTicketFallback(report);
+  const attachments =
+    report.attachments && report.attachments.length > 0
+      ? report.attachments
+      : displayAttachmentUrl
+        ? [
+            {
+              id: report.id,
+              url: displayAttachmentUrl,
+              fileType: report.attachmentType || "",
+              fileName: report.attachmentName || "Lampiran laporan",
+              fileSize: 0,
+            },
+          ]
+        : [];
   const isImageAttachment =
     !!displayAttachmentUrl &&
     (report.attachmentType?.startsWith("image/") || !!report.fotoUrl);
   const rejectingAdmin = getRejectingAdmin(report);
+
+  async function submitConfirmation() {
+    try {
+      setConfirming(true);
+      setConfirmMessage("");
+
+      const res = await fetch(`/api/reports/${report.id}/confirm`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          confirmed: confirmChecked,
+          finalStatus,
+        }),
+      });
+      const data = await res.json();
+
+      setConfirmMessage(data.message || "Konfirmasi tersimpan.");
+
+      if (res.ok) {
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("CONFIRM_REPORT_CLIENT_ERROR:", error);
+      setConfirmMessage("Terjadi kesalahan saat menyimpan konfirmasi.");
+    } finally {
+      setConfirming(false);
+    }
+  }
 
   return (
     <article className="overflow-hidden rounded-[28px] border border-slate-200 bg-white/90 shadow-sm">
@@ -142,7 +211,7 @@ export default function StatusCard({
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-blue-600">
-                Laporan #{String(report.id).padStart(4, "0")}
+                Tiket {ticket}
               </p>
               <h3 className="mt-2 text-2xl font-bold text-slate-950">
                 {report.namaBarang}
@@ -166,23 +235,33 @@ export default function StatusCard({
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Kode Ruangan</p>
+              <p className="text-sm text-slate-500">Ruangan</p>
               <p className="mt-1 font-semibold text-slate-900">
-                {report.nomorRuangan || report.lokasi}
+                {report.namaRuangan || report.lokasi}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Kode: {report.nomorRuangan || "-"}
               </p>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Kode UAKPB</p>
+              <p className="text-sm text-slate-500">Nama Barang</p>
               <p className="mt-1 font-semibold text-slate-900">
-                {report.kodeUakpb || "-"}
+                {report.namaBarang || report.kodeUakpb || "-"}
               </p>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Kode</p>
+              <p className="text-sm text-slate-500">Kode Barang</p>
               <p className="mt-1 font-semibold text-slate-900">
                 {report.kode || "-"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">NUP</p>
+              <p className="mt-1 font-semibold text-slate-900">
+                {report.nup || "-"}
               </p>
             </div>
 
@@ -190,6 +269,9 @@ export default function StatusCard({
               <p className="text-sm text-slate-500">Kategori</p>
               <p className="mt-1 font-semibold text-slate-900">
                 {formatKategori(report.kategori)}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                {report.subcategory || "-"} / {report.itemType || "-"}
               </p>
             </div>
 
@@ -199,9 +281,16 @@ export default function StatusCard({
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Update Status</p>
+              <p className="text-sm text-slate-500">Pembaruan Status</p>
               <p className="mt-1 font-semibold text-slate-900">
                 {getStatusUpdateLabel(report)}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Biaya Perbaikan / Anggaran</p>
+              <p className="mt-1 font-semibold text-slate-900">
+                {formatRupiah(report.repairCost)}
               </p>
             </div>
           </div>
@@ -216,7 +305,7 @@ export default function StatusCard({
           {isWaitingStatus(report.status) ? (
             <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm font-semibold text-amber-800">
-                Sedang Menunggu Approval
+                Sedang Menunggu Persetujuan
               </p>
               <p className="mt-2 leading-7 text-amber-700">
                 Laporan kamu sedang berada di tahap{" "}
@@ -253,6 +342,71 @@ export default function StatusCard({
             </div>
           ) : null}
 
+          {report.status === "MENUNGGU_KONFIRMASI" ? (
+            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-sm font-semibold text-emerald-800">
+                Konfirmasi Penerimaan Barang
+              </p>
+              <label className="mt-3 flex items-start gap-3 text-sm text-emerald-800">
+                <input
+                  type="checkbox"
+                  checked={confirmChecked}
+                  onChange={(event) => setConfirmChecked(event.target.checked)}
+                  className="mt-1 h-4 w-4 accent-emerald-600"
+                />
+                Saya mengonfirmasi barang telah diterima kembali.
+              </label>
+              <select
+                value={finalStatus}
+                onChange={(event) =>
+                  setFinalStatus(
+                    event.target.value as
+                      | "TELAH_BERFUNGSI"
+                      | "TIDAK_DAPAT_DIGUNAKAN",
+                  )
+                }
+                className="mt-3 h-11 w-full rounded-xl border border-emerald-200 bg-white px-3 text-sm text-slate-900 outline-none"
+              >
+                <option value="TELAH_BERFUNGSI">Telah Berfungsi</option>
+                <option value="TIDAK_DAPAT_DIGUNAKAN">
+                  Tidak Dapat Digunakan / Tidak Dapat Diperbaiki
+                </option>
+              </select>
+              {confirmMessage ? (
+                <p className="mt-3 text-sm text-emerald-800">{confirmMessage}</p>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => void submitConfirmation()}
+                disabled={confirming}
+                className="mt-3 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+              >
+                {confirming ? "Menyimpan..." : "Kirim Konfirmasi"}
+              </button>
+            </div>
+          ) : null}
+
+          {attachments.length > 0 ? (
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-sm font-semibold text-slate-900">
+                Unduh Lampiran
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {attachments.map((attachment, index) => (
+                  <a
+                    key={`${attachment.id}-${attachment.url}`}
+                    href={attachment.url}
+                    download
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                  >
+                    <Download className="h-4 w-4" />
+                    {attachment.fileName || `Lampiran ${index + 1}`}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {report.completionPhotoUrl ? (
             <div className="mt-5 rounded-2xl border border-emerald-200 bg-white p-4">
               <p className="text-sm font-semibold text-slate-900">
@@ -283,10 +437,20 @@ export default function StatusCard({
             </div>
           ) : null}
 
+          <div className="mt-5">
+            <a
+              href={`/api/reports/${report.id}/pdf`}
+              className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+            >
+              <Download className="h-4 w-4" />
+              Ekspor PDF
+            </a>
+          </div>
+
           {report.histories?.length ? (
             <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-900">
-                Log Approval
+                Log Persetujuan
               </p>
               <div className="mt-3 space-y-3">
                 {report.histories.map((history) => (

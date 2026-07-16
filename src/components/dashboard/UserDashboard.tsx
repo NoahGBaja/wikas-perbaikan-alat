@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CircleUserRound, ShieldCheck } from "lucide-react";
 import UserDashboardLogoutButton from "./UserDashboardLogoutButton";
 import { getRoleLabel } from "@/src/lib/roles";
+import NotificationBell from "@/src/components/notifications/NotificationBell";
 
 type UserDashboardProps = {
   currentUser: {
@@ -53,6 +54,8 @@ export default function UserDashboard({ currentUser }: UserDashboardProps) {
             </div>
 
             <div className="flex items-center gap-3">
+              <NotificationBell />
+
               <div className="hidden items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm md:flex">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-base font-bold text-blue-700 ring-1 ring-blue-100">
                   {initials}
@@ -95,7 +98,7 @@ export default function UserDashboard({ currentUser }: UserDashboardProps) {
               href="/dashboard/user"
               className="font-medium text-blue-700 transition hover:text-blue-600"
             >
-              Dashboard
+              Dasbor
             </Link>
             <Link
               href="/dashboard/user/report"
@@ -143,7 +146,7 @@ export default function UserDashboard({ currentUser }: UserDashboardProps) {
         <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 py-10 md:py-14">
           <section className="flex flex-1 flex-col items-center justify-center text-center">
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
-              Dashboard Pegawai
+              Dasbor Pegawai
             </p>
 
             <h2 className="max-w-4xl text-4xl font-extrabold leading-tight text-slate-950 md:text-6xl">

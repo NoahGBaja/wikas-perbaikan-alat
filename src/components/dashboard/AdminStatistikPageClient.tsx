@@ -12,6 +12,12 @@ import {
 } from "lucide-react";
 import MonthlyStatsCards from "@/src/components/dashboard/MonthlyStatsCards";
 import MonthlyReporterTable from "@/src/components/dashboard/MonthlyReporterTable";
+import {
+  FeedbackBanner,
+  showError,
+  toFeedback,
+  type FeedbackMessage,
+} from "@/src/components/ui/feedback";
 import { getRoleLabel } from "@/src/lib/roles";
 import type { ReportStatus } from "@/lib/report-helpers";
 import type { MonthlyStatsResponse } from "@/src/lib/monthly-report-stats-types";
@@ -67,7 +73,7 @@ export default function AdminStatistikPageClient({
   const [stats, setStats] = useState<MonthlyStatsResponse | null>(initialStats);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const [isPending, startStatsTransition] = useTransition();
 
   const yearOptions = useMemo(() => {
@@ -94,7 +100,7 @@ export default function AdminStatistikPageClient({
         setLoading(true);
       }
 
-      setMessage("");
+      setMessage(null);
 
       const params = new URLSearchParams({
         month: String(month),
@@ -115,7 +121,9 @@ export default function AdminStatistikPageClient({
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(data.message || "Gagal memuat statistik bulanan.");
+        const text = data.message || "Gagal memuat statistik bulanan.";
+        setMessage(toFeedback(text, "error"));
+        showError("Gagal memuat statistik", text);
 
         if (!hasExistingStats) {
           setStats(null);
@@ -129,7 +137,9 @@ export default function AdminStatistikPageClient({
       });
     } catch (error) {
       console.error("LOAD_MONTHLY_STATS_ERROR:", error);
-      setMessage("Terjadi kesalahan saat memuat statistik bulanan.");
+      const text = "Terjadi kesalahan saat memuat statistik bulanan.";
+      setMessage(toFeedback(text, "error"));
+      showError("Gagal memuat statistik", text);
 
       if (!hasExistingStats) {
         setStats(null);
@@ -198,7 +208,7 @@ export default function AdminStatistikPageClient({
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
             >
               <ArrowLeft className="h-4 w-4 text-blue-600" />
-              Kembali ke Dashboard
+              Kembali ke Dasbor
             </button>
 
             <button
@@ -208,7 +218,7 @@ export default function AdminStatistikPageClient({
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Download className="h-4 w-4" />
-              Export XLSX
+              Ekspor XLSX
             </button>
           </div>
         </div>
@@ -305,11 +315,7 @@ export default function AdminStatistikPageClient({
                 </div>
               ) : null}
 
-              {message ? (
-                <div className="mx-5 mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                  {message}
-                </div>
-              ) : null}
+              <FeedbackBanner message={message} className="mx-5 mt-4" />
 
               <div className="flex flex-col gap-3 p-5 pt-0 sm:flex-row">
                 <p className="flex items-center text-sm font-semibold text-slate-500">

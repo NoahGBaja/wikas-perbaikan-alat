@@ -23,7 +23,7 @@ export function requireSameOrigin(req: Request) {
   if (origin) {
     return allowedOrigins.has(origin)
       ? null
-      : NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      : NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
   }
 
   if (referer) {
@@ -32,13 +32,13 @@ export function requireSameOrigin(req: Request) {
 
       return allowedOrigins.has(refererOrigin)
         ? null
-        : NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        : NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     } catch {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
   }
 
-  return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
 }
 
 export function enforceBodySize(req: Request, maxBytes: number) {

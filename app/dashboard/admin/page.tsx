@@ -7,7 +7,7 @@ export default async function AdminDashboardPage() {
   return (
     <AdminDashboard
       currentUser={currentUser}
-      title="Dashboard Laporan Kerusakan Barang & Alat"
+      title="Dasbor Laporan Kerusakan Barang & Alat"
     />
   );
 }

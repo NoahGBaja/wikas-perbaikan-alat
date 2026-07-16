@@ -80,6 +80,31 @@ export function validateReportAttachmentUpload(
   return null;
 }
 
+export function validateReportAttachmentUploads(
+  files: File[],
+  options?: { required?: boolean; maxFiles?: number },
+) {
+  if (options?.required && files.length === 0) {
+    return "Lampiran wajib diunggah.";
+  }
+
+  const maxFiles = options?.maxFiles || 10;
+
+  if (files.length > maxFiles) {
+    return `Lampiran maksimal ${maxFiles} file.`;
+  }
+
+  for (const file of files) {
+    const error = validateReportAttachmentUpload(file);
+
+    if (error) {
+      return `${file.name}: ${error}`;
+    }
+  }
+
+  return null;
+}
+
 function isJpeg(bytes: Buffer) {
   return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
 }

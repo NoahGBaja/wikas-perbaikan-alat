@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     const authUser = await getApiSessionUser();
 
     if (!authUser) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 });
     }
 
     const body = await req.json();
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
     if (!currentPassword || !newPassword || !confirmPassword) {
       return NextResponse.json(
-        { message: "Password saat ini, password baru, dan konfirmasi wajib diisi." },
+        { message: "Kata sandi saat ini, kata sandi baru, dan konfirmasi wajib diisi." },
         { status: 400 }
       );
     }
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { message: "User tidak ditemukan." },
+        { message: "Pengguna tidak ditemukan." },
         { status: 404 }
       );
     }
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
 
     if (!isCurrentPasswordValid) {
       return NextResponse.json(
-        { message: "Password saat ini salah." },
+        { message: "Kata sandi saat ini salah." },
         { status: 400 }
       );
     }
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({
-      message: "Password berhasil diperbarui.",
+      message: "Kata sandi berhasil diperbarui.",
     });
   } catch (error) {
     console.error("UPDATE_ACCOUNT_PASSWORD_ERROR:", error);

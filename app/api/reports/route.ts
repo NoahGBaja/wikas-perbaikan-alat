@@ -8,11 +8,14 @@ import {
 } from "@/src/lib/report-validation";
 import {
   saveReportAttachmentUpload,
-  validateReportAttachmentUpload,
+  validateReportAttachmentUploads,
 } from "@/src/lib/uploads";
 import { listReportsRaw } from "@/src/lib/raw-data";
 import { validateMutationRequest } from "@/src/lib/request-security";
 import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
+import { getRoomCodeByNameFromMaster } from "@/src/lib/master-data-db";
+import { createTicket } from "@/src/lib/ticket-server";
+import { findWorkflowRecipientIds, notifyUsers } from "@/src/lib/notifications";
 
 export async function POST(req: Request) {
   try {
@@ -25,7 +28,7 @@ export async function POST(req: Request) {
     const authUser = await getApiSessionUser();
 
     if (!authUser) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 });
     }
 
     if (authUser.role !== "USER") {
@@ -37,7 +40,14 @@ export async function POST(req: Request) {
 
     const formData = await req.formData();
     const reportInput = parseModalReportFormData(formData);
-    const file = formData.get("attachment") as File | null;
+    const files = formData
+      .getAll("attachments")
+      .filter((value): value is File => value instanceof File && value.size > 0);
+    const legacyFile = formData.get("attachment");
+
+    if (legacyFile instanceof File && legacyFile.size > 0 && files.length === 0) {
+      files.push(legacyFile);
+    }
 
     const validationError = validateModalReportInput(reportInput);
 
@@ -45,7 +55,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: validationError }, { status: 400 });
     }
 
-    const fileValidationError = validateReportAttachmentUpload(file);
+    const fileValidationError = validateReportAttachmentUploads(files);
 
     if (fileValidationError) {
       return NextResponse.json(
@@ -54,29 +64,52 @@ export async function POST(req: Request) {
       );
     }
 
-    let attachmentUrl: string | null = null;
+    const savedAttachments = [];
 
-    if (file && file.size > 0) {
-      attachmentUrl = await saveReportAttachmentUpload(file);
+    for (const file of files) {
+      const url = await saveReportAttachmentUpload(file);
+      savedAttachments.push({
+        url,
+        fileType: file.type,
+        fileName: file.name,
+        fileSize: file.size,
+      });
     }
+
+    const primaryAttachment = savedAttachments[0] || null;
+    const roomCode =
+      (await getRoomCodeByNameFromMaster(reportInput.namaRuangan)) ||
+      reportInput.nomorRuangan;
+    const ticket = await createTicket(reportInput.kategori as ValidKategori);
 
     const report = await prisma.report.create({
       data: {
+        ticket,
         userId: authUser.id,
         namaPelapor: reportInput.namaPelapor,
-        nomorRuangan: reportInput.nomorRuangan,
-        kodeUakpb: reportInput.kodeUakpb,
+        nomorRuangan: roomCode,
+        namaRuangan: reportInput.namaRuangan,
+        kodeUakpb: reportInput.namaBarang || reportInput.kodeUakpb,
         kode: reportInput.kode,
+        nup: reportInput.nup,
         kategori: reportInput.kategori as ValidKategori,
-        namaBarang: "Perbaikan Alat",
-        lokasi: `Ruangan ${reportInput.nomorRuangan}`,
+        subcategory: reportInput.subcategory,
+        itemType: reportInput.itemType,
+        namaBarang: reportInput.namaBarang || reportInput.itemType,
+        lokasi: reportInput.namaRuangan,
         deskripsi: reportInput.deskripsi,
         severity: "SEDANG",
-        fotoUrl: file?.type.startsWith("image/") ? attachmentUrl : null,
-        attachmentUrl,
-        attachmentType: file && file.size > 0 ? file.type : null,
-        attachmentName: file && file.size > 0 ? file.name : null,
+        repairCost: null,
+        fotoUrl: primaryAttachment?.fileType.startsWith("image/")
+          ? primaryAttachment.url
+          : null,
+        attachmentUrl: primaryAttachment?.url || null,
+        attachmentType: primaryAttachment?.fileType || null,
+        attachmentName: primaryAttachment?.fileName || null,
         status: "MENUNGGU_ADMIN_1",
+        attachments: {
+          create: savedAttachments,
+        },
       },
       include: {
         user: {
@@ -110,6 +143,18 @@ export async function POST(req: Request) {
       message: `Laporan berhasil dikirim dan menunggu persetujuan ${getRoleLabel("ADMIN_1")}.`,
       report,
     });
+
+    const nextRecipientIds = await findWorkflowRecipientIds({
+      role: "ADMIN_1",
+      reportCategory: reportInput.kategori as ValidKategori,
+    });
+
+    await notifyUsers({
+      userIds: nextRecipientIds,
+      reportId: report.id,
+      title: "Laporan baru masuk",
+      message: `${ticket} menunggu tindakan ${getRoleLabel("ADMIN_1")}.`,
+    });
   } catch (error) {
     console.error("CREATE_REPORT_ERROR:", error);
 
@@ -125,7 +170,7 @@ export async function GET() {
     const authUser = await getApiSessionUser();
 
     if (!authUser) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 });
     }
 
     const reports = await listReportsRaw(

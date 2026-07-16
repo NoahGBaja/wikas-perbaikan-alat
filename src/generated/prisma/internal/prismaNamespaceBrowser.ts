@@ -53,8 +53,15 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Report: 'Report',
+  ReportAttachment: 'ReportAttachment',
   ReportApprovalHistory: 'ReportApprovalHistory',
-  PasswordResetToken: 'PasswordResetToken'
+  PasswordResetToken: 'PasswordResetToken',
+  MasterCategory: 'MasterCategory',
+  MasterSubcategory: 'MasterSubcategory',
+  MasterItemType: 'MasterItemType',
+  MasterRoom: 'MasterRoom',
+  MessageTemplate: 'MessageTemplate',
+  Notification: 'Notification'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -78,10 +85,12 @@ export const UserScalarFieldEnum = {
   nama: 'nama',
   jabatan: 'jabatan',
   nip: 'nip',
+  activeNip: 'activeNip',
   passwordHash: 'passwordHash',
   role: 'role',
   isSuperAdmin: 'isSuperAdmin',
   categoryScope: 'categoryScope',
+  deletedAt: 'deletedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -91,16 +100,22 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 
 export const ReportScalarFieldEnum = {
   id: 'id',
+  ticket: 'ticket',
   userId: 'userId',
   namaPelapor: 'namaPelapor',
   nomorRuangan: 'nomorRuangan',
+  namaRuangan: 'namaRuangan',
   kodeUakpb: 'kodeUakpb',
   kode: 'kode',
+  nup: 'nup',
   kategori: 'kategori',
+  subcategory: 'subcategory',
+  itemType: 'itemType',
   namaBarang: 'namaBarang',
   lokasi: 'lokasi',
   deskripsi: 'deskripsi',
   severity: 'severity',
+  repairCost: 'repairCost',
   fotoUrl: 'fotoUrl',
   attachmentUrl: 'attachmentUrl',
   attachmentType: 'attachmentType',
@@ -111,6 +126,9 @@ export const ReportScalarFieldEnum = {
   adminNotes: 'adminNotes',
   completionNotes: 'completionNotes',
   completionPhotoUrl: 'completionPhotoUrl',
+  reporterConfirmed: 'reporterConfirmed',
+  reporterConfirmedAt: 'reporterConfirmedAt',
+  reporterConfirmationStatus: 'reporterConfirmationStatus',
   approvedAt: 'approvedAt',
   rejectedAt: 'rejectedAt',
   processedAt: 'processedAt',
@@ -120,6 +138,19 @@ export const ReportScalarFieldEnum = {
 } as const
 
 export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]
+
+
+export const ReportAttachmentScalarFieldEnum = {
+  id: 'id',
+  reportId: 'reportId',
+  url: 'url',
+  fileType: 'fileType',
+  fileName: 'fileName',
+  fileSize: 'fileSize',
+  createdAt: 'createdAt'
+} as const
+
+export type ReportAttachmentScalarFieldEnum = (typeof ReportAttachmentScalarFieldEnum)[keyof typeof ReportAttachmentScalarFieldEnum]
 
 
 export const ReportApprovalHistoryScalarFieldEnum = {
@@ -148,6 +179,82 @@ export const PasswordResetTokenScalarFieldEnum = {
 export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
 
 
+export const MasterCategoryScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  name: 'name',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MasterCategoryScalarFieldEnum = (typeof MasterCategoryScalarFieldEnum)[keyof typeof MasterCategoryScalarFieldEnum]
+
+
+export const MasterSubcategoryScalarFieldEnum = {
+  id: 'id',
+  categoryId: 'categoryId',
+  code: 'code',
+  name: 'name',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MasterSubcategoryScalarFieldEnum = (typeof MasterSubcategoryScalarFieldEnum)[keyof typeof MasterSubcategoryScalarFieldEnum]
+
+
+export const MasterItemTypeScalarFieldEnum = {
+  id: 'id',
+  subcategoryId: 'subcategoryId',
+  code: 'code',
+  name: 'name',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MasterItemTypeScalarFieldEnum = (typeof MasterItemTypeScalarFieldEnum)[keyof typeof MasterItemTypeScalarFieldEnum]
+
+
+export const MasterRoomScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  name: 'name',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MasterRoomScalarFieldEnum = (typeof MasterRoomScalarFieldEnum)[keyof typeof MasterRoomScalarFieldEnum]
+
+
+export const MessageTemplateScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  title: 'title',
+  body: 'body',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MessageTemplateScalarFieldEnum = (typeof MessageTemplateScalarFieldEnum)[keyof typeof MessageTemplateScalarFieldEnum]
+
+
+export const NotificationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  reportId: 'reportId',
+  title: 'title',
+  message: 'message',
+  readAt: 'readAt',
+  createdAt: 'createdAt'
+} as const
+
+export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -168,6 +275,7 @@ export const UserOrderByRelevanceFieldEnum = {
   nama: 'nama',
   jabatan: 'jabatan',
   nip: 'nip',
+  activeNip: 'activeNip',
   passwordHash: 'passwordHash'
 } as const
 
@@ -175,10 +283,15 @@ export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnu
 
 
 export const ReportOrderByRelevanceFieldEnum = {
+  ticket: 'ticket',
   namaPelapor: 'namaPelapor',
   nomorRuangan: 'nomorRuangan',
+  namaRuangan: 'namaRuangan',
   kodeUakpb: 'kodeUakpb',
   kode: 'kode',
+  nup: 'nup',
+  subcategory: 'subcategory',
+  itemType: 'itemType',
   namaBarang: 'namaBarang',
   lokasi: 'lokasi',
   deskripsi: 'deskripsi',
@@ -190,10 +303,20 @@ export const ReportOrderByRelevanceFieldEnum = {
   assignedTechnician: 'assignedTechnician',
   adminNotes: 'adminNotes',
   completionNotes: 'completionNotes',
-  completionPhotoUrl: 'completionPhotoUrl'
+  completionPhotoUrl: 'completionPhotoUrl',
+  reporterConfirmationStatus: 'reporterConfirmationStatus'
 } as const
 
 export type ReportOrderByRelevanceFieldEnum = (typeof ReportOrderByRelevanceFieldEnum)[keyof typeof ReportOrderByRelevanceFieldEnum]
+
+
+export const ReportAttachmentOrderByRelevanceFieldEnum = {
+  url: 'url',
+  fileType: 'fileType',
+  fileName: 'fileName'
+} as const
+
+export type ReportAttachmentOrderByRelevanceFieldEnum = (typeof ReportAttachmentOrderByRelevanceFieldEnum)[keyof typeof ReportAttachmentOrderByRelevanceFieldEnum]
 
 
 export const ReportApprovalHistoryOrderByRelevanceFieldEnum = {
@@ -208,4 +331,53 @@ export const PasswordResetTokenOrderByRelevanceFieldEnum = {
 } as const
 
 export type PasswordResetTokenOrderByRelevanceFieldEnum = (typeof PasswordResetTokenOrderByRelevanceFieldEnum)[keyof typeof PasswordResetTokenOrderByRelevanceFieldEnum]
+
+
+export const MasterCategoryOrderByRelevanceFieldEnum = {
+  code: 'code',
+  name: 'name'
+} as const
+
+export type MasterCategoryOrderByRelevanceFieldEnum = (typeof MasterCategoryOrderByRelevanceFieldEnum)[keyof typeof MasterCategoryOrderByRelevanceFieldEnum]
+
+
+export const MasterSubcategoryOrderByRelevanceFieldEnum = {
+  code: 'code',
+  name: 'name'
+} as const
+
+export type MasterSubcategoryOrderByRelevanceFieldEnum = (typeof MasterSubcategoryOrderByRelevanceFieldEnum)[keyof typeof MasterSubcategoryOrderByRelevanceFieldEnum]
+
+
+export const MasterItemTypeOrderByRelevanceFieldEnum = {
+  code: 'code',
+  name: 'name'
+} as const
+
+export type MasterItemTypeOrderByRelevanceFieldEnum = (typeof MasterItemTypeOrderByRelevanceFieldEnum)[keyof typeof MasterItemTypeOrderByRelevanceFieldEnum]
+
+
+export const MasterRoomOrderByRelevanceFieldEnum = {
+  code: 'code',
+  name: 'name'
+} as const
+
+export type MasterRoomOrderByRelevanceFieldEnum = (typeof MasterRoomOrderByRelevanceFieldEnum)[keyof typeof MasterRoomOrderByRelevanceFieldEnum]
+
+
+export const MessageTemplateOrderByRelevanceFieldEnum = {
+  type: 'type',
+  title: 'title',
+  body: 'body'
+} as const
+
+export type MessageTemplateOrderByRelevanceFieldEnum = (typeof MessageTemplateOrderByRelevanceFieldEnum)[keyof typeof MessageTemplateOrderByRelevanceFieldEnum]
+
+
+export const NotificationOrderByRelevanceFieldEnum = {
+  title: 'title',
+  message: 'message'
+} as const
+
+export type NotificationOrderByRelevanceFieldEnum = (typeof NotificationOrderByRelevanceFieldEnum)[keyof typeof NotificationOrderByRelevanceFieldEnum]
 

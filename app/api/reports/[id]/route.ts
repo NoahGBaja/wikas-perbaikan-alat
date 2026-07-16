@@ -9,11 +9,12 @@ import {
 import {
   deleteUploadedFileByUrl,
   saveReportAttachmentUpload,
-  validateReportAttachmentUpload,
+  validateReportAttachmentUploads,
 } from "@/src/lib/uploads";
 import { validateMutationRequest } from "@/src/lib/request-security";
-import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
+import { hasAdminAccess } from "@/src/lib/roles";
 import { canAdminAccessReport } from "@/src/lib/workflow";
+import { getRoomCodeByNameFromMaster } from "@/src/lib/master-data-db";
 
 function parseReportId(id: string) {
   const reportId = Number(id);
@@ -50,6 +51,11 @@ const reportInclude = {
       createdAt: "asc" as const,
     },
   },
+  attachments: {
+    orderBy: {
+      createdAt: "asc" as const,
+    },
+  },
 };
 
 export async function GET(
@@ -60,7 +66,7 @@ export async function GET(
     const authUser = await getApiSessionUser();
 
     if (!authUser) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 });
     }
 
     const { id } = await ctx.params;
@@ -94,11 +100,11 @@ export async function GET(
         reportCategory: report.kategori,
       })
     ) {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
     if (!hasAdminAccess(authUser) && report.userId !== authUser.id) {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
     return NextResponse.json({ report });
@@ -126,11 +132,11 @@ export async function PATCH(
     const authUser = await getApiSessionUser();
 
     if (!authUser) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 });
     }
 
     if (authUser.role !== "USER") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
     const { id } = await ctx.params;
@@ -155,14 +161,18 @@ export async function PATCH(
     }
 
     if (existingReport.userId !== authUser.id) {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
-    if (existingReport.status !== "MENUNGGU_ADMIN_1") {
+    if (
+      ["DITOLAK", "TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN"].includes(
+        existingReport.status,
+      )
+    ) {
       return NextResponse.json(
         {
           message:
-            `Laporan hanya bisa diubah saat masih menunggu persetujuan ${getRoleLabel("ADMIN_1")}.`,
+            "Laporan tidak bisa diubah setelah approval atau rejection final.",
         },
         { status: 400 }
       );
@@ -170,7 +180,14 @@ export async function PATCH(
 
     const formData = await req.formData();
     const reportInput = parseModalReportFormData(formData);
-    const file = formData.get("attachment") as File | null;
+    const files = formData
+      .getAll("attachments")
+      .filter((value): value is File => value instanceof File && value.size > 0);
+    const legacyFile = formData.get("attachment");
+
+    if (legacyFile instanceof File && legacyFile.size > 0 && files.length === 0) {
+      files.push(legacyFile);
+    }
 
     const validationError = validateModalReportInput(reportInput);
 
@@ -178,7 +195,7 @@ export async function PATCH(
       return NextResponse.json({ message: validationError }, { status: 400 });
     }
 
-    const fileValidationError = validateReportAttachmentUpload(file);
+    const fileValidationError = validateReportAttachmentUploads(files);
 
     if (fileValidationError) {
       return NextResponse.json(
@@ -187,45 +204,62 @@ export async function PATCH(
       );
     }
 
-    let attachmentUrl = existingReport.attachmentUrl;
-    let attachmentType = existingReport.attachmentType;
-    let attachmentName = existingReport.attachmentName;
-    let fotoUrl = existingReport.fotoUrl;
+    const savedAttachments = [];
 
-    if (file && file.size > 0) {
-      const newAttachmentUrl = await saveReportAttachmentUpload(file);
+    for (const file of files) {
+      const url = await saveReportAttachmentUpload(file);
 
-      if (existingReport.attachmentUrl) {
-        await deleteUploadedFileByUrl(existingReport.attachmentUrl);
-      } else if (existingReport.fotoUrl) {
-        await deleteUploadedFileByUrl(existingReport.fotoUrl);
-      }
-
-      attachmentUrl = newAttachmentUrl;
-      attachmentType = file.type;
-      attachmentName = file.name;
-      fotoUrl = file.type.startsWith("image/") ? newAttachmentUrl : null;
+      savedAttachments.push({
+        url,
+        fileType: file.type,
+        fileName: file.name,
+        fileSize: file.size,
+      });
     }
+
+    const primaryAttachment = savedAttachments[0] || null;
+    const hasNewAttachments = savedAttachments.length > 0;
+    const roomCode =
+      (await getRoomCodeByNameFromMaster(reportInput.namaRuangan)) ||
+      reportInput.nomorRuangan;
 
     const updatedReport = await prisma.report.update({
       where: { id: reportId },
       data: {
         namaPelapor: reportInput.namaPelapor,
-        nomorRuangan: reportInput.nomorRuangan,
-        kodeUakpb: reportInput.kodeUakpb,
+        nomorRuangan: roomCode,
+        namaRuangan: reportInput.namaRuangan,
+        kodeUakpb: reportInput.namaBarang || reportInput.kodeUakpb,
         kode: reportInput.kode,
+        nup: reportInput.nup,
         kategori: reportInput.kategori as ValidKategori,
-        namaBarang: "Perbaikan Alat",
-        lokasi: `Ruangan ${reportInput.nomorRuangan}`,
+        subcategory: reportInput.subcategory,
+        itemType: reportInput.itemType,
+        namaBarang: reportInput.namaBarang || reportInput.itemType,
+        lokasi: reportInput.namaRuangan,
         deskripsi: reportInput.deskripsi,
         severity: "SEDANG",
-        fotoUrl,
-        attachmentUrl,
-        attachmentType,
-        attachmentName,
+        ...(hasNewAttachments
+          ? {
+              fotoUrl: primaryAttachment?.fileType.startsWith("image/")
+                ? primaryAttachment.url
+                : null,
+              attachmentUrl: primaryAttachment?.url || null,
+              attachmentType: primaryAttachment?.fileType || null,
+              attachmentName: primaryAttachment?.fileName || null,
+              attachments: {
+                deleteMany: {},
+                create: savedAttachments,
+              },
+            }
+          : {}),
       },
       include: reportInclude,
     });
+
+    if (hasNewAttachments) {
+      await deleteUploadedFileByUrl(existingReport.attachmentUrl || existingReport.fotoUrl);
+    }
 
     return NextResponse.json({
       message: "Laporan berhasil diperbarui.",
@@ -255,11 +289,11 @@ export async function DELETE(
     const authUser = await getApiSessionUser();
 
     if (!authUser) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 });
     }
 
     if (authUser.role !== "USER") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
     const { id } = await ctx.params;
@@ -280,6 +314,7 @@ export async function DELETE(
         status: true,
         fotoUrl: true,
         attachmentUrl: true,
+        attachments: true,
       },
     });
 
@@ -291,14 +326,18 @@ export async function DELETE(
     }
 
     if (existingReport.userId !== authUser.id) {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
-    if (existingReport.status !== "MENUNGGU_ADMIN_1") {
+    if (
+      ["DITOLAK", "TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN"].includes(
+        existingReport.status,
+      )
+    ) {
       return NextResponse.json(
         {
           message:
-            `Laporan hanya bisa dihapus saat masih menunggu persetujuan ${getRoleLabel("ADMIN_1")}.`,
+            "Laporan tidak bisa dihapus setelah approval atau rejection final.",
         },
         { status: 400 }
       );
@@ -308,9 +347,12 @@ export async function DELETE(
       where: { id: reportId },
     });
 
-    await deleteUploadedFileByUrl(
-      existingReport.attachmentUrl || existingReport.fotoUrl
-    );
+    await Promise.all([
+      ...existingReport.attachments.map((attachment) =>
+        deleteUploadedFileByUrl(attachment.url),
+      ),
+      deleteUploadedFileByUrl(existingReport.attachmentUrl || existingReport.fotoUrl),
+    ]);
 
     return NextResponse.json({
       message: "Laporan berhasil dihapus.",

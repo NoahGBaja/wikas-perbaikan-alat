@@ -14,8 +14,14 @@ type UserReportPageClientProps = {
     id: number;
     namaPelapor: string | null;
     nomorRuangan: string | null;
+    namaRuangan?: string | null;
     kodeUakpb: string | null;
     kode: string | null;
+    nup?: string | null;
+    subcategory?: string | null;
+    itemType?: string | null;
+    namaBarang?: string | null;
+    repairCost?: string | null;
     deskripsi: string;
     kategori: UserReportCategory;
   };
@@ -50,13 +56,19 @@ export default function UserReportPageClient({
     formData.append("kategori", payload.kategori);
     formData.append("namaPelapor", payload.namaPelapor);
     formData.append("nomorRuangan", payload.nomorRuangan);
-    formData.append("kodeUakpb", payload.kodeUakpb);
+    formData.append("namaRuangan", payload.namaRuangan);
+    formData.append("kodeUakpb", payload.namaBarang);
     formData.append("kode", payload.kode);
+    formData.append("nup", payload.nup);
+    formData.append("subcategory", payload.subcategory);
+    formData.append("itemType", payload.itemType);
+    formData.append("namaBarang", payload.namaBarang);
+    formData.append("repairCost", payload.repairCost);
     formData.append("deskripsi", payload.deskripsi);
 
-    if (payload.attachment) {
-      formData.append("attachment", payload.attachment);
-    }
+    payload.attachments.forEach((attachment) => {
+      formData.append("attachments", attachment);
+    });
 
     const res = await fetch(
       initialReport ? `/api/reports/${initialReport.id}` : "/api/reports",
@@ -89,7 +101,7 @@ export default function UserReportPageClient({
       <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center text-center">
         <section className="rounded-2xl border border-blue-100 bg-blue-50/40 px-8 py-10 shadow-sm">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
-            Dashboard Pegawai
+            Dasbor Pegawai
           </p>
           <h1 className="mt-3 text-3xl font-bold md:text-5xl">
             Buat Laporan Perbaikan Alat
@@ -116,8 +128,14 @@ export default function UserReportPageClient({
         defaultKategori={initialReport?.kategori || "FASILITAS_INVENTARIS"}
         defaultNamaPelapor={initialReport?.namaPelapor || defaultNamaPelapor}
         defaultNomorRuangan={initialReport?.nomorRuangan || ""}
+        defaultNamaRuangan={initialReport?.namaRuangan || ""}
         defaultKodeUakpb={initialReport?.kodeUakpb || ""}
         defaultKode={initialReport?.kode || ""}
+        defaultNup={initialReport?.nup || ""}
+        defaultSubcategory={initialReport?.subcategory || ""}
+        defaultItemType={initialReport?.itemType || ""}
+        defaultNamaBarang={initialReport?.namaBarang || initialReport?.kodeUakpb || ""}
+        defaultRepairCost={initialReport?.repairCost || ""}
         defaultDeskripsi={initialReport?.deskripsi || ""}
         submitLabel={initialReport ? "Simpan Perubahan" : "Kirim Laporan"}
       />

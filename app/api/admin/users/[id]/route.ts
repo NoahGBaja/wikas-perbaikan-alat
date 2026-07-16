@@ -3,7 +3,10 @@ import { prisma } from "@/src/lib/prisma";
 import { getApiSessionUser } from "@/src/lib/session";
 import { validateMutationRequest } from "@/src/lib/request-security";
 import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
-import { isCategoryScopedRole } from "@/src/lib/roles";
+import {
+  isCategoryScopedRole,
+  isSuperAdmin as hasSuperAdminAccess,
+} from "@/src/lib/roles";
 
 const VALID_ROLES: AppRole[] = [
   "ADMIN_1",
@@ -11,6 +14,7 @@ const VALID_ROLES: AppRole[] = [
   "ADMIN_3",
   "ADMIN_4",
   "ADMIN_5",
+  "EXECUTIVE",
   "USER",
 ];
 
@@ -46,14 +50,14 @@ async function requireSuperAdmin() {
 
   if (!authUser) {
     return {
-      error: NextResponse.json({ message: "Unauthorized" }, { status: 401 }),
+      error: NextResponse.json({ message: "Sesi masuk tidak ditemukan." }, { status: 401 }),
     };
   }
 
-  if (!authUser.isSuperAdmin) {
+  if (!hasSuperAdminAccess(authUser)) {
     return {
       error: NextResponse.json(
-        { message: "Hanya Super Admin yang boleh mengelola user." },
+        { message: "Hanya Admin Utama yang boleh mengelola pengguna." },
         { status: 403 }
       ),
     };
@@ -122,7 +126,7 @@ export async function PATCH(
       );
     }
 
-    const existingUserByNip = await prisma.user.findUnique({
+    const existingUserByNip = await prisma.user.findFirst({
       where: { nip },
       select: {
         id: true,
@@ -160,7 +164,7 @@ export async function PATCH(
     });
 
     return NextResponse.json({
-      message: "User berhasil diperbarui.",
+      message: "Pengguna berhasil diperbarui.",
       user: updatedUser,
     });
   } catch (error) {
@@ -223,14 +227,14 @@ export async function DELETE(
 
     if (!user) {
       return NextResponse.json(
-        { message: "User tidak ditemukan." },
+        { message: "Pengguna tidak ditemukan." },
         { status: 404 }
       );
     }
 
-    if (user.isSuperAdmin) {
+    if (hasSuperAdminAccess(user)) {
       return NextResponse.json(
-        { message: "Akun Super Admin tidak boleh dihapus dari dashboard." },
+        { message: "Akun Admin Utama tidak boleh dihapus dari dasbor." },
         { status: 400 }
       );
     }
@@ -239,7 +243,7 @@ export async function DELETE(
       return NextResponse.json(
         {
           message:
-            "User yang sudah memiliki laporan tidak bisa dihapus. Nonaktifkan pengguna secara operasional bila perlu.",
+            "Pengguna yang sudah memiliki laporan tidak bisa dihapus. Nonaktifkan pengguna secara operasional bila perlu.",
         },
         { status: 400 }
       );
@@ -250,7 +254,7 @@ export async function DELETE(
     });
 
     return NextResponse.json({
-      message: "User berhasil dihapus.",
+      message: "Pengguna berhasil dihapus.",
     });
   } catch (error) {
     console.error("DELETE_ADMIN_USER_ERROR:", error);

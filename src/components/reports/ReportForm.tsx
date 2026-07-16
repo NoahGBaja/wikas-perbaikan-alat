@@ -5,6 +5,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import {
+  FeedbackBanner,
+  showError,
+  showSuccess,
+  toFeedback,
+  type FeedbackMessage,
+} from "@/src/components/ui/feedback";
 
 type Kategori =
   | "FASILITAS_INVENTARIS"
@@ -50,7 +57,7 @@ export default function ReportForm({
   const [foto, setFoto] = useState<File | null>(null);
   const [removeFoto, setRemoveFoto] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const [previewUrl, setPreviewUrl] = useState(
     initialReport?.fotoUrl && !removeFoto ? initialReport.fotoUrl : ""
   );
@@ -73,10 +80,12 @@ export default function ReportForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setMessage("");
+    setMessage(null);
 
     if (!kategori) {
-      setMessage("Silakan pilih kategori terlebih dahulu.");
+      const text = "Silakan pilih kategori terlebih dahulu.";
+      setMessage(toFeedback(text, "error"));
+      showError("Data laporan belum lengkap", text);
       return;
     }
 
@@ -107,16 +116,18 @@ export default function ReportForm({
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(data.message || "Gagal menyimpan laporan.");
+        const text = data.message || "Gagal menyimpan laporan.";
+        setMessage(toFeedback(text, "error"));
+        showError("Gagal menyimpan laporan", text);
         setLoading(false);
         return;
       }
 
-      setMessage(
-        isEditMode
-          ? "Laporan berhasil diperbarui."
-          : "Laporan berhasil dikirim."
-      );
+      const text = isEditMode
+        ? "Laporan berhasil diperbarui."
+        : "Laporan berhasil dikirim.";
+      setMessage(toFeedback(text, "success"));
+      showSuccess("Laporan tersimpan", text);
 
       if (!isEditMode) {
         setNamaBarang("");
@@ -131,7 +142,9 @@ export default function ReportForm({
       }, 900);
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat menyimpan laporan.");
+      const text = "Terjadi kesalahan saat menyimpan laporan.";
+      setMessage(toFeedback(text, "error"));
+      showError("Gagal menyimpan laporan", text);
     } finally {
       setLoading(false);
     }
@@ -148,7 +161,7 @@ export default function ReportForm({
             <p className="mt-2 text-white/70">
               {isEditMode
                 ? "Perbarui detail laporan selagi statusnya masih menunggu."
-                : "Pilih kategori, isi detail kerusakan, lalu upload foto barang atau alat."}
+                : "Pilih kategori, isi detail kerusakan, lalu unggah foto barang atau alat."}
             </p>
           </div>
 
@@ -244,7 +257,7 @@ export default function ReportForm({
 
               <div>
                 <label className="mb-2 block text-sm font-medium">
-                  Upload Foto
+                  Unggah Foto
                 </label>
                 <input
                   type="file"
@@ -283,7 +296,7 @@ export default function ReportForm({
                   <div className="overflow-hidden rounded-2xl border border-white/10">
                     <Image
                       src={previewUrl}
-                      alt="Preview upload"
+                      alt="Preview unggahan"
                       width={1200}
                       height={800}
                       className="max-h-72 w-auto object-cover"
@@ -308,11 +321,7 @@ export default function ReportForm({
               </div>
             </div>
 
-            {message ? (
-              <div className="mt-5 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm">
-                {message}
-              </div>
-            ) : null}
+            <FeedbackBanner message={message} className="mt-5" />
 
             <div className="mt-6 flex flex-wrap gap-3">
               <button

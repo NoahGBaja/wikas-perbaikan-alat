@@ -3,10 +3,17 @@
 import { useEffect, useId, useState } from "react";
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import Image from "next/image";
-import { FileText, Send, Upload, X } from "lucide-react";
-import { toast } from "sonner";
+import { FileText, RefreshCcw, Send, Upload, X } from "lucide-react";
+import { showError } from "@/src/components/ui/feedback";
+import {
+  CATEGORY_MASTER,
+  ROOM_MASTER,
+  type CategoryMaster,
+  type RoomMaster,
+} from "@/src/lib/master-data";
 
 const MAX_ATTACHMENT_SIZE = 2 * 1024 * 1024;
+const MAX_ATTACHMENT_COUNT = 10;
 const ALLOWED_ATTACHMENT_TYPES = [
   "application/pdf",
   "image/jpeg",
@@ -19,36 +26,20 @@ export type UserReportCategory =
   | "IT_ELEKTRONIK"
   | "LABORATORIUM";
 
-const CATEGORY_OPTIONS: Array<{
-  value: UserReportCategory;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: "FASILITAS_INVENTARIS",
-    label: "Fasilitas & Inventaris",
-    description: "Meja, kursi, lemari, AC, dan fasilitas ruangan.",
-  },
-  {
-    value: "IT_ELEKTRONIK",
-    label: "IT & Alat Elektronik",
-    description: "Komputer, printer, proyektor, jaringan, dan elektronik.",
-  },
-  {
-    value: "LABORATORIUM",
-    label: "Laboratorium",
-    description: "Alat, perlengkapan, dan kebutuhan ruang laboratorium.",
-  },
-];
-
 export type UserReportModalPayload = {
   kategori: UserReportCategory;
   namaPelapor: string;
   nomorRuangan: string;
+  namaRuangan: string;
   kodeUakpb: string;
   kode: string;
+  nup: string;
+  subcategory: string;
+  itemType: string;
+  namaBarang: string;
+  repairCost: string;
   deskripsi: string;
-  attachment: File | null;
+  attachments: File[];
 };
 
 type UserReportModalProps = {
@@ -57,14 +48,25 @@ type UserReportModalProps = {
   onSubmit?: (payload: UserReportModalPayload) => void | Promise<void>;
   defaultNamaPelapor?: string;
   defaultNomorRuangan?: string;
+  defaultNamaRuangan?: string;
   defaultKodeUakpb?: string;
   defaultKode?: string;
+  defaultNup?: string;
+  defaultSubcategory?: string;
+  defaultItemType?: string;
+  defaultNamaBarang?: string;
+  defaultRepairCost?: string;
   defaultDeskripsi?: string;
   defaultKategori?: UserReportCategory;
   submitLabel?: string;
 };
 
 type FormErrors = Partial<Record<keyof UserReportModalPayload, string>>;
+
+type MasterDataState = {
+  categories: CategoryMaster[];
+  rooms: RoomMaster[];
+};
 
 function RequiredMark() {
   return (
@@ -81,18 +83,33 @@ function validateForm(payload: UserReportModalPayload) {
     errors.namaPelapor = "Nama pelapor wajib diisi.";
   }
 
-  if (!payload.nomorRuangan.trim()) {
-    errors.nomorRuangan = "Kode ruangan wajib diisi.";
+  if (!payload.namaRuangan.trim()) {
+    errors.nomorRuangan = "Nama ruangan wajib diisi.";
+  } else if (!payload.nomorRuangan.trim()) {
+    errors.nomorRuangan =
+      "Nama ruangan harus sesuai master data agar kode ruangan terisi otomatis.";
   }
 
-  if (!payload.kodeUakpb.trim()) {
-    errors.kodeUakpb = "Kode UAKPB wajib diisi.";
+  if (!payload.namaBarang.trim()) {
+    errors.namaBarang = "Nama barang wajib diisi.";
   }
 
   if (!payload.kode.trim()) {
-    errors.kode = "Kode wajib diisi.";
+    errors.kode = "Kode barang wajib diisi.";
   } else if (!/^\d{12}$/.test(payload.kode.trim())) {
-    errors.kode = "Kode harus berisi tepat 12 digit angka.";
+    errors.kode = "Kode barang harus berisi tepat 12 digit angka.";
+  }
+
+  if (!payload.nup.trim()) {
+    errors.nup = "NUP wajib diisi.";
+  }
+
+  if (!payload.subcategory.trim()) {
+    errors.subcategory = "Subkategori wajib dipilih.";
+  }
+
+  if (!payload.itemType.trim()) {
+    errors.itemType = "Tipe barang wajib dipilih.";
   }
 
   if (!payload.deskripsi.trim()) {
@@ -101,11 +118,17 @@ function validateForm(payload: UserReportModalPayload) {
     errors.deskripsi = "Deskripsi maksimal 2000 karakter.";
   }
 
-  if (payload.attachment) {
-    if (payload.attachment.size > MAX_ATTACHMENT_SIZE) {
-      errors.attachment = "Lampiran maksimal 2 MB.";
-    } else if (!ALLOWED_ATTACHMENT_TYPES.includes(payload.attachment.type)) {
-      errors.attachment = "Lampiran harus berupa gambar atau PDF.";
+  if (payload.attachments.length > MAX_ATTACHMENT_COUNT) {
+    errors.attachments = `Lampiran maksimal ${MAX_ATTACHMENT_COUNT} file.`;
+  }
+
+  for (const attachment of payload.attachments) {
+    if (attachment.size > MAX_ATTACHMENT_SIZE) {
+      errors.attachments = `${attachment.name}: Lampiran maksimal 2 MB.`;
+      break;
+    } else if (!ALLOWED_ATTACHMENT_TYPES.includes(attachment.type)) {
+      errors.attachments = `${attachment.name}: Lampiran harus berupa gambar atau PDF.`;
+      break;
     }
   }
 
@@ -118,8 +141,14 @@ export default function UserReportModal({
   onSubmit,
   defaultNamaPelapor = "",
   defaultNomorRuangan = "",
+  defaultNamaRuangan = "",
   defaultKodeUakpb = "",
   defaultKode = "",
+  defaultNup = "",
+  defaultSubcategory = "",
+  defaultItemType = "",
+  defaultNamaBarang = "",
+  defaultRepairCost = "",
   defaultDeskripsi = "",
   defaultKategori = "FASILITAS_INVENTARIS",
   submitLabel = "Kirim Laporan",
@@ -130,11 +159,23 @@ export default function UserReportModal({
   const [kategori, setKategori] = useState<UserReportCategory>(defaultKategori);
   const [namaPelapor, setNamaPelapor] = useState(defaultNamaPelapor);
   const [nomorRuangan, setNomorRuangan] = useState(defaultNomorRuangan);
+  const [namaRuangan, setNamaRuangan] = useState(defaultNamaRuangan);
   const [kodeUakpb, setKodeUakpb] = useState(defaultKodeUakpb);
   const [kode, setKode] = useState(defaultKode);
+  const [nup, setNup] = useState(defaultNup);
+  const [masterData, setMasterData] = useState<MasterDataState>({
+    categories: CATEGORY_MASTER,
+    rooms: ROOM_MASTER,
+  });
+  const [subcategory, setSubcategory] = useState(
+    defaultSubcategory || "",
+  );
+  const [itemType, setItemType] = useState(defaultItemType || "");
+  const [namaBarang, setNamaBarang] = useState(defaultNamaBarang || defaultKodeUakpb);
+  const [repairCost, setRepairCost] = useState(defaultRepairCost);
   const [deskripsi, setDeskripsi] = useState(defaultDeskripsi);
-  const [attachment, setAttachment] = useState<File | null>(null);
-  const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachmentPreviewUrls, setAttachmentPreviewUrls] = useState<string[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -143,13 +184,25 @@ export default function UserReportModal({
     setKategori(defaultKategori);
     setNamaPelapor(defaultNamaPelapor);
     setNomorRuangan(defaultNomorRuangan);
+    setNamaRuangan(defaultNamaRuangan);
     setKodeUakpb(defaultKodeUakpb);
     setKode(defaultKode);
+    setNup(defaultNup);
+    setSubcategory(defaultSubcategory || "");
+    setItemType(defaultItemType || "");
+    setNamaBarang(defaultNamaBarang || defaultKodeUakpb);
+    setRepairCost(defaultRepairCost);
     setDeskripsi(defaultDeskripsi);
   }, [
     defaultKategori,
     defaultKode,
     defaultKodeUakpb,
+    defaultNamaBarang,
+    defaultNamaRuangan,
+    defaultNup,
+    defaultRepairCost,
+    defaultSubcategory,
+    defaultItemType,
     defaultDeskripsi,
     defaultNamaPelapor,
     defaultNomorRuangan,
@@ -172,18 +225,60 @@ export default function UserReportModal({
   }, [open, onOpenChange]);
 
   useEffect(() => {
-    if (!attachment || !attachment.type.startsWith("image/")) {
-      setAttachmentPreviewUrl("");
+    if (!open) return;
+
+    let cancelled = false;
+
+    async function loadMasterData() {
+      try {
+        const res = await fetch("/api/master-data", { cache: "no-store" });
+        const data = await res.json();
+
+        if (cancelled || !res.ok) return;
+
+        setMasterData({
+          categories: data.categories || CATEGORY_MASTER,
+          rooms: data.rooms || ROOM_MASTER,
+        });
+      } catch (error) {
+        console.error("LOAD_REPORT_MASTER_DATA_ERROR:", error);
+      }
+    }
+
+    void loadMasterData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const imageFiles = attachments.filter((attachment) =>
+      attachment.type.startsWith("image/"),
+    );
+
+    if (imageFiles.length === 0) {
+      setAttachmentPreviewUrls([]);
       return;
     }
 
-    const nextPreviewUrl = URL.createObjectURL(attachment);
-    setAttachmentPreviewUrl(nextPreviewUrl);
+    const nextPreviewUrls = imageFiles.map((attachment) =>
+      URL.createObjectURL(attachment),
+    );
+    setAttachmentPreviewUrls(nextPreviewUrls);
 
     return () => {
-      URL.revokeObjectURL(nextPreviewUrl);
+      nextPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [attachment]);
+  }, [attachments]);
+
+  const selectedCategory =
+    masterData.categories.find((item) => item.value === kategori) ||
+    masterData.categories[0] ||
+    CATEGORY_MASTER[0];
+  const selectedSubcategory =
+    selectedCategory.subcategories.find((item) => item.name === subcategory) ||
+    null;
 
   if (!open) {
     return null;
@@ -193,10 +288,16 @@ export default function UserReportModal({
     kategori,
     namaPelapor,
     nomorRuangan,
+    namaRuangan,
     kodeUakpb,
     kode,
+    nup,
+    subcategory,
+    itemType,
+    namaBarang,
+    repairCost,
     deskripsi,
-    attachment,
+    attachments,
   };
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -207,9 +308,10 @@ export default function UserReportModal({
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
-      toast.error("Data laporan belum lengkap", {
-        description: Object.values(nextErrors).filter(Boolean).join(" "),
-      });
+      showError(
+        "Data laporan belum lengkap",
+        Object.values(nextErrors).filter(Boolean).join(" "),
+      );
       return;
     }
 
@@ -220,8 +322,14 @@ export default function UserReportModal({
         kategori: payload.kategori,
         namaPelapor: payload.namaPelapor.trim(),
         nomorRuangan: payload.nomorRuangan.trim(),
-        kodeUakpb: payload.kodeUakpb.trim(),
+        namaRuangan: payload.namaRuangan.trim(),
+        kodeUakpb: payload.namaBarang.trim(),
         kode: payload.kode.trim(),
+        nup: payload.nup.trim(),
+        subcategory: payload.subcategory.trim(),
+        itemType: payload.itemType.trim(),
+        namaBarang: payload.namaBarang.trim(),
+        repairCost: payload.repairCost.replace(/\D/g, ""),
         deskripsi: payload.deskripsi.trim(),
       });
 
@@ -234,37 +342,55 @@ export default function UserReportModal({
           ? error.message
           : "Terjadi kesalahan saat mengirim laporan.",
       );
-      toast.error("Gagal mengirim laporan", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "Terjadi kesalahan saat mengirim laporan.",
-      });
+      showError(
+        "Gagal mengirim laporan",
+        error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan saat mengirim laporan.",
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
   function handleAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] || null;
-    setAttachment(file);
+    const files = Array.from(event.target.files || []);
+    setAttachments(files);
 
-    if (!file) {
-      setErrors((current) => ({ ...current, attachment: undefined }));
+    if (files.length === 0) {
+      setErrors((current) => ({ ...current, attachments: undefined }));
       return;
     }
 
-    const nextErrors = validateForm({ ...payload, attachment: file });
+    const nextErrors = validateForm({ ...payload, attachments: files });
     setErrors((current) => ({
       ...current,
-      attachment: nextErrors.attachment,
+      attachments: nextErrors.attachments,
     }));
 
-    if (nextErrors.attachment) {
-      toast.error("Lampiran tidak valid", {
-        description: nextErrors.attachment,
-      });
+    if (nextErrors.attachments) {
+      showError("Lampiran tidak valid", nextErrors.attachments);
     }
+  }
+
+  function handleRoomNameChange(value: string) {
+    setNamaRuangan(value);
+    const normalized = value.trim().toLowerCase();
+    const room = masterData.rooms.find(
+      (item) => item.name.toLowerCase() === normalized,
+    );
+    setNomorRuangan(room?.code || "");
+  }
+
+  function handleCategoryChange(value: UserReportCategory) {
+    setKategori(value);
+    setSubcategory("");
+    setItemType("");
+  }
+
+  function handleSubcategoryChange(value: string) {
+    setSubcategory(value);
+    setItemType("");
   }
 
   return (
@@ -304,14 +430,14 @@ export default function UserReportModal({
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <Field label="Jenis Perbaikan" required className="md:col-span-2">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                {CATEGORY_OPTIONS.map((option) => {
+                {masterData.categories.map((option) => {
                   const active = kategori === option.value;
 
                   return (
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => setKategori(option.value)}
+                      onClick={() => handleCategoryChange(option.value)}
                       className={[
                         "rounded-md border p-4 text-left transition",
                         active
@@ -346,22 +472,75 @@ export default function UserReportModal({
               />
             </Field>
 
+            <Field label="Nama Ruangan" required error={errors.nomorRuangan}>
+              <input
+                value={namaRuangan}
+                list="room-master-list"
+                onChange={(event) => handleRoomNameChange(event.target.value)}
+                className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Pilih atau ketik nama ruangan"
+                required
+              />
+              <datalist id="room-master-list">
+                {masterData.rooms.map((room) => (
+                  <option key={room.code} value={room.name} />
+                ))}
+              </datalist>
+            </Field>
+
             <Field label="Kode Ruangan" required error={errors.nomorRuangan}>
               <input
                 value={nomorRuangan}
-                onChange={(event) => setNomorRuangan(event.target.value)}
-                className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                readOnly
+                className="h-12 w-full rounded-md border border-slate-300 bg-slate-100 px-4 text-slate-700 outline-none"
+                placeholder="Terisi otomatis dari nama ruangan"
                 required
               />
             </Field>
 
-            <Field label="Kode UAKPB" required error={errors.kodeUakpb}>
+            <Field label="Nama Barang" required error={errors.namaBarang}>
               <input
-                value={kodeUakpb}
-                onChange={(event) => setKodeUakpb(event.target.value)}
+                value={namaBarang}
+                onChange={(event) => {
+                  setNamaBarang(event.target.value);
+                  setKodeUakpb(event.target.value);
+                }}
                 className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Contoh: Laptop Lenovo, Printer Epson"
                 required
               />
+            </Field>
+
+            <Field label="Subkategori" required error={errors.subcategory}>
+              <select
+                value={subcategory}
+                onChange={(event) => handleSubcategoryChange(event.target.value)}
+                className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                required
+              >
+                <option value="">Pilih subkategori</option>
+                {selectedCategory.subcategories.map((item) => (
+                  <option key={item.code} value={item.name}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="Nama / Tipe Barang" required error={errors.itemType}>
+              <input
+                value={itemType}
+                list="item-type-master-list"
+                onChange={(event) => setItemType(event.target.value)}
+                className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Pilih atau ketik tipe barang"
+                required
+              />
+              <datalist id="item-type-master-list">
+                {selectedSubcategory?.itemTypes.map((item) => (
+                  <option key={item.code} value={item.name} />
+                ))}
+              </datalist>
             </Field>
 
             <Field
@@ -379,6 +558,16 @@ export default function UserReportModal({
                 maxLength={12}
                 pattern="\d{12}"
                 className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                required
+              />
+            </Field>
+
+            <Field label="NUP" required error={errors.nup}>
+              <input
+                value={nup}
+                onChange={(event) => setNup(event.target.value)}
+                className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Masukkan NUP"
                 required
               />
             </Field>
@@ -405,13 +594,13 @@ export default function UserReportModal({
 
             <Field
               label="Lampiran (opsional)"
-              error={errors.attachment}
+              error={errors.attachments}
               className="md:col-span-2"
             >
               <label className="flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center transition hover:bg-slate-100">
                 <Upload className="mb-3 h-6 w-6 text-blue-600" />
                 <span className="text-sm font-semibold text-slate-800">
-                  Upload gambar atau PDF
+                  Unggah gambar atau PDF
                 </span>
                 <span className="mt-1 text-xs text-slate-500">
                   Maksimal 2 MB.
@@ -419,45 +608,79 @@ export default function UserReportModal({
                 <input
                   type="file"
                   accept="image/*,application/pdf"
+                  multiple
                   onChange={handleAttachmentChange}
                   className="sr-only"
                 />
               </label>
 
-              {attachment ? (
+              {attachments.length > 0 ? (
                 <div className="mt-3 rounded-md border border-slate-200 bg-white p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <FileText className="h-5 w-5 shrink-0 text-blue-600" />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-800">
-                          {attachment.name}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {(attachment.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setAttachment(null)}
-                      className="inline-flex size-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
-                      aria-label="Hapus lampiran"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-slate-800">
+                      {attachments.length} lampiran dipilih
+                    </p>
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
+                      <RefreshCcw className="h-3.5 w-3.5" />
+                      Ganti Lampiran
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        multiple
+                        onChange={handleAttachmentChange}
+                        className="sr-only"
+                      />
+                    </label>
                   </div>
 
-                  {attachmentPreviewUrl ? (
-                    <Image
-                      src={attachmentPreviewUrl}
-                      alt="Preview lampiran"
-                      width={800}
-                      height={500}
-                      className="mt-3 max-h-56 w-full rounded-md object-cover"
-                      unoptimized
-                    />
+                  <div className="space-y-2">
+                    {attachments.map((attachment) => (
+                      <div
+                        key={`${attachment.name}-${attachment.size}`}
+                        className="flex items-center justify-between gap-3 rounded-md border border-slate-100 bg-slate-50 p-2"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <FileText className="h-5 w-5 shrink-0 text-blue-600" />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-slate-800">
+                              {attachment.name}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {(attachment.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAttachments((current) =>
+                              current.filter((item) => item !== attachment),
+                            )
+                          }
+                          className="inline-flex size-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+                          aria-label="Hapus lampiran"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {attachmentPreviewUrls.length > 0 ? (
+                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {attachmentPreviewUrls.map((url) => (
+                        <Image
+                          key={url}
+                          src={url}
+                          alt="Preview lampiran"
+                          width={800}
+                          height={500}
+                          className="max-h-56 w-full rounded-md object-cover"
+                          unoptimized
+                        />
+                      ))}
+                    </div>
                   ) : null}
                 </div>
               ) : null}
