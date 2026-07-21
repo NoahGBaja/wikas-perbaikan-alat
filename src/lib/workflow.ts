@@ -95,7 +95,7 @@ export function getNextApprovedStatus(status: ReportStatus): ReportStatus {
   const nextStatus = map[status];
 
   if (!nextStatus) {
-    throw new Error("Status laporan sudah final atau tidak valid untuk ACC.");
+    throw new Error("Status laporan sudah final atau tidak valid untuk diterima.");
   }
 
   return nextStatus;
@@ -138,11 +138,11 @@ export function getWorkflowMessage(
   }
 
   if (role === "SUPER_ADMIN") {
-    return "Admin Utama hanya memantau. Fitur override belum diaktifkan.";
+    return "Admin Utama hanya memantau. Fitur penggantian keputusan belum diaktifkan.";
   }
 
   if (role === "EXECUTIVE") {
-    return "Kepala Balai memiliki akses baca untuk monitoring eksekutif.";
+    return "Kepala Balai memiliki akses baca untuk pemantauan eksekutif.";
   }
 
   if (!requiredRole) {

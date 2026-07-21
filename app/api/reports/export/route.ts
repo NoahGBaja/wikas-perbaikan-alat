@@ -11,7 +11,7 @@ import {
   type AppCategoryScope,
   type AppRole,
 } from "@/src/lib/roles";
-import { canAdminAccessReport } from "@/src/lib/workflow";
+import { canAdminAccessReport, getRequiredAdminRole } from "@/src/lib/workflow";
 import {
   formatKategori,
   formatStatus,
@@ -72,6 +72,16 @@ type ReportExportFilter = {
   userQuery: string;
   category: AppCategoryScope | "SEMUA";
   subcategory: string;
+  itemType: string;
+  room: string;
+  responsibleRole: AppRole | "SEMUA";
+  processState:
+    | "SEMUA"
+    | "UNFINISHED"
+    | "COMPLETED"
+    | "ACCEPTED"
+    | "REJECTED"
+    | "ONGOING";
   rejectedByRole: AppRole | "SEMUA";
   budget: "SEMUA" | "BELOW_5" | "BETWEEN_5_10" | "ABOVE_10" | "CUSTOM";
   budgetMin: number | null;
@@ -167,6 +177,17 @@ function parseExportFilter(req: Request): ReportExportFilter {
     userQuery: (url.searchParams.get("userQuery") || "").trim().toLowerCase(),
     category: parseCategory(url.searchParams.get("category")),
     subcategory: (url.searchParams.get("subcategory") || "").trim(),
+    itemType: (url.searchParams.get("itemType") || "").trim(),
+    room: (url.searchParams.get("room") || "").trim().toLowerCase(),
+    responsibleRole: parseRole(url.searchParams.get("responsibleRole")),
+    processState:
+      url.searchParams.get("processState") === "UNFINISHED" ||
+      url.searchParams.get("processState") === "COMPLETED" ||
+      url.searchParams.get("processState") === "ACCEPTED" ||
+      url.searchParams.get("processState") === "REJECTED" ||
+      url.searchParams.get("processState") === "ONGOING"
+        ? (url.searchParams.get("processState") as ReportExportFilter["processState"])
+        : "SEMUA",
     rejectedByRole: parseRole(url.searchParams.get("rejectedByRole")),
     budget: parseBudget(url.searchParams.get("budget")),
     budgetMin: parseNumber(url.searchParams.get("budgetMin")),
@@ -206,6 +227,49 @@ function reportMatchesFilter(
     return false;
   }
   if (filter.subcategory && report.subcategory !== filter.subcategory) {
+    return false;
+  }
+  if (filter.itemType && report.itemType !== filter.itemType) return false;
+  if (
+    filter.room &&
+    ![report.namaRuangan, report.nomorRuangan, report.lokasi]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(filter.room)
+  ) {
+    return false;
+  }
+  if (
+    filter.responsibleRole !== "SEMUA" &&
+    getRequiredAdminRole(report.status) !== filter.responsibleRole
+  ) {
+    return false;
+  }
+
+  if (
+    filter.processState === "UNFINISHED" &&
+    ["TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN", "DITOLAK"].includes(report.status)
+  ) {
+    return false;
+  }
+  if (
+    filter.processState === "COMPLETED" &&
+    !["TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN"].includes(report.status)
+  ) {
+    return false;
+  }
+  if (filter.processState === "ACCEPTED" && report.status !== "TELAH_BERFUNGSI") {
+    return false;
+  }
+  if (filter.processState === "REJECTED" && report.status !== "DITOLAK") {
+    return false;
+  }
+  if (
+    filter.processState === "ONGOING" &&
+    !report.status.startsWith("MENUNGGU_ADMIN") &&
+    report.status !== "MENUNGGU_KONFIRMASI"
+  ) {
     return false;
   }
 
@@ -269,7 +333,9 @@ function getHistorySummary(
     .map((history) => {
       const note = history.note ? ` | Catatan: ${history.note}` : "";
 
-      return `${formatTanggal(history.createdAt)} - ${history.admin.nama} (${getRoleLabel(history.admin.role)}) ${history.action}: ${formatStatus(history.fromStatus)} -> ${formatStatus(history.toStatus)}${note}`;
+      const actionLabel = history.action === "TOLAK" ? "Tolak" : "Terima";
+
+      return `${formatTanggal(history.createdAt)} - ${history.admin.nama} (${getRoleLabel(history.admin.role)}) ${actionLabel}: ${formatStatus(history.fromStatus)} -> ${formatStatus(history.toStatus)}${note}`;
     })
     .join("\n");
 }

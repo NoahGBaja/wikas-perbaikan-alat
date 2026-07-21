@@ -19,16 +19,18 @@ import {
 import {
   deleteUploadedFileByUrl,
   saveReportAttachmentUpload,
-  validateReportAttachmentUpload,
+  validateReportAttachmentUploads,
 } from "@/src/lib/uploads";
 import { findWorkflowRecipientIds, notifyUsers } from "@/src/lib/notifications";
 import { formatTicketFallback } from "@/src/lib/tickets";
 import { parseRupiahInput } from "@/src/lib/formatting";
+import { recordAuditLog } from "@/src/lib/audit";
+import { formatStatus } from "@/lib/report-helpers";
 
 type DecisionPayload = {
   action: ReportDecisionInput | "SELESAI";
   note: string;
-  proofFile: File | null;
+  proofFiles: File[];
   repairCost: string;
 };
 
@@ -70,13 +72,22 @@ async function parseDecisionPayload(req: Request): Promise<DecisionPayload | nul
     }
 
     const noteValue = formData.get("note") || formData.get("adminNotes");
-    const proofValue = formData.get("proof");
+    const proofFiles = [
+      ...formData.getAll("proof"),
+      ...formData.getAll("proofs"),
+      ...formData.getAll("attachments"),
+    ].filter((value): value is File => value instanceof File && value.size > 0);
+    const legacyProof = formData.get("proofFile");
     const repairCostValue = formData.get("repairCost");
+
+    if (legacyProof instanceof File && legacyProof.size > 0) {
+      proofFiles.push(legacyProof);
+    }
 
     return {
       action,
       note: typeof noteValue === "string" ? noteValue.trim() : "",
-      proofFile: proofValue instanceof File ? proofValue : null,
+      proofFiles,
       repairCost:
         typeof repairCostValue === "string" ? repairCostValue.trim() : "",
     };
@@ -105,7 +116,7 @@ async function parseDecisionPayload(req: Request): Promise<DecisionPayload | nul
   return {
     action,
     note,
-    proofFile: null,
+    proofFiles: [],
     repairCost: typeof body.repairCost === "string" ? body.repairCost.trim() : "",
   };
 }
@@ -144,7 +155,7 @@ export async function POST(
       return NextResponse.json(
         {
           message:
-            "Admin Utama hanya memantau. Fitur override ACC/TOLAK belum diaktifkan.",
+            "Admin Utama hanya memantau. Fitur penggantian keputusan belum diaktifkan.",
         },
         { status: 403 }
       );
@@ -250,6 +261,13 @@ export async function POST(
       );
     }
 
+    if (payload.action === "ACC" && authUser.role === "ADMIN_1" && !payload.note) {
+      return NextResponse.json(
+        { message: "Deskripsi wajib diisi sebelum PJ Ruangan meneruskan laporan." },
+        { status: 400 },
+      );
+    }
+
     if (payload.action === "SELESAI" && !payload.note) {
       return NextResponse.json(
         { message: "Deskripsi penyelesaian wajib diisi." },
@@ -260,12 +278,27 @@ export async function POST(
     const isCompletion = payload.action === "SELESAI";
     const repairCost =
       authUser.role === "ADMIN_5" ? parseRupiahInput(payload.repairCost) : null;
-    let completionProofUrl: string | null = null;
-
-    if (isCompletion && payload.proofFile) {
-      const proofValidationError = validateReportAttachmentUpload(
-        payload.proofFile,
+    if (
+      payload.action === "ACC" &&
+      authUser.role === "ADMIN_5" &&
+      (!repairCost || repairCost <= 0)
+    ) {
+      return NextResponse.json(
+        { message: "Anggaran wajib diisi sebelum PP menerima laporan." },
+        { status: 400 },
       );
+    }
+
+    let completionProofUrl: string | null = null;
+    const savedCompletionAttachments: {
+      url: string;
+      fileType: string;
+      fileName: string;
+      fileSize: number;
+    }[] = [];
+
+    if (isCompletion && payload.proofFiles.length > 0) {
+      const proofValidationError = validateReportAttachmentUploads(payload.proofFiles);
 
       if (proofValidationError) {
         return NextResponse.json(
@@ -275,10 +308,31 @@ export async function POST(
       }
 
       try {
-        completionProofUrl = await saveReportAttachmentUpload(payload.proofFile!, {
-          folder: "uploads",
-        });
+        for (const proofFile of payload.proofFiles) {
+          const url = await saveReportAttachmentUpload(proofFile, {
+            folder: "uploads",
+          });
+
+          savedCompletionAttachments.push({
+            url,
+            fileType: proofFile.type,
+            fileName: proofFile.name,
+            fileSize: proofFile.size,
+          });
+        }
+
+        const firstImageProof = savedCompletionAttachments.find((attachment) =>
+          attachment.fileType.startsWith("image/"),
+        );
+        completionProofUrl =
+          firstImageProof?.url || savedCompletionAttachments[0]?.url || null;
       } catch (error) {
+        await Promise.all(
+          savedCompletionAttachments.map((attachment) =>
+            deleteUploadedFileByUrl(attachment.url),
+          ),
+        );
+
         return NextResponse.json(
           {
             message:
@@ -322,6 +376,13 @@ export async function POST(
             completionNotes: isCompletion ? payload.note : null,
             completionPhotoUrl: isCompletion ? completionProofUrl : null,
             ...(authUser.role === "ADMIN_5" ? { repairCost } : {}),
+            ...(isCompletion && savedCompletionAttachments.length > 0
+              ? {
+                  attachments: {
+                    create: savedCompletionAttachments,
+                  },
+                }
+              : {}),
           },
         });
 
@@ -337,7 +398,11 @@ export async function POST(
         });
       });
     } catch (error) {
-      await deleteUploadedFileByUrl(completionProofUrl);
+      await Promise.all(
+        savedCompletionAttachments.map((attachment) =>
+          deleteUploadedFileByUrl(attachment.url),
+        ),
+      );
       throw error;
     }
 
@@ -345,41 +410,80 @@ export async function POST(
     const ticket = updated ? formatTicketFallback(updated) : `LP-${reportId}`;
 
     if (updated) {
-      if (payload.action === "ACC") {
-        const nextRole = getRequiredAdminRole(updated.status);
-        const nextRecipientIds = await findWorkflowRecipientIds({
-          role: nextRole,
-          reportCategory: updated.kategori,
-        });
+      try {
+        if (
+          payload.action === "ACC" &&
+          updated.status === "MENUNGGU_KONFIRMASI"
+        ) {
+          await notifyUsers({
+            userIds: [updated.userId],
+            reportId,
+            title: "Laporan diterima, perlu konfirmasi",
+            message: `${ticket} telah diterima oleh PP. Mohon konfirmasi penerimaan barang.`,
+          });
+        } else if (payload.action === "ACC") {
+          const nextRole = getRequiredAdminRole(updated.status);
+          const nextRecipientIds = await findWorkflowRecipientIds({
+            role: nextRole,
+            reportCategory: updated.kategori,
+          });
 
-        await notifyUsers({
-          userIds: nextRecipientIds,
-          reportId,
-          title: "Laporan perlu ditindaklanjuti",
-          message: `${ticket} menunggu tindakan ${nextRole ? getRoleLabel(nextRole) : "role berikutnya"}.`,
-        });
-      } else {
-        await notifyUsers({
-          userIds: [updated.userId],
-          reportId,
-          title:
-            payload.action === "SELESAI"
-              ? "Laporan selesai, perlu konfirmasi"
-              : "Laporan ditolak",
-          message:
-            payload.action === "SELESAI"
-              ? `${ticket} telah diselesaikan. Mohon konfirmasi penerimaan barang.`
-              : `${ticket} ditolak. Silakan cek detail laporan.`,
-        });
+          await notifyUsers({
+            userIds: nextRecipientIds,
+            reportId,
+            title: "Laporan perlu ditindaklanjuti",
+            message: `${ticket} menunggu tindakan ${nextRole ? getRoleLabel(nextRole) : "peran berikutnya"}.`,
+          });
+        } else {
+          await notifyUsers({
+            userIds: [updated.userId],
+            reportId,
+            title:
+              payload.action === "SELESAI"
+                ? "Laporan selesai, perlu konfirmasi"
+                : "Laporan ditolak",
+            message:
+              payload.action === "SELESAI"
+                ? `${ticket} telah diselesaikan. Mohon konfirmasi penerimaan barang.`
+                : `${ticket} ditolak. Silakan cek detail laporan.`,
+          });
+        }
+      } catch (notificationError) {
+        console.error("DECIDE_REPORT_NOTIFICATION_ERROR:", notificationError);
       }
     }
+
+    await recordAuditLog({
+      actorUserId: authUser.id,
+      reportId,
+      entityType: "REPORT",
+      entityId: reportId,
+      action:
+        payload.action === "SELESAI"
+          ? "COMPLETE"
+          : payload.action === "ACC"
+            ? "FORWARD"
+            : "REJECT",
+      summary: `${ticket} diproses oleh ${authUser.nama} (${getRoleLabel(authUser.role)}).`,
+      metadata: {
+        fromStatus,
+        toStatus,
+        note: payload.note || null,
+        repairCost,
+        uploadedFiles: savedCompletionAttachments.map((attachment) => ({
+          fileName: attachment.fileName,
+          fileType: attachment.fileType,
+          fileSize: attachment.fileSize,
+        })),
+      },
+    });
 
     return NextResponse.json({
       message:
         payload.action === "SELESAI"
           ? "Laporan berhasil diselesaikan dan dikirim ke pelapor untuk konfirmasi."
           : payload.action === "ACC"
-            ? `Laporan berhasil diterima dan diteruskan ke ${toStatus}.`
+            ? `Laporan berhasil diterima dan diteruskan ke ${formatStatus(toStatus)}.`
             : "Laporan berhasil ditolak.",
       report: updated,
     });

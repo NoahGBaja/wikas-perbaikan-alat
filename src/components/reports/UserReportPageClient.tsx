@@ -107,7 +107,7 @@ export default function UserReportPageClient({
             Buat Laporan Perbaikan Alat
           </h1>
           <p className="mt-4 max-w-2xl text-slate-600">
-            Isi data laporan melalui modal, lalu laporan akan masuk ke approval{" "}
+            Isi data melalui jendela formulir, lalu laporan akan masuk ke alur persetujuan{" "}
             {getRoleLabel("ADMIN_1")} sampai {getRoleLabel("ADMIN_5")}.
           </p>
 
@@ -116,7 +116,7 @@ export default function UserReportPageClient({
             onClick={() => setOpen(true)}
             className="mt-8 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-500"
           >
-            Buka Form Laporan
+            Buka Formulir Laporan
           </button>
         </section>
       </div>
@@ -137,6 +137,7 @@ export default function UserReportPageClient({
         defaultNamaBarang={initialReport?.namaBarang || initialReport?.kodeUakpb || ""}
         defaultRepairCost={initialReport?.repairCost || ""}
         defaultDeskripsi={initialReport?.deskripsi || ""}
+        attachmentRequired={!initialReport}
         submitLabel={initialReport ? "Simpan Perubahan" : "Kirim Laporan"}
       />
     </div>

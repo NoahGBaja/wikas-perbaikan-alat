@@ -7,11 +7,13 @@ import {
   BarChart3,
   Download,
   Filter,
+  KeyRound,
   RefreshCcw,
   Users,
 } from "lucide-react";
 import MonthlyStatsCards from "@/src/components/dashboard/MonthlyStatsCards";
 import MonthlyReporterTable from "@/src/components/dashboard/MonthlyReporterTable";
+import UserDashboardLogoutButton from "@/src/components/dashboard/UserDashboardLogoutButton";
 import {
   FeedbackBanner,
   showError,
@@ -24,6 +26,7 @@ import type { MonthlyStatsResponse } from "@/src/lib/monthly-report-stats-types"
 
 type AdminStatistikPageClientProps = {
   initialStats: MonthlyStatsResponse;
+  canReturnToDashboard?: boolean;
 };
 
 const MONTH_OPTIONS = [
@@ -54,6 +57,7 @@ const STATUS_OPTIONS = [
 
 export default function AdminStatistikPageClient({
   initialStats,
+  canReturnToDashboard = true,
 }: AdminStatistikPageClientProps) {
   const router = useRouter();
   const now = useMemo(() => new Date(), []);
@@ -68,12 +72,13 @@ export default function AdminStatistikPageClient({
     defaultStatus,
   );
   const [activeDisplay, setActiveDisplay] = useState<"TABLE" | "SUMMARY">(
-    "TABLE",
+    "SUMMARY",
   );
   const [stats, setStats] = useState<MonthlyStatsResponse | null>(initialStats);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [isPending, startStatsTransition] = useTransition();
 
   const yearOptions = useMemo(() => {
@@ -172,6 +177,7 @@ export default function AdminStatistikPageClient({
     }
 
     window.location.href = `/api/reports/stats/monthly/export?${params.toString()}`;
+    setShowExportModal(false);
   }
 
   const isRefreshingStats = refreshing || isPending;
@@ -193,27 +199,40 @@ export default function AdminStatistikPageClient({
             </div>
 
             <h1 className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 md:text-4xl">
-              Statistik Laporan
+              Ringkasan Eksekutif
             </h1>
             <p className="mt-3 max-w-3xl text-slate-600">
-              Lihat performa laporan berdasarkan bulan, tahun, status, dan
-              aktivitas pelapor.
+              Kondisi menyeluruh penanganan laporan, biaya perbaikan, dan
+              progres penyelesaian pada periode aktif.
             </p>
           </div>
 
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard/admin")}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
-            >
-              <ArrowLeft className="h-4 w-4 text-blue-600" />
-              Kembali ke Dasbor
-            </button>
+            {canReturnToDashboard ? (
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard/admin")}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
+              >
+                <ArrowLeft className="h-4 w-4 text-blue-600" />
+                Kembali ke Dasbor
+              </button>
+            ) : null}
 
             <button
               type="button"
-              onClick={handleExport}
+              onClick={() => router.push("/dashboard/account")}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
+            >
+              <KeyRound className="h-4 w-4 text-blue-600" />
+              Akun
+            </button>
+
+            <UserDashboardLogoutButton className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-white px-5 py-3 font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-70" />
+
+            <button
+              type="button"
+              onClick={() => setShowExportModal(true)}
               disabled={isBusy || !stats}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
@@ -223,12 +242,76 @@ export default function AdminStatistikPageClient({
           </div>
         </div>
 
+        {showExportModal ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+            <section className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+              <h2 className="text-xl font-bold text-slate-950">Filter Ekspor</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Ekspor akan memakai filter statistik yang sedang dipilih:
+                bulan, tahun, dan status.
+              </p>
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                <p>Bulan: {MONTH_OPTIONS.find((item) => item.value === selectedMonth)?.label}</p>
+                <p>Tahun: {selectedYear}</p>
+                <p>
+                  Status:{" "}
+                  {STATUS_OPTIONS.find((item) => item.value === selectedStatus)?.label ||
+                    "Semua Status"}
+                </p>
+              </div>
+              <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowExportModal(false)}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
+                >
+                  Mulai Ekspor
+                </button>
+              </div>
+            </section>
+          </div>
+        ) : null}
+
         {showInitialLoader ? (
           <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-slate-600 shadow-sm">
             Memuat statistik bulanan...
           </div>
         ) : stats ? (
           <div className="space-y-6">
+            <section className="space-y-6">
+              <div
+                className={
+                  activeDisplay === "SUMMARY"
+                    ? "mx-auto block w-full max-w-5xl"
+                    : "hidden"
+                }
+              >
+                <MonthlyStatsCards
+                  monthLabel={stats.month}
+                  summary={stats.summary}
+                  categories={stats.categories.items}
+                  statusBreakdown={stats.statusBreakdown}
+                />
+              </div>
+
+              <div
+                className={activeDisplay === "TABLE" ? "block min-w-0" : "hidden"}
+              >
+                <MonthlyReporterTable
+                  reporterStats={stats.reporterStats}
+                  totalReports={stats.summary.totalReports}
+                  monthLabel={stats.month}
+                />
+              </div>
+            </section>
+
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-blue-100 bg-blue-50/30 p-5">
                 <div className="max-w-2xl">
@@ -304,7 +387,7 @@ export default function AdminStatistikPageClient({
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   <RefreshCcw className="h-4 w-4 text-slate-500" />
-                  Reset
+                  Atur Ulang
                 </button>
 
               </div>
@@ -324,19 +407,6 @@ export default function AdminStatistikPageClient({
                 <div className="grid flex-1 gap-2 sm:grid-cols-2">
                   <button
                     type="button"
-                    onClick={() => setActiveDisplay("TABLE")}
-                    className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                      activeDisplay === "TABLE"
-                        ? "border-blue-200 bg-blue-50 text-blue-700"
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Users className="h-4 w-4" />
-                    Rekap Pelapor
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => setActiveDisplay("SUMMARY")}
                     className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                       activeDisplay === "SUMMARY"
@@ -347,35 +417,20 @@ export default function AdminStatistikPageClient({
                     <BarChart3 className="h-4 w-4" />
                     Panel Ringkasan
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveDisplay("TABLE")}
+                    className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                      activeDisplay === "TABLE"
+                        ? "border-blue-200 bg-blue-50 text-blue-700"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Users className="h-4 w-4" />
+                    Rekap Pelapor
+                  </button>
                 </div>
-              </div>
-            </section>
-
-            <section className="space-y-6">
-              <div
-                className={activeDisplay === "TABLE" ? "block min-w-0" : "hidden"}
-              >
-                <MonthlyReporterTable
-                  reporterStats={stats.reporterStats}
-                  totalReports={stats.summary.totalReports}
-                  monthLabel={stats.month}
-                />
-              </div>
-
-              <div
-                className={
-                  activeDisplay === "SUMMARY"
-                    ? "mx-auto block w-full max-w-5xl"
-                    : "hidden"
-                }
-              >
-                <MonthlyStatsCards
-                  monthLabel={stats.month}
-                  selectedStatus={stats.selectedStatus}
-                  summary={stats.summary}
-                  categories={stats.categories.items}
-                  statusBreakdown={stats.statusBreakdown}
-                />
               </div>
             </section>
           </div>

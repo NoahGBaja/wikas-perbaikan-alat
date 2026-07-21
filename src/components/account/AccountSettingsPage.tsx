@@ -2,9 +2,19 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, KeyRound, Save, ShieldCheck, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  KeyRound,
+  Save,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import type { AppRole } from "@/src/lib/roles";
 import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
+import {
+  PASSWORD_REQUIREMENT_TEXT,
+  validatePasswordStrength,
+} from "@/src/lib/password-rules";
 import PasswordInput from "@/src/components/ui/PasswordInput";
 import {
   FeedbackBanner,
@@ -38,8 +48,7 @@ async function readApiResponse(res: Response) {
 
   return {
     message:
-      text.trim().slice(0, 180) ||
-      `Request gagal dengan status ${res.status}.`,
+      text.trim().slice(0, 180) || `Request gagal dengan status ${res.status}.`,
   };
 }
 
@@ -110,9 +119,38 @@ export default function AccountSettingsPage({
 
   async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPasswordLoading(true);
     setPasswordMessage("");
     setPasswordMessageType("success");
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      const errorMessage =
+        "Kata sandi saat ini, kata sandi baru, dan konfirmasi wajib diisi.";
+
+      setPasswordMessage(errorMessage);
+      setPasswordMessageType("error");
+      showError("Kata sandi gagal diperbarui", errorMessage);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      const errorMessage = "Konfirmasi password baru tidak sama.";
+
+      setPasswordMessage(errorMessage);
+      setPasswordMessageType("error");
+      showError("Kata sandi gagal diperbarui", errorMessage);
+      return;
+    }
+
+    const passwordErrors = validatePasswordStrength(newPassword);
+
+    if (passwordErrors.length > 0) {
+      setPasswordMessage(passwordErrors[0]);
+      setPasswordMessageType("error");
+      showError("Kata sandi gagal diperbarui", passwordErrors[0]);
+      return;
+    }
+
+    setPasswordLoading(true);
 
     try {
       const res = await fetch("/api/account/password", {
@@ -179,11 +217,11 @@ export default function AccountSettingsPage({
             <button
               type="button"
               onClick={() =>
-              router.push(
-                hasAdminAccess(currentUser)
-                  ? "/dashboard/admin"
-                  : "/dashboard/user",
-              )
+                router.push(
+                  hasAdminAccess(currentUser)
+                    ? "/dashboard/admin"
+                    : "/dashboard/user",
+                )
               }
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
             >
@@ -265,9 +303,7 @@ export default function AccountSettingsPage({
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">
-                  Keamanan
-                </h2>
+                <h2 className="text-2xl font-bold text-slate-900">Keamanan</h2>
                 <p className="text-sm text-slate-500">
                   Gunakan kata sandi baru yang kuat dan mudah diingat.
                 </p>
@@ -297,6 +333,9 @@ export default function AccountSettingsPage({
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
                   required
+                  minLength={8}
+                  pattern="(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}"
+                  title={PASSWORD_REQUIREMENT_TEXT}
                   className="h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none placeholder:text-slate-400 transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                 />
               </div>
@@ -310,13 +349,15 @@ export default function AccountSettingsPage({
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   required
+                  minLength={8}
+                  pattern="(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}"
+                  title={PASSWORD_REQUIREMENT_TEXT}
                   className="h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-slate-900 outline-none placeholder:text-slate-400 transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                 />
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                Kata sandi minimal 8 karakter dan harus mengandung huruf, angka,
-                dan simbol.
+                {PASSWORD_REQUIREMENT_TEXT}
               </div>
 
               {passwordMessage ? (

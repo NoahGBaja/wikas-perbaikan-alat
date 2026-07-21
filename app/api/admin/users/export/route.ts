@@ -16,7 +16,7 @@ function createFileName() {
   return `daftar-user-${datePart}.xlsx`;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const authUser = await getApiSessionUser();
 
@@ -28,7 +28,9 @@ export async function GET() {
       return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
-    const { users } = await listUsersWithReportCountRaw({ take: 10000 });
+    const url = new URL(req.url);
+    const search = (url.searchParams.get("q") || "").trim();
+    const { users } = await listUsersWithReportCountRaw({ search, take: 10000 });
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "WIKAS Perbaikan Alat";
     workbook.created = new Date();
@@ -41,9 +43,9 @@ export async function GET() {
       { header: "ID Pengguna", key: "id", width: 12 },
       { header: "Nama", key: "nama", width: 28 },
       { header: "NIP", key: "nip", width: 22 },
-      { header: "Role", key: "role", width: 28 },
+      { header: "Peran", key: "role", width: 28 },
       { header: "Admin Utama", key: "isSuperAdmin", width: 16 },
-      { header: "Kategori Role", key: "categoryScope", width: 20 },
+      { header: "Kategori Peran", key: "categoryScope", width: 20 },
       { header: "Total Laporan", key: "totalReports", width: 16 },
       { header: "Laporan Aktif", key: "activeReports", width: 16 },
       { header: "Tanggal Dibuat", key: "createdAt", width: 20 },

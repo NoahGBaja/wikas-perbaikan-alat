@@ -102,7 +102,12 @@ export default function LoginPageClient() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 pb-6">
+        <form
+          method="post"
+          action="/api/login"
+          onSubmit={handleSubmit}
+          className="px-6 pb-6"
+        >
           <div className="space-y-5">
             <div className="grid gap-2">
               <label

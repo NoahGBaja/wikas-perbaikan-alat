@@ -132,6 +132,10 @@ export async function getApiSessionUser() {
 }
 
 export function getDefaultRedirectForRole(role: AppRole) {
+  if (role === "EXECUTIVE") {
+    return "/dashboard/admin/statistik";
+  }
+
   return isAdminRole(role) ? "/dashboard/admin" : "/dashboard/user";
 }
 
@@ -139,6 +143,10 @@ export function getDefaultRedirectForUser(user: {
   role: AppRole;
   isSuperAdmin?: boolean | null;
 }) {
+  if (user.role === "EXECUTIVE") {
+    return "/dashboard/admin/statistik";
+  }
+
   return user.isSuperAdmin || isAdminRole(user.role)
     ? "/dashboard/admin"
     : "/dashboard/user";

@@ -11,7 +11,7 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
-import { formatStatus, type ReportStatus } from "@/lib/report-helpers";
+import { formatRupiah } from "@/src/lib/formatting";
 
 type MonthlySummary = {
   totalReports: number;
@@ -19,8 +19,12 @@ type MonthlySummary = {
   totalWaiting: number;
   totalApproved: number;
   totalRejected: number;
+  totalReopened: number;
+  totalOngoing: number;
   totalProcessed: number;
   totalFinished: number;
+  totalExpenses: number;
+  averageCompletionDays: number;
 };
 
 type CategoryItem = {
@@ -37,7 +41,6 @@ type StatusItem = {
 
 type MonthlyStatsCardsProps = {
   monthLabel: string;
-  selectedStatus: ReportStatus | "SEMUA";
   summary: MonthlySummary;
   categories: CategoryItem[];
   statusBreakdown: StatusItem[];
@@ -125,7 +128,6 @@ function getStatusBarClass(statusKey: string) {
 
 function MonthlyStatsCards({
   monthLabel,
-  selectedStatus,
   summary,
   categories,
   statusBreakdown,
@@ -146,6 +148,11 @@ function MonthlyStatsCards({
     statusBreakdown.length > 0
       ? [...statusBreakdown].sort((a, b) => b.total - a.total)[0]
       : null;
+  const completionRate =
+    summary.totalReports > 0
+      ? Math.round((summary.totalFinished / summary.totalReports) * 100)
+      : 0;
+  const needsAttention = summary.totalOngoing > 0 || summary.totalReopened > 0;
 
   return (
     <section className="space-y-4">
@@ -155,25 +162,31 @@ function MonthlyStatsCards({
         </p>
 
         <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em] text-slate-950">
-          Snapshot {monthLabel}
+          Ringkasan {monthLabel}
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Ringkasan cepat untuk periode aktif, lengkap dengan kategori,
-          distribusi status, dan rasio persetujuan.
+          Gambaran menyeluruh periode aktif untuk membantu Kepala Balai melihat
+          beban kerja, progres, biaya, dan bagian yang perlu perhatian.
         </p>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          <span className="inline-flex rounded-full border border-blue-100 bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm">
-            {selectedStatus === "SEMUA"
-              ? "Semua Status"
-              : formatStatus(selectedStatus)}
-          </span>
-
-          <span className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">
-            {summary.totalReports} laporan
-          </span>
+        <div
+          className={`mt-5 border-l-4 px-4 py-3 ${
+            needsAttention
+              ? "border-amber-500 bg-amber-50 text-amber-900"
+              : "border-emerald-500 bg-emerald-50 text-emerald-900"
+          }`}
+        >
+          <p className="font-semibold">
+            {needsAttention ? "Perlu perhatian" : "Kondisi terkendali"}
+          </p>
+          <p className="mt-1 text-sm leading-6">
+            {needsAttention
+              ? `${summary.totalOngoing} laporan masih berjalan dan ${summary.totalReopened} laporan dibuka kembali.`
+              : "Tidak ada laporan berjalan atau laporan yang dibuka kembali pada periode ini."}
+          </p>
         </div>
+
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -217,15 +230,15 @@ function MonthlyStatsCards({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <MiniStat
           icon={<Clock3 className="h-5 w-5 text-amber-600" />}
-          value={summary.totalWaiting}
-          label="Menunggu"
+          value={summary.totalOngoing}
+          label="Berjalan"
           colorClass="text-amber-600"
         />
 
         <MiniStat
           icon={<Activity className="h-5 w-5 text-cyan-600" />}
-          value={summary.totalProcessed}
-          label="Diproses"
+          value={summary.totalReopened}
+          label="Dibuka Kembali"
           colorClass="text-cyan-600"
         />
 
@@ -234,6 +247,32 @@ function MonthlyStatsCards({
           value={summary.totalFinished}
           label="Selesai"
           colorClass="text-blue-600"
+        />
+      </div>
+
+      <div className="border-l-4 border-blue-500 bg-white px-4 py-3 shadow-sm">
+        <p className="text-sm font-semibold text-slate-900">
+          Tingkat penyelesaian {completionRate}%
+        </p>
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          {summary.totalFinished} dari {summary.totalReports} laporan pada
+          periode aktif telah selesai.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <MiniStat
+          icon={<BarChart3 className="h-5 w-5 text-emerald-600" />}
+          value={formatRupiah(summary.totalExpenses)}
+          label="Total Biaya"
+          colorClass="text-emerald-600"
+        />
+
+        <MiniStat
+          icon={<Clock3 className="h-5 w-5 text-indigo-600" />}
+          value={`${summary.averageCompletionDays} hari`}
+          label="Rata-rata Waktu Selesai"
+          colorClass="text-indigo-600"
         />
       </div>
 
@@ -387,7 +426,7 @@ function MiniStat({
   colorClass,
 }: {
   icon: ReactNode;
-  value: number;
+  value: ReactNode;
   label: string;
   colorClass: string;
 }) {

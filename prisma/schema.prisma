@@ -240,3 +240,20 @@ model Notification {
   @@index([userId, readAt, createdAt])
   @@index([reportId])
 }
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  actorUserId Int?
+  reportId    Int?
+  entityType  String
+  entityId    String?
+  action      String
+  summary     String   @db.Text
+  metadata    String?  @db.LongText
+  createdAt   DateTime @default(now())
+
+  @@index([actorUserId])
+  @@index([reportId])
+  @@index([entityType, action])
+  @@index([createdAt])
+}

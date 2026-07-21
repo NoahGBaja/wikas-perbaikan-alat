@@ -58,6 +58,7 @@ type UserReportModalProps = {
   defaultRepairCost?: string;
   defaultDeskripsi?: string;
   defaultKategori?: UserReportCategory;
+  attachmentRequired?: boolean;
   submitLabel?: string;
 };
 
@@ -76,7 +77,10 @@ function RequiredMark() {
   );
 }
 
-function validateForm(payload: UserReportModalPayload) {
+function validateForm(
+  payload: UserReportModalPayload,
+  attachmentRequired: boolean,
+) {
   const errors: FormErrors = {};
 
   if (!payload.namaPelapor.trim()) {
@@ -118,7 +122,9 @@ function validateForm(payload: UserReportModalPayload) {
     errors.deskripsi = "Deskripsi maksimal 2000 karakter.";
   }
 
-  if (payload.attachments.length > MAX_ATTACHMENT_COUNT) {
+  if (attachmentRequired && payload.attachments.length === 0) {
+    errors.attachments = "Lampiran wajib diunggah.";
+  } else if (payload.attachments.length > MAX_ATTACHMENT_COUNT) {
     errors.attachments = `Lampiran maksimal ${MAX_ATTACHMENT_COUNT} file.`;
   }
 
@@ -151,6 +157,7 @@ export default function UserReportModal({
   defaultRepairCost = "",
   defaultDeskripsi = "",
   defaultKategori = "FASILITAS_INVENTARIS",
+  attachmentRequired = true,
   submitLabel = "Kirim Laporan",
 }: UserReportModalProps) {
   const titleId = useId();
@@ -304,7 +311,7 @@ export default function UserReportModal({
     event.preventDefault();
     setSubmitError("");
 
-    const nextErrors = validateForm(payload);
+    const nextErrors = validateForm(payload, attachmentRequired);
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -358,11 +365,19 @@ export default function UserReportModal({
     setAttachments(files);
 
     if (files.length === 0) {
-      setErrors((current) => ({ ...current, attachments: undefined }));
+      setErrors((current) => ({
+        ...current,
+        attachments: attachmentRequired
+          ? "Lampiran wajib diunggah."
+          : undefined,
+      }));
       return;
     }
 
-    const nextErrors = validateForm({ ...payload, attachments: files });
+    const nextErrors = validateForm(
+      { ...payload, attachments: files },
+      attachmentRequired,
+    );
     setErrors((current) => ({
       ...current,
       attachments: nextErrors.attachments,
@@ -593,7 +608,8 @@ export default function UserReportModal({
             </Field>
 
             <Field
-              label="Lampiran (opsional)"
+              label={attachmentRequired ? "Lampiran" : "Lampiran tambahan (opsional)"}
+              required={attachmentRequired}
               error={errors.attachments}
               className="md:col-span-2"
             >
@@ -610,6 +626,7 @@ export default function UserReportModal({
                   accept="image/*,application/pdf"
                   multiple
                   onChange={handleAttachmentChange}
+                  required={attachmentRequired}
                   className="sr-only"
                 />
               </label>
@@ -628,6 +645,7 @@ export default function UserReportModal({
                         accept="image/*,application/pdf"
                         multiple
                         onChange={handleAttachmentChange}
+                        required={attachmentRequired}
                         className="sr-only"
                       />
                     </label>
@@ -653,11 +671,19 @@ export default function UserReportModal({
 
                         <button
                           type="button"
-                          onClick={() =>
-                            setAttachments((current) =>
-                              current.filter((item) => item !== attachment),
-                            )
-                          }
+                          onClick={() => {
+                            const nextAttachments = attachments.filter(
+                              (item) => item !== attachment,
+                            );
+                            setAttachments(nextAttachments);
+                            setErrors((current) => ({
+                              ...current,
+                              attachments:
+                                attachmentRequired && nextAttachments.length === 0
+                                  ? "Lampiran wajib diunggah."
+                                  : undefined,
+                            }));
+                          }}
                           className="inline-flex size-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
                           aria-label="Hapus lampiran"
                         >

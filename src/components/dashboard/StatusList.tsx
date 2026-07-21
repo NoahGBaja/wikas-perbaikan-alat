@@ -4,6 +4,7 @@ import StatusCard, { type StatusReportItem } from "./StatusCard";
 
 type StatusListProps = {
   reports: StatusReportItem[];
+  highlightedReportId?: number | null;
   deletingReportId?: number | null;
   onEdit?: (reportId: number) => void;
   onDelete?: (reportId: number) => void;
@@ -11,6 +12,7 @@ type StatusListProps = {
 
 export default function StatusList({
   reports,
+  highlightedReportId,
   deletingReportId,
   onEdit,
   onDelete,
@@ -29,6 +31,7 @@ export default function StatusList({
         <StatusCard
           key={report.id}
           report={report}
+          highlighted={report.id === highlightedReportId}
           onEdit={onEdit}
           onDelete={onDelete}
           deleting={deletingReportId === report.id}

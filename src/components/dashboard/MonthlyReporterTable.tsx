@@ -191,7 +191,7 @@ function MonthlyReporterTable({
             <thead>
               <tr className="border-b border-blue-100 bg-blue-50/40 text-slate-600">
                 <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.24em]">
-                  Rank
+                  Peringkat
                 </th>
                 <th className="px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.24em]">
                   Nama

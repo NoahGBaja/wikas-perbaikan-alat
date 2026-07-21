@@ -16,6 +16,7 @@ import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
 import { getRoomCodeByNameFromMaster } from "@/src/lib/master-data-db";
 import { createTicket } from "@/src/lib/ticket-server";
 import { findWorkflowRecipientIds, notifyUsers } from "@/src/lib/notifications";
+import { recordAuditLog } from "@/src/lib/audit";
 
 export async function POST(req: Request) {
   try {
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
         { status: 403 }
       );
     }
+    const actorUser = authUser;
 
     const formData = await req.formData();
     const reportInput = parseModalReportFormData(formData);
@@ -55,7 +57,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: validationError }, { status: 400 });
     }
 
-    const fileValidationError = validateReportAttachmentUploads(files);
+    const fileValidationError = validateReportAttachmentUploads(files, {
+      required: true,
+    });
 
     if (fileValidationError) {
       return NextResponse.json(
@@ -139,21 +143,45 @@ export async function POST(req: Request) {
       },
     });
 
+    try {
+      const nextRecipientIds = await findWorkflowRecipientIds({
+        role: "ADMIN_1",
+        reportCategory: reportInput.kategori as ValidKategori,
+      });
+
+      await notifyUsers({
+        userIds: nextRecipientIds,
+        reportId: report.id,
+        title: "Laporan baru masuk",
+        message: `${ticket} menunggu tindakan ${getRoleLabel("ADMIN_1")}.`,
+      });
+    } catch (notificationError) {
+      console.error("CREATE_REPORT_NOTIFICATION_ERROR:", notificationError);
+    }
+
     return NextResponse.json({
       message: `Laporan berhasil dikirim dan menunggu persetujuan ${getRoleLabel("ADMIN_1")}.`,
       report,
     });
 
-    const nextRecipientIds = await findWorkflowRecipientIds({
-      role: "ADMIN_1",
-      reportCategory: reportInput.kategori as ValidKategori,
-    });
-
-    await notifyUsers({
-      userIds: nextRecipientIds,
+    await recordAuditLog({
+      actorUserId: actorUser.id,
       reportId: report.id,
-      title: "Laporan baru masuk",
-      message: `${ticket} menunggu tindakan ${getRoleLabel("ADMIN_1")}.`,
+      entityType: "REPORT",
+      entityId: report.id,
+      action: "CREATE",
+      summary: `Laporan ${ticket} dibuat oleh ${actorUser.nama}.`,
+      metadata: {
+        ticket,
+        status: report.status,
+        kategori: report.kategori,
+        namaBarang: report.namaBarang,
+        attachments: savedAttachments.map((attachment) => ({
+          fileName: attachment.fileName,
+          fileType: attachment.fileType,
+          fileSize: attachment.fileSize,
+        })),
+      },
     });
   } catch (error) {
     console.error("CREATE_REPORT_ERROR:", error);

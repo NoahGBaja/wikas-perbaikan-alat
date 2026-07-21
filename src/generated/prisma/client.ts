@@ -96,3 +96,8 @@ export type MessageTemplate = Prisma.MessageTemplateModel
  * 
  */
 export type Notification = Prisma.NotificationModel
+/**
+ * Model AuditLog
+ * 
+ */
+export type AuditLog = Prisma.AuditLogModel

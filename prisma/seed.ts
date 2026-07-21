@@ -1,6 +1,9 @@
 import "dotenv/config";
-import bcrypt from "bcryptjs";
 import { createPool } from "mariadb";
+import {
+  hashPassword,
+  validatePasswordStrength,
+} from "../src/lib/passwords";
 
 const pool = createPool({
   host: "127.0.0.1",
@@ -11,7 +14,7 @@ const pool = createPool({
   connectionLimit: 5,
 });
 
-const DEFAULT_PASSWORD = process.env.SEED_PASSWORD || "admin12345";
+const DEFAULT_PASSWORD = process.env.SEED_PASSWORD || "";
 
 const accounts = [
   {
@@ -73,10 +76,20 @@ const accounts = [
 ];
 
 async function main() {
+  if (!DEFAULT_PASSWORD) {
+    throw new Error("SEED_PASSWORD wajib diisi.");
+  }
+
+  const passwordErrors = validatePasswordStrength(DEFAULT_PASSWORD);
+
+  if (passwordErrors.length > 0) {
+    throw new Error(passwordErrors[0]);
+  }
+
   const conn = await pool.getConnection();
 
   try {
-    const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 12);
+    const passwordHash = await hashPassword(DEFAULT_PASSWORD);
 
     for (const account of accounts) {
       await conn.query(

@@ -173,6 +173,9 @@ export async function getMonthlyReportStats(
       userId: true,
       kategori: true,
       status: true,
+      repairCost: true,
+      finishedAt: true,
+      reporterConfirmationStatus: true,
       createdAt: true,
       user: {
         select: {
@@ -267,6 +270,34 @@ export async function getMonthlyReportStats(
     (sum, status) => sum + statusCounts[status],
     0
   );
+  const completedReports = reports.filter((report) =>
+    ["TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN"].includes(report.status),
+  );
+  const totalExpenses = reports.reduce(
+    (sum, report) => sum + Number(report.repairCost || 0),
+    0,
+  );
+  const completionDurations = completedReports
+    .filter((report) => report.finishedAt)
+    .map((report) => {
+      const finishedAt = report.finishedAt?.getTime() || 0;
+
+      return Math.max(finishedAt - report.createdAt.getTime(), 0);
+    });
+  const averageCompletionDays =
+    completionDurations.length > 0
+      ? Math.round(
+          (completionDurations.reduce((sum, value) => sum + value, 0) /
+            completionDurations.length /
+            (1000 * 60 * 60 * 24)) *
+            10,
+        ) / 10
+      : 0;
+  const totalReopened = reports.filter(
+    (report) =>
+      report.reporterConfirmationStatus === "TIDAK_DAPAT_DIGUNAKAN" &&
+      isWaitingStatus(report.status as ReportStatus),
+  ).length;
 
   return {
     month: start.toLocaleDateString("id-ID", {
@@ -282,8 +313,12 @@ export async function getMonthlyReportStats(
       totalWaiting,
       totalApproved: statusCounts.DISETUJUI_FINAL,
       totalRejected: statusCounts.DITOLAK,
+      totalReopened,
+      totalOngoing: totalWaiting + statusCounts.MENUNGGU_KONFIRMASI,
       totalProcessed: 0,
-      totalFinished: statusCounts.DISETUJUI_FINAL,
+      totalFinished: completedReports.length,
+      totalExpenses,
+      averageCompletionDays,
     },
     categories: {
       items: [

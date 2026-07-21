@@ -1,10 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  BarChart3,
   CalendarDays,
   Database,
   Download,
@@ -48,6 +47,7 @@ type AdminDashboardProps = {
     categoryScope: AppCategoryScope | null;
   };
   title?: string;
+  initialReportId?: number | null;
 };
 
 const REPORT_PAGE_SIZE = 50;
@@ -156,15 +156,17 @@ function isPdfUrl(url: string) {
 export default function AdminDashboard({
   currentUser,
   title = "Dasbor Laporan Kerusakan Barang & Alat",
+  initialReportId = null,
 }: AdminDashboardProps) {
   const router = useRouter();
+  const handledInitialReportId = useRef<number | null>(null);
 
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [decisionNote, setDecisionNote] = useState("");
   const [decisionRepairCost, setDecisionRepairCost] = useState("");
-  const [completionProof, setCompletionProof] = useState<File | null>(null);
+  const [completionProofs, setCompletionProofs] = useState<File[]>([]);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const [visibleReportLimit, setVisibleReportLimit] = useState(REPORT_PAGE_SIZE);
@@ -207,6 +209,23 @@ export default function AdminDashboard({
   }, []);
 
   useEffect(() => {
+    if (
+      loading ||
+      !initialReportId ||
+      handledInitialReportId.current === initialReportId
+    ) {
+      return;
+    }
+
+    handledInitialReportId.current = initialReportId;
+    const report = reports.find((item) => item.id === initialReportId);
+
+    if (report) {
+      openReportDetail(report);
+    }
+  }, [initialReportId, loading, reports]);
+
+  useEffect(() => {
     async function loadMessageTemplates() {
       try {
         const res = await fetch("/api/master-data", { cache: "no-store" });
@@ -244,17 +263,39 @@ export default function AdminDashboard({
 
   function openReportDetail(report: ReportItem) {
     setSelectedReport(report);
-    setDecisionNote(report.adminNotes || report.alasanPenolakan || "");
+    setDecisionNote("");
     setDecisionRepairCost(report.repairCost || "");
-    setCompletionProof(null);
+    setCompletionProofs([]);
     setMessage(null);
+  }
+
+  async function openNotificationReport(reportId: number) {
+    const loadedReport = reports.find((report) => report.id === reportId);
+
+    if (loadedReport) {
+      openReportDetail(loadedReport);
+      return true;
+    }
+
+    try {
+      const res = await fetch(`/api/reports/${reportId}`, { cache: "no-store" });
+      const data = await res.json();
+
+      if (!res.ok || !data.report) return false;
+
+      openReportDetail(data.report as ReportItem);
+      return true;
+    } catch (error) {
+      console.error("OPEN_NOTIFICATION_REPORT_ERROR:", error);
+      return false;
+    }
   }
 
   function closeReportDetail() {
     setSelectedReport(null);
     setDecisionNote("");
     setDecisionRepairCost("");
-    setCompletionProof(null);
+    setCompletionProofs([]);
   }
 
   async function submitDecision(action: "ACC" | "TOLAK" | "SELESAI") {
@@ -267,6 +308,13 @@ export default function AdminDashboard({
       return;
     }
 
+    if (action === "ACC" && currentUser.role === "ADMIN_1" && !decisionNote.trim()) {
+      const text = "Deskripsi wajib diisi sebelum meneruskan laporan.";
+      setMessage(toFeedback(text, "error"));
+      showError("Deskripsi wajib diisi", text);
+      return;
+    }
+
     if (action === "SELESAI" && !decisionNote.trim()) {
       const text = "Deskripsi penyelesaian wajib diisi.";
       setMessage(toFeedback(text, "error"));
@@ -275,9 +323,23 @@ export default function AdminDashboard({
     }
 
     if (
+      action === "ACC" &&
+      currentUser.role === "ADMIN_5" &&
+      !decisionRepairCost.replace(/\D/g, "")
+    ) {
+      const text = "Anggaran wajib diisi sebelum PP menerima laporan.";
+      setMessage(toFeedback(text, "error"));
+      showError("Anggaran wajib diisi", text);
+      return;
+    }
+
+    const invalidCompletionProof = completionProofs.find(
+      (file) => !ALLOWED_COMPLETION_PROOF_TYPES.has(file.type),
+    );
+
+    if (
       action === "SELESAI" &&
-      completionProof &&
-      !ALLOWED_COMPLETION_PROOF_TYPES.has(completionProof.type)
+      invalidCompletionProof
     ) {
       const text = "Bukti penyelesaian harus berupa JPG, PNG, WEBP, atau PDF.";
       setMessage(toFeedback(text, "error"));
@@ -285,10 +347,13 @@ export default function AdminDashboard({
       return;
     }
 
+    const oversizedCompletionProof = completionProofs.find(
+      (file) => file.size > MAX_COMPLETION_PROOF_SIZE,
+    );
+
     if (
       action === "SELESAI" &&
-      completionProof &&
-      completionProof.size > MAX_COMPLETION_PROOF_SIZE
+      oversizedCompletionProof
     ) {
       const text = "Bukti penyelesaian maksimal 2MB.";
       setMessage(toFeedback(text, "error"));
@@ -307,7 +372,9 @@ export default function AdminDashboard({
         const formData = new FormData();
         formData.set("action", action);
         formData.set("note", decisionNote);
-        formData.set("proof", completionProof!);
+        for (const proof of completionProofs) {
+          formData.append("proofs", proof);
+        }
         if (currentUser.role === "ADMIN_5") {
           formData.set("repairCost", decisionRepairCost.replace(/\D/g, ""));
         }
@@ -418,7 +485,7 @@ export default function AdminDashboard({
           </div>
 
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
-            <NotificationBell />
+            <NotificationBell onReportClick={openNotificationReport} />
 
             <button
               type="button"
@@ -427,15 +494,6 @@ export default function AdminDashboard({
             >
               <History className="h-4 w-4 text-blue-600" />
               Riwayat
-            </button>
-
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard/admin/statistik")}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
-            >
-              <BarChart3 className="h-4 w-4 text-blue-600" />
-              Statistik
             </button>
 
             {currentUser.isSuperAdmin || currentUser.role === "SUPER_ADMIN" ? (
@@ -881,7 +939,7 @@ export default function AdminDashboard({
                               <p className="font-semibold text-slate-900">
                                 {history.admin.nama}{" "}
                                 ({getRoleLabel(history.admin.role)}) -{" "}
-                                {history.action}
+                                {history.action === "TOLAK" ? "Tolak" : "Terima"}
                               </p>
                               <p className="mt-1 text-slate-500">
                                 {formatStatus(history.fromStatus)} -{" "}
@@ -901,15 +959,6 @@ export default function AdminDashboard({
                       </div>
                     ) : null}
 
-                    <div className="mt-4">
-                      <a
-                        href={`/api/reports/${selectedReport.id}/pdf`}
-                        className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-                      >
-                        <Download className="h-4 w-4" />
-                        Ekspor PDF
-                      </a>
-                    </div>
                   </div>
                 </div>
 
@@ -952,7 +1001,7 @@ export default function AdminDashboard({
                         {selectedReport.attachments.map((attachment) => (
                           <a
                             key={attachment.id}
-                            href={attachment.url}
+                            href={`/api/reports/${selectedReport.id}/attachments/${attachment.id}/download`}
                             download
                             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
                           >
@@ -1039,7 +1088,11 @@ export default function AdminDashboard({
 
                           {currentUser.role === "ADMIN_5" ? (
                             <label className="grid gap-2 text-sm font-semibold text-slate-700">
-                              Biaya Perbaikan / Anggaran PP
+                              <span>Anggaran PP</span>
+                              <span className="text-xs font-normal text-slate-500">
+                                Wajib diisi saat memilih Terima. Tidak wajib saat
+                                memilih Tolak.
+                              </span>
                               <input
                                 value={
                                   decisionRepairCost
@@ -1059,7 +1112,7 @@ export default function AdminDashboard({
                           ) : null}
 
                           {true ? (
-                            <label className="block rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-700">
+                            <label className="block cursor-pointer rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-700">
                               <span className="block font-semibold text-slate-900">
                                 Bukti penyelesaian (opsional)
                               </span>
@@ -1069,16 +1122,33 @@ export default function AdminDashboard({
                               </span>
                               <input
                                 type="file"
+                                multiple
                                 accept="image/jpeg,image/png,image/webp,application/pdf"
                                 onChange={(event) =>
-                                  setCompletionProof(event.target.files?.[0] || null)
+                                  setCompletionProofs(
+                                    Array.from(event.target.files || []),
+                                  )
                                 }
-                                className="mt-3 block w-full text-sm text-slate-700 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-700 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-slate-600"
+                                className="sr-only"
                               />
-                              {completionProof ? (
-                                <span className="mt-2 block text-xs font-medium text-slate-700">
-                                  Dipilih: {completionProof.name}
+                              <span className="mt-3 flex flex-wrap items-center gap-3">
+                                <span className="rounded-xl bg-slate-700 px-4 py-2 font-semibold text-white transition hover:bg-slate-600">
+                                  Pilih Berkas
                                 </span>
+                                <span className="text-slate-500">
+                                  {completionProofs.length > 0
+                                    ? `${completionProofs.length} berkas dipilih`
+                                    : "Belum ada berkas dipilih"}
+                                </span>
+                              </span>
+                              {completionProofs.length > 0 ? (
+                                <ul className="mt-2 space-y-1 text-xs font-medium text-slate-700">
+                                  {completionProofs.map((proof) => (
+                                    <li key={`${proof.name}-${proof.size}`}>
+                                      Dipilih: {proof.name}
+                                    </li>
+                                  ))}
+                                </ul>
                               ) : null}
                             </label>
                           ) : null}
@@ -1093,7 +1163,7 @@ export default function AdminDashboard({
                               {submitLoading
                                 ? "Memproses..."
                                 : currentUser.role === "ADMIN_1"
-                                  ? "Lanjut"
+                                  ? "Teruskan"
                                   : "Terima"}
                             </button>
 

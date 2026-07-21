@@ -18,6 +18,10 @@ import {
   getRoleLabel,
   isCategoryScopedRole,
 } from "@/src/lib/roles";
+import {
+  PASSWORD_REQUIREMENT_TEXT,
+  validatePasswordStrength,
+} from "@/src/lib/password-rules";
 import PasswordInput from "@/src/components/ui/PasswordInput";
 import {
   FeedbackBanner,
@@ -107,6 +111,7 @@ export default function AdminUsersPage({
   const [loadingMore, setLoadingMore] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [totalUsers, setTotalUsers] = useState(0);
@@ -206,6 +211,14 @@ export default function AdminUsersPage({
   }, [debouncedSearchQuery, loadUsers]);
 
   async function handleCreateUser() {
+    const passwordErrors = validatePasswordStrength(newUser.password);
+
+    if (passwordErrors.length > 0) {
+      setMessage(toFeedback(passwordErrors[0], "error"));
+      showError("Gagal membuat pengguna", passwordErrors[0]);
+      return;
+    }
+
     try {
       setMessage(null);
 
@@ -306,6 +319,13 @@ export default function AdminUsersPage({
 
   async function handleResetPassword(userId: number) {
     const password = passwordDrafts[userId] || "";
+    const passwordErrors = validatePasswordStrength(password);
+
+    if (passwordErrors.length > 0) {
+      setMessage(toFeedback(passwordErrors[0], "error"));
+      showError("Reset kata sandi gagal", passwordErrors[0]);
+      return;
+    }
 
     try {
       setMessage(null);
@@ -407,9 +427,16 @@ export default function AdminUsersPage({
   async function handleExportUsers() {
     try {
       setExporting(true);
+      setShowExportModal(false);
       setMessage(null);
 
-      const res = await fetch("/api/admin/users/export", {
+      const params = new URLSearchParams();
+
+      if (debouncedSearchQuery.trim()) {
+        params.set("q", debouncedSearchQuery.trim());
+      }
+
+      const res = await fetch(`/api/admin/users/export?${params.toString()}`, {
         cache: "no-store",
       });
 
@@ -494,7 +521,7 @@ export default function AdminUsersPage({
 
             <button
               type="button"
-              onClick={() => void handleExportUsers()}
+              onClick={() => setShowExportModal(true)}
               disabled={exporting}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
@@ -503,6 +530,40 @@ export default function AdminUsersPage({
             </button>
           </div>
         </div>
+
+        {showExportModal ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+            <section className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+              <h2 className="text-xl font-bold text-slate-950">Filter Ekspor</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Daftar pengguna akan diekspor setelah konfirmasi. Gunakan kotak
+                pencarian di halaman ini untuk mempersempit daftar sebelum
+                ekspor jika diperlukan.
+              </p>
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                <p>Pencarian aktif: {debouncedSearchQuery.trim() || "Tidak ada"}</p>
+                <p>Total data ditampilkan: {users.length} dari {totalUsers}</p>
+              </div>
+              <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowExportModal(false)}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleExportUsers()}
+                  disabled={exporting}
+                  className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+                >
+                  {exporting ? "Mengekspor..." : "Mulai Ekspor"}
+                </button>
+              </div>
+            </section>
+          </div>
+        ) : null}
 
         <FeedbackBanner message={message} className="mb-6" />
 
@@ -605,6 +666,9 @@ export default function AdminUsersPage({
                     }))
                   }
                   placeholder="Kata sandi"
+                  minLength={8}
+                  pattern="(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}"
+                  title={PASSWORD_REQUIREMENT_TEXT}
                   className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
 
@@ -623,6 +687,10 @@ export default function AdminUsersPage({
                   Admin Utama
                 </label>
               </div>
+
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                {PASSWORD_REQUIREMENT_TEXT}
+              </p>
 
               <button
                 type="button"
@@ -835,6 +903,9 @@ export default function AdminUsersPage({
                                   [user.id]: event.target.value,
                                 }))
                               }
+                              minLength={8}
+                              pattern="(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}"
+                              title={PASSWORD_REQUIREMENT_TEXT}
                               className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                             />
                           </label>
@@ -860,6 +931,10 @@ export default function AdminUsersPage({
                             </span>
                           </label>
                         </div>
+
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                          {PASSWORD_REQUIREMENT_TEXT}
+                        </p>
 
                         <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                           <p className="text-xs leading-5 text-slate-500">

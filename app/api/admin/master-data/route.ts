@@ -8,6 +8,7 @@ import {
   getMasterData,
 } from "@/src/lib/master-data-db";
 import type { AppCategoryScope } from "@/src/lib/roles";
+import { recordAuditLog } from "@/src/lib/audit";
 
 const VALID_CATEGORIES: AppCategoryScope[] = [
   "FASILITAS_INVENTARIS",
@@ -89,6 +90,14 @@ export async function POST(req: Request) {
         update: { code, active: true },
         create: { name, code, active: true },
       });
+      await recordAuditLog({
+        actorUserId: access.authUser.id,
+        entityType: "MASTER_DATA",
+        entityId: `room:${code}`,
+        action: "UPSERT",
+        summary: `Data ruangan ${name} (${code}) disimpan.`,
+        metadata: { kind, name, code },
+      });
 
       return NextResponse.json({
         message: "Data ruangan berhasil disimpan.",
@@ -128,6 +137,14 @@ export async function POST(req: Request) {
           },
         });
       }
+      await recordAuditLog({
+        actorUserId: access.authUser.id,
+        entityType: "MASTER_DATA",
+        entityId: `subcategory:${category}:${code}`,
+        action: "UPSERT",
+        summary: `Subkategori ${name} disimpan.`,
+        metadata: { kind, category, name, code },
+      });
 
       return NextResponse.json({
         message: "Subkategori berhasil disimpan.",
@@ -194,6 +211,21 @@ export async function POST(req: Request) {
           },
         });
       }
+      await recordAuditLog({
+        actorUserId: access.authUser.id,
+        entityType: "MASTER_DATA",
+        entityId: `itemType:${category}:${subcategory.id}:${code}`,
+        action: "UPSERT",
+        summary: `Tipe barang ${name} disimpan.`,
+        metadata: {
+          kind,
+          category,
+          subcategoryId: subcategory.id,
+          subcategoryName: subcategory.name,
+          name,
+          code,
+        },
+      });
 
       return NextResponse.json({
         message: "Tipe barang berhasil disimpan.",
@@ -239,6 +271,14 @@ export async function POST(req: Request) {
           },
         });
       }
+      await recordAuditLog({
+        actorUserId: access.authUser.id,
+        entityType: "MESSAGE_TEMPLATE",
+        entityId: `${type}:${title}`,
+        action: "UPSERT",
+        summary: `Template pesan ${title} disimpan.`,
+        metadata: { kind, type, title, body: bodyText },
+      });
 
       return NextResponse.json({
         message: "Template pesan berhasil disimpan.",
@@ -312,6 +352,14 @@ export async function DELETE(req: Request) {
           });
         }
       }
+      await recordAuditLog({
+        actorUserId: access.authUser.id,
+        entityType: "MASTER_DATA",
+        entityId: id > 0 ? `room:${id}` : `room:${code}`,
+        action: "DELETE",
+        summary: `Data ruangan ${name || id} dihapus.`,
+        metadata: { kind, id, name, code },
+      });
 
       return NextResponse.json({
         message: "Data ruangan berhasil dihapus.",
@@ -359,6 +407,14 @@ export async function DELETE(req: Request) {
           });
         }
       }
+      await recordAuditLog({
+        actorUserId: access.authUser.id,
+        entityType: "MASTER_DATA",
+        entityId: id > 0 ? `subcategory:${id}` : `subcategory:${category}:${code}`,
+        action: "DELETE",
+        summary: `Subkategori ${name || id} dihapus.`,
+        metadata: { kind, id, category, name, code },
+      });
 
       return NextResponse.json({
         message: "Subkategori berhasil dihapus.",
@@ -434,6 +490,14 @@ export async function DELETE(req: Request) {
           });
         }
       }
+      await recordAuditLog({
+        actorUserId: access.authUser.id,
+        entityType: "MASTER_DATA",
+        entityId: id > 0 ? `itemType:${id}` : `itemType:${category}:${code}`,
+        action: "DELETE",
+        summary: `Tipe barang ${name || id} dihapus.`,
+        metadata: { kind, id, category, subcategoryId, subcategoryName, name, code },
+      });
 
       return NextResponse.json({
         message: "Tipe barang berhasil dihapus.",
@@ -488,6 +552,14 @@ export async function DELETE(req: Request) {
         });
       }
     }
+    await recordAuditLog({
+      actorUserId: access.authUser.id,
+      entityType: "MESSAGE_TEMPLATE",
+      entityId: id > 0 ? id : `${type}:${title}`,
+      action: "DELETE",
+      summary: `Template pesan ${title || id} dihapus.`,
+      metadata: { kind, id, type, title },
+    });
 
     return NextResponse.json({
       message: "Template pesan berhasil dihapus.",

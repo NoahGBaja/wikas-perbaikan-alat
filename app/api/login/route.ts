@@ -15,6 +15,38 @@ import {
 } from "@/src/lib/rate-limit";
 import { validateMutationRequest } from "@/src/lib/request-security";
 
+async function parseLoginBody(req: Request) {
+  const contentType = req.headers.get("content-type") || "";
+
+  if (
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data")
+  ) {
+    const formData = await req.formData();
+
+    return {
+      nip: typeof formData.get("nip") === "string" ? String(formData.get("nip")).trim() : "",
+      password:
+        typeof formData.get("password") === "string"
+          ? String(formData.get("password"))
+          : "",
+      isFormPost: true,
+    };
+  }
+
+  const body = await req.json();
+
+  return {
+    nip: typeof body.nip === "string" ? body.nip.trim() : "",
+    password: typeof body.password === "string" ? body.password : "",
+    isFormPost: false,
+  };
+}
+
+function redirectLoginError(req: Request) {
+  return NextResponse.redirect(new URL("/login?error=1", req.url), 303);
+}
+
 export async function POST(req: Request) {
   try {
     const requestError = validateMutationRequest(req, { body: "json" });
@@ -23,13 +55,13 @@ export async function POST(req: Request) {
       return requestError;
     }
 
-    const body = await req.json();
-
-    const nip = typeof body.nip === "string" ? body.nip.trim() : "";
-    const password =
-      typeof body.password === "string" ? body.password : "";
+    const { nip, password, isFormPost } = await parseLoginBody(req);
 
     if (!nip || !password) {
+      if (isFormPost) {
+        return redirectLoginError(req);
+      }
+
       return NextResponse.json(
         { message: "NIP dan password wajib diisi." },
         { status: 400 }
@@ -46,6 +78,10 @@ export async function POST(req: Request) {
     ]);
 
     if (ipLimited || nipLimited) {
+      if (isFormPost) {
+        return redirectLoginError(req);
+      }
+
       return NextResponse.json(
         { message: "Terlalu banyak percobaan login. Coba lagi nanti." },
         { status: 429 }
@@ -55,6 +91,10 @@ export async function POST(req: Request) {
     const user = await findUserByNipRaw(nip, true);
 
     if (!user || !user.passwordHash) {
+      if (isFormPost) {
+        return redirectLoginError(req);
+      }
+
       return NextResponse.json(
         { message: "NIP atau password salah" },
         { status: 401 }
@@ -64,6 +104,10 @@ export async function POST(req: Request) {
     const isMatch = await verifyPassword(password, user.passwordHash);
 
     if (!isMatch) {
+      if (isFormPost) {
+        return redirectLoginError(req);
+      }
+
       return NextResponse.json(
         { message: "NIP atau password salah" },
         { status: 401 }
@@ -87,17 +131,20 @@ export async function POST(req: Request) {
       }),
     });
 
-    const response = NextResponse.json({
-      message: "Masuk berhasil",
-      user: {
-        id: user.id,
-        nama: user.nama,
-        nip: user.nip,
-        role: user.role,
-        isSuperAdmin: user.isSuperAdmin,
-      },
-      redirectTo: getDefaultRedirectForUser(user),
-    });
+    const redirectTo = getDefaultRedirectForUser(user);
+    const response = isFormPost
+      ? NextResponse.redirect(new URL(redirectTo, req.url), 303)
+      : NextResponse.json({
+          message: "Masuk berhasil",
+          user: {
+            id: user.id,
+            nama: user.nama,
+            nip: user.nip,
+            role: user.role,
+            isSuperAdmin: user.isSuperAdmin,
+          },
+          redirectTo,
+        });
 
     response.cookies.set(AUTH_COOKIE_NAME, token, getAuthCookieOptions());
 

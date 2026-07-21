@@ -5,6 +5,7 @@ import { validateMutationRequest } from "@/src/lib/request-security";
 import { findReportByIdRaw } from "@/src/lib/raw-data";
 import { formatTicketFallback } from "@/src/lib/tickets";
 import { findWorkflowRecipientIds, notifyUsers } from "@/src/lib/notifications";
+import { recordAuditLog } from "@/src/lib/audit";
 
 function parseReportId(id: string) {
   const reportId = Number(id);
@@ -53,6 +54,8 @@ export async function POST(
     const body = await req.json();
     const confirmed = body.confirmed === true;
     const finalStatus = normalizeFinalStatus(body.finalStatus);
+    const description =
+      typeof body.description === "string" ? body.description.trim() : "";
 
     if (!confirmed) {
       return NextResponse.json(
@@ -64,6 +67,16 @@ export async function POST(
     if (!finalStatus) {
       return NextResponse.json(
         { message: "Pilih status akhir laporan." },
+        { status: 400 },
+      );
+    }
+
+    if (finalStatus === "TIDAK_DAPAT_DIGUNAKAN" && !description) {
+      return NextResponse.json(
+        {
+          message:
+            "Deskripsi wajib diisi jika barang masih tidak dapat digunakan.",
+        },
         { status: 400 },
       );
     }
@@ -88,30 +101,64 @@ export async function POST(
       );
     }
 
+    const shouldReopen = finalStatus === "TIDAK_DAPAT_DIGUNAKAN";
+    const nextStatus = shouldReopen ? "MENUNGGU_ADMIN_1" : finalStatus;
     const updated = await prisma.report.update({
       where: { id: reportId },
       data: {
-        status: finalStatus,
+        status: nextStatus,
         reporterConfirmedAt: new Date(),
         reporterConfirmationStatus: finalStatus,
-        finishedAt: new Date(),
+        adminNotes: shouldReopen
+          ? `Pelapor menyatakan barang masih tidak dapat digunakan: ${description}`
+          : report.adminNotes,
+        finishedAt: shouldReopen ? null : new Date(),
       },
     });
     const ticket = formatTicketFallback(report);
-    const adminIds = await findWorkflowRecipientIds({
-      role: "ADMIN_1",
-      reportCategory: report.kategori,
-    });
 
-    await notifyUsers({
-      userIds: adminIds,
+    try {
+      const adminIds = await findWorkflowRecipientIds({
+        role: "ADMIN_1",
+        reportCategory: report.kategori,
+      });
+
+      await notifyUsers({
+        userIds: adminIds,
+        reportId,
+        title: shouldReopen
+          ? "Laporan dibuka kembali oleh pelapor"
+          : "Pelapor mengonfirmasi laporan",
+        message: shouldReopen
+          ? `${ticket} masih tidak dapat digunakan dan perlu ditindaklanjuti kembali.`
+          : `${ticket} dikonfirmasi dengan status Telah Berfungsi.`,
+      });
+    } catch (notificationError) {
+      console.error("CONFIRM_REPORT_NOTIFICATION_ERROR:", notificationError);
+    }
+
+    await recordAuditLog({
+      actorUserId: authUser.id,
       reportId,
-      title: "Pelapor mengonfirmasi laporan",
-      message: `${ticket} dikonfirmasi dengan status ${finalStatus === "TELAH_BERFUNGSI" ? "Telah Berfungsi" : "Tidak Dapat Digunakan"}.`,
+      entityType: "REPORT",
+      entityId: reportId,
+      action: shouldReopen ? "REOPEN" : "FINAL_CONFIRM",
+      summary: shouldReopen
+        ? `${ticket} dibuka kembali oleh pelapor.`
+        : `${ticket} dikonfirmasi final oleh pelapor.`,
+      metadata: {
+        confirmed,
+        finalStatus,
+        description: description || null,
+        previousStatus: report.status,
+        nextStatus,
+      },
     });
 
     return NextResponse.json({
-      message: "Konfirmasi laporan berhasil disimpan.",
+      message: shouldReopen
+        ? "Konfirmasi disimpan. Laporan dibuka kembali untuk ditindaklanjuti."
+        : "Konfirmasi laporan berhasil disimpan.",
       report: updated,
     });
   } catch (error) {

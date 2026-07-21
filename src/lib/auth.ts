@@ -28,6 +28,7 @@ const VALID_ROLES: AppRole[] = [
   "ADMIN_3",
   "ADMIN_4",
   "ADMIN_5",
+  "EXECUTIVE",
   "USER",
 ];
 

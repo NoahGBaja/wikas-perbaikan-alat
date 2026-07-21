@@ -73,6 +73,7 @@ export type StatusReportItem = {
 
 type StatusCardProps = {
   report: StatusReportItem;
+  highlighted?: boolean;
   onEdit?: (reportId: number) => void;
   onDelete?: (reportId: number) => void;
   deleting?: boolean;
@@ -110,6 +111,7 @@ function isPdfUrl(url: string) {
 
 export default function StatusCard({
   report,
+  highlighted = false,
   onEdit,
   onDelete,
   deleting = false,
@@ -118,6 +120,7 @@ export default function StatusCard({
   const [finalStatus, setFinalStatus] = useState<
     "TELAH_BERFUNGSI" | "TIDAK_DAPAT_DIGUNAKAN"
   >("TELAH_BERFUNGSI");
+  const [confirmationDescription, setConfirmationDescription] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState("");
   const canEditOrDelete = report.status === "MENUNGGU_ADMIN_1";
@@ -134,6 +137,7 @@ export default function StatusCard({
               fileType: report.attachmentType || "",
               fileName: report.attachmentName || "Lampiran laporan",
               fileSize: 0,
+              legacy: true,
             },
           ]
         : [];
@@ -143,6 +147,16 @@ export default function StatusCard({
   const rejectingAdmin = getRejectingAdmin(report);
 
   async function submitConfirmation() {
+    if (
+      finalStatus === "TIDAK_DAPAT_DIGUNAKAN" &&
+      !confirmationDescription.trim()
+    ) {
+      setConfirmMessage(
+        "Deskripsi wajib diisi jika barang masih tidak dapat digunakan.",
+      );
+      return;
+    }
+
     try {
       setConfirming(true);
       setConfirmMessage("");
@@ -155,6 +169,7 @@ export default function StatusCard({
         body: JSON.stringify({
           confirmed: confirmChecked,
           finalStatus,
+          description: confirmationDescription,
         }),
       });
       const data = await res.json();
@@ -173,7 +188,14 @@ export default function StatusCard({
   }
 
   return (
-    <article className="overflow-hidden rounded-[28px] border border-slate-200 bg-white/90 shadow-sm">
+    <article
+      id={`report-${report.id}`}
+      className={`scroll-mt-8 overflow-hidden rounded-[28px] border bg-white/90 shadow-sm transition ${
+        highlighted
+          ? "border-blue-400 ring-4 ring-blue-100"
+          : "border-slate-200"
+      }`}
+    >
       <div className="grid grid-cols-1 gap-0 lg:grid-cols-[340px_minmax(0,1fr)]">
         <div className="border-b border-slate-200 bg-slate-50 p-4 lg:border-b-0 lg:border-r">
           {displayAttachmentUrl && isImageAttachment ? (
@@ -343,16 +365,16 @@ export default function StatusCard({
           ) : null}
 
           {report.status === "MENUNGGU_KONFIRMASI" ? (
-            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-              <p className="text-sm font-semibold text-emerald-800">
+            <div className="mt-5 rounded-2xl border border-slate-300 bg-slate-100 p-4">
+              <p className="text-sm font-semibold text-slate-900">
                 Konfirmasi Penerimaan Barang
               </p>
-              <label className="mt-3 flex items-start gap-3 text-sm text-emerald-800">
+              <label className="mt-3 flex items-start gap-3 text-sm text-slate-700">
                 <input
                   type="checkbox"
                   checked={confirmChecked}
                   onChange={(event) => setConfirmChecked(event.target.checked)}
-                  className="mt-1 h-4 w-4 accent-emerald-600"
+                  className="mt-1 h-4 w-4 accent-slate-600"
                 />
                 Saya mengonfirmasi barang telah diterima kembali.
               </label>
@@ -365,21 +387,32 @@ export default function StatusCard({
                       | "TIDAK_DAPAT_DIGUNAKAN",
                   )
                 }
-                className="mt-3 h-11 w-full rounded-xl border border-emerald-200 bg-white px-3 text-sm text-slate-900 outline-none"
+                className="mt-3 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               >
                 <option value="TELAH_BERFUNGSI">Telah Berfungsi</option>
                 <option value="TIDAK_DAPAT_DIGUNAKAN">
                   Tidak Dapat Digunakan / Tidak Dapat Diperbaiki
                 </option>
               </select>
+              {finalStatus === "TIDAK_DAPAT_DIGUNAKAN" ? (
+                <textarea
+                  value={confirmationDescription}
+                  onChange={(event) =>
+                    setConfirmationDescription(event.target.value)
+                  }
+                  rows={4}
+                  placeholder="Jelaskan kondisi barang yang masih bermasalah..."
+                  className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                />
+              ) : null}
               {confirmMessage ? (
-                <p className="mt-3 text-sm text-emerald-800">{confirmMessage}</p>
+                <p className="mt-3 text-sm text-slate-700">{confirmMessage}</p>
               ) : null}
               <button
                 type="button"
                 onClick={() => void submitConfirmation()}
                 disabled={confirming}
-                className="mt-3 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+                className="mt-3 rounded-xl bg-slate-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-600 disabled:opacity-60"
               >
                 {confirming ? "Menyimpan..." : "Kirim Konfirmasi"}
               </button>
@@ -395,7 +428,9 @@ export default function StatusCard({
                 {attachments.map((attachment, index) => (
                   <a
                     key={`${attachment.id}-${attachment.url}`}
-                    href={attachment.url}
+                    href={`/api/reports/${report.id}/attachments/${
+                      "legacy" in attachment ? "legacy" : attachment.id
+                    }/download`}
                     download
                     className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
                   >
@@ -436,16 +471,6 @@ export default function StatusCard({
               )}
             </div>
           ) : null}
-
-          <div className="mt-5">
-            <a
-              href={`/api/reports/${report.id}/pdf`}
-              className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-            >
-              <Download className="h-4 w-4" />
-              Ekspor PDF
-            </a>
-          </div>
 
           {report.histories?.length ? (
             <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">

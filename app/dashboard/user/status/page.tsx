@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 import StatusList from "@/src/components/dashboard/StatusList";
 import {
   FeedbackBanner,
@@ -11,9 +12,9 @@ import {
   type FeedbackMessage,
 } from "@/src/components/ui/feedback";
 import { getRoleLabel } from "@/src/lib/roles";
-import type {
-  StatusReportItem,
-  StatusReportStatus,
+import StatusCard, {
+  type StatusReportItem,
+  type StatusReportStatus,
 } from "@/src/components/dashboard/StatusCard";
 
 type StatusFilter =
@@ -59,6 +60,8 @@ export default function UserStatusPage() {
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const [filter, setFilter] = useState<StatusFilter>("SEMUA");
   const [visibleLimit, setVisibleLimit] = useState(STATUS_PAGE_SIZE);
+  const [focusedReportId, setFocusedReportId] = useState<number | null>(null);
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
 
   async function loadReports() {
     try {
@@ -92,11 +95,29 @@ export default function UserStatusPage() {
 
   useEffect(() => {
     void loadReports();
+
+    const rawReportId = new URLSearchParams(window.location.search).get("report");
+    const reportId = Number(rawReportId);
+
+    if (Number.isInteger(reportId) && reportId > 0) {
+      setFocusedReportId(reportId);
+      setFilter("SEMUA");
+    }
   }, []);
 
   useEffect(() => {
     setVisibleLimit(STATUS_PAGE_SIZE);
   }, [filter]);
+
+  useEffect(() => {
+    if (!focusedReportId || reports.length === 0) return;
+
+    const reportIndex = reports.findIndex((report) => report.id === focusedReportId);
+
+    if (reportIndex >= 0) {
+      setVisibleLimit((current) => Math.max(current, reportIndex + 1));
+    }
+  }, [focusedReportId, reports]);
 
   async function handleDeleteReport(reportId: number) {
     const confirmed = window.confirm(
@@ -153,6 +174,26 @@ export default function UserStatusPage() {
     filteredReports.length - visibleReports.length,
     0
   );
+  const focusedReport = useMemo(
+    () => reports.find((report) => report.id === focusedReportId) || null,
+    [focusedReportId, reports],
+  );
+
+  useEffect(() => {
+    if (focusedReport) {
+      setNotificationModalOpen(true);
+    }
+  }, [focusedReport]);
+
+  useEffect(() => {
+    if (!focusedReportId) return;
+
+    const reportElement = document.getElementById(`report-${focusedReportId}`);
+
+    if (reportElement) {
+      reportElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [focusedReportId, visibleReports]);
 
   const totalReports = reports.length;
   const waitingReports = reports.filter((r) => isWaitingStatus(r.status)).length;
@@ -161,9 +202,16 @@ export default function UserStatusPage() {
   ).length;
   const rejectedReports = reports.filter((r) => r.status === "DITOLAK").length;
 
+  function closeNotificationModal() {
+    setNotificationModalOpen(false);
+    setFocusedReportId(null);
+    router.replace("/dashboard/user/status", { scroll: false });
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-10 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
-      <div className="mx-auto max-w-7xl">
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-10 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
+        <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">
@@ -218,7 +266,7 @@ export default function UserStatusPage() {
               {waitingReports}
             </p>
             <p className="mt-3 text-sm text-slate-500">
-              Masih dalam proses approval.
+              Masih dalam proses persetujuan.
             </p>
           </div>
 
@@ -281,6 +329,7 @@ export default function UserStatusPage() {
           <>
             <StatusList
               reports={visibleReports}
+              highlightedReportId={focusedReportId}
               deletingReportId={deletingReportId}
               onEdit={(reportId) =>
                 router.push(`/dashboard/user/report/${reportId}`)
@@ -304,7 +353,58 @@ export default function UserStatusPage() {
             ) : null}
           </>
         )}
+        </div>
       </div>
-    </div>
+
+      {notificationModalOpen && focusedReport ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4"
+          onClick={closeNotificationModal}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="notification-report-title"
+            className="max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
+              <div>
+                <p className="text-xs font-semibold uppercase text-blue-600">
+                  Detail Laporan
+                </p>
+                <h2
+                  id="notification-report-title"
+                  className="mt-1 text-xl font-bold text-slate-950"
+                >
+                  {focusedReport.namaBarang}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={closeNotificationModal}
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50"
+                aria-label="Tutup detail laporan"
+                title="Tutup"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </header>
+
+            <div className="p-4">
+              <StatusCard
+                report={focusedReport}
+                highlighted
+                deleting={deletingReportId === focusedReport.id}
+                onEdit={(reportId) =>
+                  router.push(`/dashboard/user/report/${reportId}`)
+                }
+                onDelete={(reportId) => void handleDeleteReport(reportId)}
+              />
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </>
   );
 }

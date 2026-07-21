@@ -11,8 +11,12 @@ export type MonthlyStatsResponse = {
     totalWaiting: number;
     totalApproved: number;
     totalRejected: number;
+    totalReopened: number;
+    totalOngoing: number;
     totalProcessed: number;
     totalFinished: number;
+    totalExpenses: number;
+    averageCompletionDays: number;
   };
   categories: {
     items: Array<{
