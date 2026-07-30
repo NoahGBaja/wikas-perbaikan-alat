@@ -60,6 +60,8 @@ export function parseReportFormData(formData: FormData): ReportInput {
 }
 
 export function parseModalReportFormData(formData: FormData): ModalReportInput {
+  const subcategory = trimmedValue(formData.get("subcategory"));
+
   return {
     kategori: trimmedValue(formData.get("kategori")),
     namaPelapor: trimmedValue(formData.get("namaPelapor")),
@@ -68,8 +70,10 @@ export function parseModalReportFormData(formData: FormData): ModalReportInput {
     kodeUakpb: trimmedValue(formData.get("kodeUakpb")),
     kode: trimmedValue(formData.get("kode")),
     nup: trimmedValue(formData.get("nup")),
-    subcategory: trimmedValue(formData.get("subcategory")),
-    itemType: trimmedValue(formData.get("itemType")),
+    subcategory,
+    // Compatibility for existing reports and clients while the separate
+    // "Tipe Barang" field is retired from the UI.
+    itemType: trimmedValue(formData.get("itemType")) || subcategory,
     namaBarang: trimmedValue(formData.get("namaBarang")),
     repairCost: trimmedValue(formData.get("repairCost")),
     deskripsi: trimmedValue(formData.get("deskripsi")),
@@ -85,7 +89,6 @@ export function validateModalReportInput(input: ModalReportInput) {
     !input.kode ||
     !input.nup ||
     !input.subcategory ||
-    !input.itemType ||
     !input.namaBarang ||
     !input.deskripsi
   ) {
@@ -108,8 +111,8 @@ export function validateModalReportInput(input: ModalReportInput) {
     return "Nama barang maksimal 120 karakter.";
   }
 
-  if (input.namaBarang.length > 120 || input.itemType.length > 120) {
-    return "Nama barang atau tipe barang maksimal 120 karakter.";
+  if (input.namaBarang.length > 120 || input.subcategory.length > 120) {
+    return "Nama barang atau subkategori maksimal 120 karakter.";
   }
 
   if (input.nup.length > 80) {

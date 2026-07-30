@@ -15,6 +15,16 @@ const VALID_CATEGORIES: AppCategoryScope[] = [
   "IT_ELEKTRONIK",
   "LABORATORIUM",
 ];
+const VALID_TEMPLATE_TYPES = new Set([
+  "APPROVAL",
+  "REJECTION",
+  "NOTES",
+  "COMPLETION",
+]);
+const CUSTOM_TEMPLATE_TYPE = "CUSTOM";
+const MAX_TEMPLATE_TYPE_LENGTH = 80;
+const MAX_TEMPLATE_NAME_LENGTH = 191;
+const MAX_TEMPLATE_DESCRIPTION_LENGTH = 10_000;
 
 function isValidCategory(value: unknown): value is AppCategoryScope {
   return (
@@ -234,30 +244,56 @@ export async function POST(req: Request) {
     }
 
     if (kind === "messageTemplate") {
-      const type = cleanText(body.type) || "NOTES";
-      const title = cleanText(body.title);
-      const bodyText = cleanText(body.body);
+      const selectedType = cleanText(body.type) || "NOTES";
+      const customType = cleanText(body.customType);
+      const type =
+        selectedType === CUSTOM_TEMPLATE_TYPE ? customType : selectedType;
+      const name = cleanText(body.name ?? body.title);
+      const description = cleanText(body.description ?? body.body);
 
-      if (!title || !bodyText) {
+      if (!type || !name || !description) {
         return NextResponse.json(
-          { message: "Judul dan isi template wajib diisi." },
+          { message: "Jenis, nama, dan deskripsi template wajib diisi." },
           { status: 400 },
         );
       }
 
-      const inactiveTemplate = await prisma.messageTemplate.findFirst({
+      if (
+        selectedType !== CUSTOM_TEMPLATE_TYPE &&
+        !VALID_TEMPLATE_TYPES.has(selectedType)
+      ) {
+        return NextResponse.json(
+          { message: "Jenis template tidak valid." },
+          { status: 400 },
+        );
+      }
+
+      if (
+        type.length > MAX_TEMPLATE_TYPE_LENGTH ||
+        name.length > MAX_TEMPLATE_NAME_LENGTH ||
+        description.length > MAX_TEMPLATE_DESCRIPTION_LENGTH
+      ) {
+        return NextResponse.json(
+          {
+            message:
+              "Jenis maksimal 80 karakter, nama maksimal 191 karakter, dan deskripsi maksimal 10.000 karakter.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const existingTemplate = await prisma.messageTemplate.findFirst({
         where: {
           type,
-          title,
-          active: false,
+          title: name,
         },
       });
 
-      if (inactiveTemplate) {
+      if (existingTemplate) {
         await prisma.messageTemplate.update({
-          where: { id: inactiveTemplate.id },
+          where: { id: existingTemplate.id },
           data: {
-            body: bodyText,
+            body: description,
             active: true,
           },
         });
@@ -265,8 +301,8 @@ export async function POST(req: Request) {
         await prisma.messageTemplate.create({
           data: {
             type,
-            title,
-            body: bodyText,
+            title: name,
+            body: description,
             active: true,
           },
         });
@@ -274,10 +310,10 @@ export async function POST(req: Request) {
       await recordAuditLog({
         actorUserId: access.authUser.id,
         entityType: "MESSAGE_TEMPLATE",
-        entityId: `${type}:${title}`,
+        entityId: `${type}:${name}`,
         action: "UPSERT",
-        summary: `Template pesan ${title} disimpan.`,
-        metadata: { kind, type, title, body: bodyText },
+        summary: `Template pesan ${name} disimpan.`,
+        metadata: { kind, type, name, description },
       });
 
       return NextResponse.json({
@@ -516,8 +552,8 @@ export async function DELETE(req: Request) {
 
     const id = Number(body.id || 0);
     const type = cleanText(body.type) || "NOTES";
-    const title = cleanText(body.title);
-    const bodyText = cleanText(body.body);
+    const name = cleanText(body.name ?? body.title);
+    const description = cleanText(body.description ?? body.body);
 
     if (id > 0) {
       await prisma.messageTemplate.update({
@@ -525,15 +561,15 @@ export async function DELETE(req: Request) {
         data: { active: false },
       });
     } else {
-      if (!title) {
+      if (!name) {
         return NextResponse.json(
-          { message: "Judul template wajib diisi." },
+          { message: "Nama template wajib diisi." },
           { status: 400 },
         );
       }
 
       const existing = await prisma.messageTemplate.findFirst({
-        where: { type, title },
+        where: { type, title: name },
       });
 
       if (existing) {
@@ -545,8 +581,8 @@ export async function DELETE(req: Request) {
         await prisma.messageTemplate.create({
           data: {
             type,
-            title,
-            body: bodyText || "-",
+            title: name,
+            body: description || "-",
             active: false,
           },
         });
@@ -555,10 +591,10 @@ export async function DELETE(req: Request) {
     await recordAuditLog({
       actorUserId: access.authUser.id,
       entityType: "MESSAGE_TEMPLATE",
-      entityId: id > 0 ? id : `${type}:${title}`,
+      entityId: id > 0 ? id : `${type}:${name}`,
       action: "DELETE",
-      summary: `Template pesan ${title || id} dihapus.`,
-      metadata: { kind, id, type, title },
+      summary: `Template pesan ${name || id} dihapus.`,
+      metadata: { kind, id, type, name },
     });
 
     return NextResponse.json({

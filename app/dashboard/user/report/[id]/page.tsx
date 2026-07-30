@@ -60,7 +60,6 @@ export default async function EditReportPage({
         kode: report.kode,
         nup: report.nup,
         subcategory: report.subcategory,
-        itemType: report.itemType,
         namaBarang: report.namaBarang,
         repairCost: report.repairCost?.toString() || null,
         deskripsi: report.deskripsi,

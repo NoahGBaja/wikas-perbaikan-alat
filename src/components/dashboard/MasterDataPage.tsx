@@ -3,7 +3,6 @@
 import {
   FormEvent,
   useEffect,
-  useMemo,
   useState,
   type Dispatch,
   type ReactNode,
@@ -14,7 +13,6 @@ import { ArrowLeft, Plus, RefreshCcw, Save, Search, Trash2, X } from "lucide-rea
 import type {
   CategoryMaster,
   RoomMaster,
-  SubcategoryMaster,
 } from "@/src/lib/master-data";
 import type { AppCategoryScope } from "@/src/lib/roles";
 import {
@@ -28,14 +26,15 @@ import {
 type MessageTemplate = {
   id?: number;
   type: string;
-  title: string;
-  body: string;
+  name: string;
+  description: string;
 };
 
 type TemplateDraft = {
   type: string;
-  title: string;
-  body: string;
+  customType: string;
+  name: string;
+  description: string;
 };
 
 type RoomDraft = {
@@ -45,14 +44,6 @@ type RoomDraft = {
 
 type SubcategoryDraft = {
   category: AppCategoryScope;
-  name: string;
-  code: string;
-};
-
-type ItemTypeDraft = {
-  category: AppCategoryScope;
-  subcategoryName: string;
-  subcategoryId: string;
   name: string;
   code: string;
 };
@@ -74,11 +65,11 @@ const TEMPLATE_TYPES = [
   { value: "REJECTION", label: "Penolakan" },
   { value: "NOTES", label: "Catatan" },
   { value: "COMPLETION", label: "Penyelesaian" },
+  { value: "CUSTOM", label: "Custom" },
 ];
 const MASTER_DATA_TABS = [
   { value: "rooms", label: "Ruangan" },
   { value: "subcategories", label: "Subkategori" },
-  { value: "itemTypes", label: "Tipe Barang" },
   { value: "templates", label: "Template Pesan" },
 ] as const;
 type MasterDataTab = (typeof MASTER_DATA_TABS)[number]["value"];
@@ -95,7 +86,6 @@ export default function MasterDataPage() {
   const [saving, setSaving] = useState(false);
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [showSubcategoryModal, setShowSubcategoryModal] = useState(false);
-  const [showItemTypeModal, setShowItemTypeModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [activeTab, setActiveTab] = useState<MasterDataTab>("rooms");
   const [searchTerm, setSearchTerm] = useState("");
@@ -105,17 +95,11 @@ export default function MasterDataPage() {
     name: "",
     code: "",
   });
-  const [itemTypeDraft, setItemTypeDraft] = useState<ItemTypeDraft>({
-    category: "FASILITAS_INVENTARIS" as AppCategoryScope,
-    subcategoryName: "",
-    subcategoryId: "",
-    name: "",
-    code: "",
-  });
   const [templateDraft, setTemplateDraft] = useState<TemplateDraft>({
     type: "NOTES",
-    title: "",
-    body: "",
+    customType: "",
+    name: "",
+    description: "",
   });
 
   async function loadMasterData() {
@@ -145,16 +129,6 @@ export default function MasterDataPage() {
   useEffect(() => {
     void loadMasterData();
   }, []);
-
-  const selectedItemCategory = useMemo(
-    () =>
-      masterData.categories.find(
-        (category) => category.value === itemTypeDraft.category,
-      ),
-    [itemTypeDraft.category, masterData.categories],
-  );
-
-  const itemSubcategories = selectedItemCategory?.subcategories || [];
 
   async function submitEntry(
     event: FormEvent<HTMLFormElement>,
@@ -237,18 +211,6 @@ export default function MasterDataPage() {
     }
   }
 
-  function handleItemSubcategoryChange(value: string) {
-    const subcategory = itemSubcategories.find(
-      (item) => `${item.id || ""}|${item.name}` === value,
-    );
-
-    setItemTypeDraft((current) => ({
-      ...current,
-      subcategoryId: subcategory?.id ? String(subcategory.id) : "",
-      subcategoryName: subcategory?.name || "",
-    }));
-  }
-
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const matchesSearch = (...values: Array<string | null | undefined>) => {
     if (!normalizedSearch) return true;
@@ -284,7 +246,7 @@ export default function MasterDataPage() {
       )
       .map((subcategory) => ({
         title: subcategory.name,
-        detail: category.label,
+        detail: `Subkategori ${subcategory.code}`,
         actionLabel: "Hapus",
         onAction: () =>
           void deleteEntry(
@@ -300,45 +262,12 @@ export default function MasterDataPage() {
           ),
       })),
   );
-  const itemTypeItems = masterData.categories.flatMap((category) =>
-    category.subcategories.flatMap((subcategory) =>
-      subcategory.itemTypes
-        .filter((itemType) =>
-          matchesSearch(
-            itemType.name,
-            itemType.code,
-            subcategory.name,
-            category.label,
-          ),
-        )
-        .map((itemType) => ({
-          title: itemType.name,
-          detail: `${category.label} / ${subcategory.name}`,
-          actionLabel: "Hapus",
-          onAction: () =>
-            void deleteEntry(
-              `tipe barang "${itemType.name}"`,
-              {
-                kind: "itemType",
-                id: itemType.id,
-                category: category.value,
-                subcategoryId: subcategory.id,
-                subcategoryName: subcategory.name,
-                subcategoryCode: subcategory.code,
-                name: itemType.name,
-                code: itemType.code,
-              },
-              "Tipe barang berhasil dihapus.",
-            ),
-        })),
-    ),
-  );
   const filteredTemplates = masterData.messageTemplates.filter((template) => {
     const typeLabel =
       TEMPLATE_TYPES.find((type) => type.value === template.type)?.label ||
       template.type;
 
-    return matchesSearch(template.title, template.body, typeLabel);
+    return matchesSearch(template.name, template.description, typeLabel);
   });
 
   return (
@@ -353,8 +282,8 @@ export default function MasterDataPage() {
               Master Data
             </h1>
             <p className="mt-3 max-w-3xl text-slate-600">
-              Kelola saran isian untuk ruangan, subkategori, tipe barang, dan
-              template pesan di alur kerja laporan.
+              Kelola saran isian untuk ruangan, subkategori, dan template pesan
+              di alur kerja laporan.
             </p>
           </div>
 
@@ -451,16 +380,6 @@ export default function MasterDataPage() {
               <DataList items={subcategoryItems} />
             ) : null}
 
-            {activeTab === "itemTypes" ? (
-              <TabPanelHeader
-                title="Tipe Barang"
-                description="Opsi ini menjadi saran nama/tipe barang tanpa mengisi otomatis."
-                buttonLabel="Tambah Tipe Barang"
-                onAdd={() => setShowItemTypeModal(true)}
-              />
-            ) : null}
-            {activeTab === "itemTypes" ? <DataList items={itemTypeItems} /> : null}
-
             {activeTab === "templates" ? (
               <TabPanelHeader
                 title="Template Pesan"
@@ -474,13 +393,13 @@ export default function MasterDataPage() {
                 templates={filteredTemplates}
                 onDelete={(template) =>
                   void deleteEntry(
-                    `template "${template.title}"`,
+                    `template "${template.name}"`,
                     {
                       kind: "messageTemplate",
                       id: template.id,
                       type: template.type,
-                      title: template.title,
-                      body: template.body,
+                      name: template.name,
+                      description: template.description,
                     },
                     "Template pesan berhasil dihapus.",
                   )
@@ -529,28 +448,6 @@ export default function MasterDataPage() {
           />
         ) : null}
 
-        {showItemTypeModal ? (
-          <ItemTypeModal
-            categories={masterData.categories}
-            subcategories={itemSubcategories}
-            draft={itemTypeDraft}
-            saving={saving}
-            onClose={() => setShowItemTypeModal(false)}
-            onDraftChange={setItemTypeDraft}
-            onSubcategoryChange={handleItemSubcategoryChange}
-            onSubmit={(event) =>
-              submitEntry(event, { kind: "itemType", ...itemTypeDraft }, () => {
-                setItemTypeDraft((current) => ({
-                  ...current,
-                  name: "",
-                  code: "",
-                }));
-                setShowItemTypeModal(false);
-              })
-            }
-          />
-        ) : null}
-
         {showTemplateModal ? (
           <TemplateModal
             draft={templateDraft}
@@ -564,8 +461,9 @@ export default function MasterDataPage() {
                 () => {
                   setTemplateDraft((current) => ({
                     ...current,
-                    title: "",
-                    body: "",
+                    customType: "",
+                    name: "",
+                    description: "",
                   }));
                   setShowTemplateModal(false);
                 },
@@ -685,88 +583,6 @@ function SubcategoryModal({
   );
 }
 
-function ItemTypeModal({
-  categories,
-  subcategories,
-  draft,
-  saving,
-  onClose,
-  onDraftChange,
-  onSubcategoryChange,
-  onSubmit,
-}: {
-  categories: CategoryMaster[];
-  subcategories: SubcategoryMaster[];
-  draft: ItemTypeDraft;
-  saving: boolean;
-  onClose: () => void;
-  onDraftChange: Dispatch<SetStateAction<ItemTypeDraft>>;
-  onSubcategoryChange: (value: string) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-}) {
-  return (
-    <MasterDataModalFrame
-      title="Tambah Tipe Barang"
-      description="Tambahkan saran nama atau tipe barang untuk subkategori tertentu."
-      onClose={onClose}
-    >
-      <form onSubmit={onSubmit} className="mt-5 space-y-4">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <select
-            value={draft.category}
-            onChange={(event) =>
-              onDraftChange((current) => ({
-                ...current,
-                category: event.target.value as AppCategoryScope,
-                subcategoryId: "",
-                subcategoryName: "",
-              }))
-            }
-            className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-          >
-            {categories.map((category) => (
-              <option key={category.value} value={category.value}>
-                {category.label}
-              </option>
-            ))}
-          </select>
-          <select
-            value={
-              draft.subcategoryId || draft.subcategoryName
-                ? `${draft.subcategoryId}|${draft.subcategoryName}`
-                : ""
-            }
-            onChange={(event) => onSubcategoryChange(event.target.value)}
-            className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-          >
-            <option value="">Pilih subkategori</option>
-            {subcategories.map((subcategory) => (
-              <option
-                key={`${subcategory.id || subcategory.code}-${subcategory.name}`}
-                value={`${subcategory.id || ""}|${subcategory.name}`}
-              >
-                {subcategory.name}
-              </option>
-            ))}
-          </select>
-          <input
-            value={draft.name}
-            onChange={(event) =>
-              onDraftChange((current) => ({
-                ...current,
-                name: event.target.value,
-              }))
-            }
-            placeholder="Nama / tipe barang"
-            className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 sm:col-span-2"
-          />
-        </div>
-        <ModalActions saving={saving} onClose={onClose} />
-      </form>
-    </MasterDataModalFrame>
-  );
-}
-
 function TemplateModal({
   draft,
   saving,
@@ -783,53 +599,89 @@ function TemplateModal({
   return (
     <MasterDataModalFrame
       title="Tambah Template Pesan"
-      description="Buat kalimat cepat untuk persetujuan, penolakan, catatan, atau penyelesaian laporan."
+      description="Pilih jenis bawaan atau buat jenis custom, lalu isi nama dan deskripsinya."
       onClose={onClose}
     >
       <form onSubmit={onSubmit} className="mt-5 space-y-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[180px_minmax(0,1fr)]">
-          <select
-            value={draft.type}
-            onChange={(event) =>
-              onDraftChange((current) => ({
-                ...current,
-                type: event.target.value,
-              }))
-            }
-            className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-          >
-            {TEMPLATE_TYPES.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
+          <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
+            Jenis
+            <select
+              value={draft.type}
+              onChange={(event) =>
+                onDraftChange((current) => ({
+                  ...current,
+                  type: event.target.value,
+                }))
+              }
+              className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            >
+              {TEMPLATE_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <input
-            value={draft.title}
-            onChange={(event) =>
-              onDraftChange((current) => ({
-                ...current,
-                title: event.target.value,
-              }))
-            }
-            placeholder="Judul template"
-            className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-          />
+          {draft.type === "CUSTOM" ? (
+            <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
+              Jenis Custom
+              <input
+                value={draft.customType}
+                onChange={(event) =>
+                  onDraftChange((current) => ({
+                    ...current,
+                    customType: event.target.value,
+                  }))
+                }
+                placeholder="Contoh: Perbaikan Mandiri"
+                maxLength={80}
+                required
+                className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </label>
+          ) : null}
+
+          <label
+            className={`grid gap-1.5 text-sm font-semibold text-slate-700 ${
+              draft.type === "CUSTOM" ? "sm:col-span-2" : ""
+            }`}
+          >
+            Nama
+            <input
+              value={draft.name}
+              onChange={(event) =>
+                onDraftChange((current) => ({
+                  ...current,
+                  name: event.target.value,
+                }))
+              }
+              placeholder="Contoh: Tolak"
+              maxLength={191}
+              required
+              className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
         </div>
 
-        <textarea
-          value={draft.body}
-          onChange={(event) =>
-            onDraftChange((current) => ({
-              ...current,
-              body: event.target.value,
-            }))
-          }
-          rows={5}
-          placeholder="Isi template pesan"
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-        />
+        <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
+          Deskripsi
+          <textarea
+            value={draft.description}
+            onChange={(event) =>
+              onDraftChange((current) => ({
+                ...current,
+                description: event.target.value,
+              }))
+            }
+            rows={5}
+            placeholder="Contoh: Bisa diperbaiki sendiri"
+            maxLength={10000}
+            required
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+          />
+        </label>
 
         <ModalActions saving={saving} onClose={onClose} />
       </form>
@@ -949,13 +801,13 @@ function TemplateList({
         <>
           {templates.map((template) => (
             <article
-              key={`${template.type}-${template.title}-${template.id || ""}`}
+              key={`${template.type}-${template.name}-${template.id || ""}`}
               className="grid min-h-[76px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-slate-100 bg-white px-3 py-2"
             >
               <div className="min-w-0">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
                   <h3 className="truncate font-semibold text-slate-900">
-                    {template.title}
+                    {template.name}
                   </h3>
                   <span className="inline-flex shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
                     {labelByType[template.type] || template.type}
@@ -963,7 +815,7 @@ function TemplateList({
                 </div>
 
                 <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
-                  {template.body}
+                  {template.description}
                 </p>
               </div>
 
@@ -971,7 +823,7 @@ function TemplateList({
                 type="button"
                 onClick={() => onDelete(template)}
                 className="inline-flex h-10 shrink-0 items-center justify-center gap-1 rounded-lg border border-rose-100 bg-rose-50 px-3 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
-                aria-label={`Hapus ${template.title}`}
+                aria-label={`Hapus ${template.name}`}
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Hapus

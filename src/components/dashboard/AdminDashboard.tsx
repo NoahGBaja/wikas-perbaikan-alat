@@ -124,10 +124,10 @@ type ReportItem = {
 };
 
 const DEFAULT_MESSAGE_TEMPLATES = [
-  { label: "Persetujuan", value: "Laporan diterima dan dapat dilanjutkan ke tahap berikutnya." },
-  { label: "Penolakan", value: "Laporan ditolak karena data atau kondisi belum memenuhi persyaratan." },
-  { label: "Catatan", value: "Mohon lengkapi informasi tambahan agar proses dapat dilanjutkan." },
-  { label: "Penyelesaian", value: "Perbaikan telah selesai dilakukan. Mohon pelapor melakukan konfirmasi penerimaan barang." },
+  { name: "Persetujuan", description: "Laporan diterima dan dapat dilanjutkan ke tahap berikutnya." },
+  { name: "Penolakan", description: "Laporan ditolak karena data atau kondisi belum memenuhi persyaratan." },
+  { name: "Catatan", description: "Mohon lengkapi informasi tambahan agar proses dapat dilanjutkan." },
+  { name: "Penyelesaian", description: "Perbaikan telah selesai dilakukan. Mohon pelapor melakukan konfirmasi penerimaan barang." },
 ];
 
 function getInitials(name: string) {
@@ -234,9 +234,9 @@ export default function AdminDashboard({
         if (!res.ok || !Array.isArray(data.messageTemplates)) return;
 
         setMessageTemplates(
-          data.messageTemplates.map((template: { title: string; body: string }) => ({
-            label: template.title,
-            value: template.body,
+          data.messageTemplates.map((template: { name: string; description: string }) => ({
+            name: template.name,
+            description: template.description,
           })),
         );
       } catch (error) {
@@ -867,9 +867,6 @@ export default function AdminDashboard({
                         {selectedReport.subcategory || "-"}
                       </InfoBox>
 
-                      <InfoBox label="Tipe Barang">
-                        {selectedReport.itemType || "-"}
-                      </InfoBox>
 
                       <InfoBox label="Biaya Perbaikan / Anggaran">
                         {formatRupiah(selectedReport.repairCost)}
@@ -1068,12 +1065,12 @@ export default function AdminDashboard({
                           <div className="grid grid-cols-2 gap-2">
                             {messageTemplates.map((template) => (
                               <button
-                                key={template.label}
+                                key={template.name}
                                 type="button"
-                                onClick={() => setDecisionNote(template.value)}
+                                onClick={() => setDecisionNote(template.description)}
                                 className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
                               >
-                                {template.label}
+                                {template.name}
                               </button>
                             ))}
                           </div>

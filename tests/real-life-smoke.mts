@@ -170,7 +170,6 @@ async function createReport(cookie: string) {
   form.set("kode", "123456789012");
   form.set("nup", `NUP-${runId.slice(0, 6)}`);
   form.set("subcategory", "Komputer");
-  form.set("itemType", "Laptop");
   form.set("namaBarang", `Laptop Smoke ${runId.slice(0, 6)}`);
   form.set("repairCost", "");
   form.set("deskripsi", `Smoke test report ${runId}`);

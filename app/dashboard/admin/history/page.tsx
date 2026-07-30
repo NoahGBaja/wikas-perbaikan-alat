@@ -24,6 +24,10 @@ import {
   type ReportStatus,
 } from "@/lib/report-helpers";
 import {
+  IN_PROGRESS_STATUS_FILTER,
+  isInProgressStatus,
+} from "@/src/lib/report-status-filters";
+import {
   ADMIN_ROLES,
   getCategoryScopeLabel,
   getRoleLabel,
@@ -81,6 +85,7 @@ type ReportItem = {
   createdAt: string;
   approvedAt?: string | null;
   rejectedAt?: string | null;
+  finishedAt?: string | null;
   histories?: ReportHistoryItem[];
   user: {
     id: number;
@@ -144,12 +149,13 @@ const ROW_RENDER_CONTAINMENT: CSSProperties = {
   containIntrinsicSize: "76px",
 };
 
-function isOngoingStatus(status: ReportStatus) {
-  return status.startsWith("MENUNGGU_ADMIN") || status === "MENUNGGU_KONFIRMASI";
-}
-
 function getReportStatusDate(report: ReportItem) {
-  return report.rejectedAt || report.approvedAt || report.createdAt;
+  return (
+    report.finishedAt ||
+    report.rejectedAt ||
+    report.approvedAt ||
+    report.createdAt
+  );
 }
 
 function isPdfAttachment(report: ReportItem) {
@@ -259,7 +265,7 @@ export default function AdminHistoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    ReportStatus | "SEMUA" | "BERJALAN"
+    ReportStatus | "SEMUA" | typeof IN_PROGRESS_STATUS_FILTER
   >("SEMUA");
   const [userQuery, setUserQuery] = useState("");
   const [debouncedUserQuery, setDebouncedUserQuery] = useState("");
@@ -294,16 +300,26 @@ export default function AdminHistoryPage() {
         cache: "no-store",
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        const text = data.message || "Gagal memuat riwayat laporan.";
+        const text = data?.message || "Gagal memuat riwayat laporan.";
         setMessage(toFeedback(text, "error"));
         showError("Gagal memuat riwayat", text);
         return;
       }
 
-      setReports(data.reports || []);
+      if (!data || !Array.isArray(data.reports)) {
+        throw new Error("Respons riwayat laporan tidak valid.");
+      }
+
+      setReports(
+        data.reports.map((report: ReportItem) => ({
+          ...report,
+          histories: Array.isArray(report.histories) ? report.histories : [],
+          attachments: Array.isArray(report.attachments) ? report.attachments : [],
+        })),
+      );
     } catch (error) {
       console.error("LOAD_ADMIN_HISTORY_ERROR:", error);
       const text = "Terjadi kesalahan saat memuat riwayat laporan.";
@@ -410,8 +426,8 @@ export default function AdminHistoryPage() {
       const params = new URLSearchParams();
 
       if (debouncedSearchTerm.trim()) params.set("q", debouncedSearchTerm.trim());
-      if (statusFilter === "BERJALAN") {
-        params.set("processState", "ONGOING");
+      if (statusFilter === IN_PROGRESS_STATUS_FILTER) {
+        params.set("status", IN_PROGRESS_STATUS_FILTER);
       } else if (statusFilter !== "SEMUA") {
         params.set("status", statusFilter);
       }
@@ -470,8 +486,8 @@ export default function AdminHistoryPage() {
     return reports.filter((report) => {
       const matchesStatus =
         statusFilter === "SEMUA" ||
-        (statusFilter === "BERJALAN"
-          ? isOngoingStatus(report.status)
+        (statusFilter === IN_PROGRESS_STATUS_FILTER
+          ? isInProgressStatus(report.status)
           : report.status === statusFilter);
       const normalizedUserQuery = debouncedUserQuery.trim().toLowerCase();
       const matchesUser =
@@ -543,7 +559,7 @@ export default function AdminHistoryPage() {
     (report) => report.status === "DISETUJUI_FINAL",
   ).length;
   const ongoingCount = reports.filter((report) =>
-    isOngoingStatus(report.status),
+    isInProgressStatus(report.status),
   ).length;
   const rejectedCount = reports.filter(
     (report) => report.status === "DITOLAK",
@@ -625,7 +641,7 @@ export default function AdminHistoryPage() {
             colorClass="text-blue-600"
           />
           <SummaryCard
-            label="Masih Berjalan"
+            label="Dalam Proses"
             value={ongoingCount}
             description="Sedang diproses atau menunggu konfirmasi."
             colorClass="text-cyan-600"
@@ -680,13 +696,16 @@ export default function AdminHistoryPage() {
                     value={statusFilter}
                     onChange={(event) =>
                       setStatusFilter(
-                        event.target.value as ReportStatus | "SEMUA" | "BERJALAN",
+                        event.target.value as
+                          | ReportStatus
+                          | "SEMUA"
+                          | typeof IN_PROGRESS_STATUS_FILTER,
                       )
                     }
                     className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 sm:min-w-[190px]"
                   >
                     <option value="SEMUA">Semua Status</option>
-                    <option value="BERJALAN">Masih Berjalan</option>
+                    <option value={IN_PROGRESS_STATUS_FILTER}>Dalam Proses</option>
                     {STATUS_FILTER_OPTIONS.map((status) => (
                       <option key={status} value={status}>
                         {formatStatus(status)}

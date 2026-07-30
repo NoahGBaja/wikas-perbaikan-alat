@@ -293,7 +293,7 @@ export default function StatusCard({
                 {formatKategori(report.kategori)}
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                {report.subcategory || "-"} / {report.itemType || "-"}
+                {report.subcategory || "-"}
               </p>
             </div>
 

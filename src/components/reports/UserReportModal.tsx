@@ -35,7 +35,6 @@ export type UserReportModalPayload = {
   kode: string;
   nup: string;
   subcategory: string;
-  itemType: string;
   namaBarang: string;
   repairCost: string;
   deskripsi: string;
@@ -53,7 +52,6 @@ type UserReportModalProps = {
   defaultKode?: string;
   defaultNup?: string;
   defaultSubcategory?: string;
-  defaultItemType?: string;
   defaultNamaBarang?: string;
   defaultRepairCost?: string;
   defaultDeskripsi?: string;
@@ -112,10 +110,6 @@ function validateForm(
     errors.subcategory = "Subkategori wajib dipilih.";
   }
 
-  if (!payload.itemType.trim()) {
-    errors.itemType = "Tipe barang wajib dipilih.";
-  }
-
   if (!payload.deskripsi.trim()) {
     errors.deskripsi = "Deskripsi wajib diisi.";
   } else if (payload.deskripsi.trim().length > 2000) {
@@ -152,7 +146,6 @@ export default function UserReportModal({
   defaultKode = "",
   defaultNup = "",
   defaultSubcategory = "",
-  defaultItemType = "",
   defaultNamaBarang = "",
   defaultRepairCost = "",
   defaultDeskripsi = "",
@@ -177,7 +170,6 @@ export default function UserReportModal({
   const [subcategory, setSubcategory] = useState(
     defaultSubcategory || "",
   );
-  const [itemType, setItemType] = useState(defaultItemType || "");
   const [namaBarang, setNamaBarang] = useState(defaultNamaBarang || defaultKodeUakpb);
   const [repairCost, setRepairCost] = useState(defaultRepairCost);
   const [deskripsi, setDeskripsi] = useState(defaultDeskripsi);
@@ -196,7 +188,6 @@ export default function UserReportModal({
     setKode(defaultKode);
     setNup(defaultNup);
     setSubcategory(defaultSubcategory || "");
-    setItemType(defaultItemType || "");
     setNamaBarang(defaultNamaBarang || defaultKodeUakpb);
     setRepairCost(defaultRepairCost);
     setDeskripsi(defaultDeskripsi);
@@ -209,7 +200,6 @@ export default function UserReportModal({
     defaultNup,
     defaultRepairCost,
     defaultSubcategory,
-    defaultItemType,
     defaultDeskripsi,
     defaultNamaPelapor,
     defaultNomorRuangan,
@@ -283,10 +273,6 @@ export default function UserReportModal({
     masterData.categories.find((item) => item.value === kategori) ||
     masterData.categories[0] ||
     CATEGORY_MASTER[0];
-  const selectedSubcategory =
-    selectedCategory.subcategories.find((item) => item.name === subcategory) ||
-    null;
-
   if (!open) {
     return null;
   }
@@ -300,7 +286,6 @@ export default function UserReportModal({
     kode,
     nup,
     subcategory,
-    itemType,
     namaBarang,
     repairCost,
     deskripsi,
@@ -334,7 +319,6 @@ export default function UserReportModal({
         kode: payload.kode.trim(),
         nup: payload.nup.trim(),
         subcategory: payload.subcategory.trim(),
-        itemType: payload.itemType.trim(),
         namaBarang: payload.namaBarang.trim(),
         repairCost: payload.repairCost.replace(/\D/g, ""),
         deskripsi: payload.deskripsi.trim(),
@@ -400,12 +384,10 @@ export default function UserReportModal({
   function handleCategoryChange(value: UserReportCategory) {
     setKategori(value);
     setSubcategory("");
-    setItemType("");
   }
 
   function handleSubcategoryChange(value: string) {
     setSubcategory(value);
-    setItemType("");
   }
 
   return (
@@ -540,22 +522,6 @@ export default function UserReportModal({
                   </option>
                 ))}
               </select>
-            </Field>
-
-            <Field label="Nama / Tipe Barang" required error={errors.itemType}>
-              <input
-                value={itemType}
-                list="item-type-master-list"
-                onChange={(event) => setItemType(event.target.value)}
-                className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="Pilih atau ketik tipe barang"
-                required
-              />
-              <datalist id="item-type-master-list">
-                {selectedSubcategory?.itemTypes.map((item) => (
-                  <option key={item.code} value={item.name} />
-                ))}
-              </datalist>
             </Field>
 
             <Field

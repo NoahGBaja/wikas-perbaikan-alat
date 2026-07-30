@@ -11,8 +11,8 @@ import type { AppCategoryScope } from "@/src/lib/roles";
 export type MasterMessageTemplate = {
   id?: number;
   type: string;
-  title: string;
-  body: string;
+  name: string;
+  description: string;
 };
 
 export type MasterDataPayload = {
@@ -112,14 +112,6 @@ export async function getMasterData(): Promise<MasterDataPayload> {
         .filter((template) => !template.active)
         .map((template) => `${template.type}:${template.title.toLowerCase()}`),
     );
-
-    for (const template of MESSAGE_TEMPLATE_MASTER) {
-      const key = `${template.type}:${template.title.toLowerCase()}`;
-
-      if (!inactiveTemplateKeys.has(key)) {
-        messageTemplates.push({ ...template });
-      }
-    }
 
     for (const dbCategory of dbCategories) {
       const target = categories.find(
@@ -251,16 +243,29 @@ export async function getMasterData(): Promise<MasterDataPayload> {
       const exists = messageTemplates.some(
         (template) =>
           template.type === dbTemplate.type &&
-          template.title.toLowerCase() === dbTemplate.title.toLowerCase(),
+          template.name.toLowerCase() === dbTemplate.title.toLowerCase(),
       );
 
       if (!exists) {
         messageTemplates.push({
           id: dbTemplate.id,
           type: dbTemplate.type,
-          title: dbTemplate.title,
-          body: dbTemplate.body,
+          name: dbTemplate.title,
+          description: dbTemplate.body,
         });
+      }
+    }
+
+    for (const template of MESSAGE_TEMPLATE_MASTER) {
+      const key = `${template.type}:${template.name.toLowerCase()}`;
+      const exists = messageTemplates.some(
+        (existingTemplate) =>
+          existingTemplate.type === template.type &&
+          existingTemplate.name.toLowerCase() === template.name.toLowerCase(),
+      );
+
+      if (!inactiveTemplateKeys.has(key) && !exists) {
+        messageTemplates.push({ ...template });
       }
     }
   } catch {

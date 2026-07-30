@@ -182,7 +182,7 @@ function MonthlyStatsCards({
           </p>
           <p className="mt-1 text-sm leading-6">
             {needsAttention
-              ? `${summary.totalOngoing} laporan masih berjalan dan ${summary.totalReopened} laporan dibuka kembali.`
+              ? `${summary.totalOngoing} laporan dalam proses dan ${summary.totalReopened} laporan dibuka kembali.`
               : "Tidak ada laporan berjalan atau laporan yang dibuka kembali pada periode ini."}
           </p>
         </div>

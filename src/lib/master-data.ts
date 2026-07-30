@@ -115,23 +115,23 @@ export const CATEGORY_MASTER: CategoryMaster[] = [
 export const MESSAGE_TEMPLATE_MASTER = [
   {
     type: "APPROVAL",
-    title: "Persetujuan",
-    body: "Laporan diterima dan dapat dilanjutkan ke tahap berikutnya.",
+    name: "Persetujuan",
+    description: "Laporan diterima dan dapat dilanjutkan ke tahap berikutnya.",
   },
   {
     type: "REJECTION",
-    title: "Penolakan",
-    body: "Laporan ditolak karena data atau kondisi belum memenuhi persyaratan.",
+    name: "Penolakan",
+    description: "Laporan ditolak karena data atau kondisi belum memenuhi persyaratan.",
   },
   {
     type: "NOTES",
-    title: "Catatan",
-    body: "Mohon lengkapi informasi tambahan agar proses dapat dilanjutkan.",
+    name: "Catatan",
+    description: "Mohon lengkapi informasi tambahan agar proses dapat dilanjutkan.",
   },
   {
     type: "COMPLETION",
-    title: "Penyelesaian",
-    body: "Perbaikan telah selesai dilakukan. Mohon pelapor melakukan konfirmasi penerimaan barang.",
+    name: "Penyelesaian",
+    description: "Perbaikan telah selesai dilakukan. Mohon pelapor melakukan konfirmasi penerimaan barang.",
   },
 ] as const;
 

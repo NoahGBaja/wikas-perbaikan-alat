@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { validatePasswordStrength } from "../src/lib/passwords.ts";
-import { validateReportInput } from "../src/lib/report-validation.ts";
+import {
+  parseModalReportFormData,
+  validateModalReportInput,
+  validateReportInput,
+} from "../src/lib/report-validation.ts";
 
 test("validatePasswordStrength accepts a strong password", () => {
   assert.deepEqual(validatePasswordStrength("Password123!"), []);
@@ -48,4 +52,24 @@ test("validateReportInput rejects invalid category and long fields", () => {
     }) || "",
     /Nama barang maksimal/
   );
+});
+
+test("modal report uses subcategory when the retired item type field is absent", () => {
+  const form = new FormData();
+  form.set("kategori", "IT_ELEKTRONIK");
+  form.set("namaPelapor", "Pengguna");
+  form.set("nomorRuangan", "R-005");
+  form.set("namaRuangan", "Ruang IT");
+  form.set("kodeUakpb", "Komputer");
+  form.set("kode", "123456789012");
+  form.set("nup", "1");
+  form.set("subcategory", "Komputer");
+  form.set("namaBarang", "Komputer");
+  form.set("deskripsi", "Komputer tidak dapat menyala.");
+
+  const input = parseModalReportFormData(form);
+
+  assert.equal(input.subcategory, "Komputer");
+  assert.equal(input.itemType, "Komputer");
+  assert.equal(validateModalReportInput(input), null);
 });

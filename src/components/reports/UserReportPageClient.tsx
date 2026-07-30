@@ -19,7 +19,6 @@ type UserReportPageClientProps = {
     kode: string | null;
     nup?: string | null;
     subcategory?: string | null;
-    itemType?: string | null;
     namaBarang?: string | null;
     repairCost?: string | null;
     deskripsi: string;
@@ -61,7 +60,6 @@ export default function UserReportPageClient({
     formData.append("kode", payload.kode);
     formData.append("nup", payload.nup);
     formData.append("subcategory", payload.subcategory);
-    formData.append("itemType", payload.itemType);
     formData.append("namaBarang", payload.namaBarang);
     formData.append("repairCost", payload.repairCost);
     formData.append("deskripsi", payload.deskripsi);
@@ -133,7 +131,6 @@ export default function UserReportPageClient({
         defaultKode={initialReport?.kode || ""}
         defaultNup={initialReport?.nup || ""}
         defaultSubcategory={initialReport?.subcategory || ""}
-        defaultItemType={initialReport?.itemType || ""}
         defaultNamaBarang={initialReport?.namaBarang || initialReport?.kodeUakpb || ""}
         defaultRepairCost={initialReport?.repairCost || ""}
         defaultDeskripsi={initialReport?.deskripsi || ""}

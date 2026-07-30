@@ -1,8 +1,11 @@
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
+import { unlink } from "node:fs/promises";
+import path from "node:path";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../src/generated/prisma/client.ts";
 import { hashPassword } from "../src/lib/passwords.ts";
+import ExcelJS from "exceljs";
 
 const baseUrl =
   process.env.E2E_BASE_URL || process.env.APP_ORIGIN || "http://127.0.0.1:3000";
@@ -252,7 +255,6 @@ function validReportForm(overrides: Record<string, string | Blob> = {}) {
   form.set("kode", "123456789012");
   form.set("nup", `NUP-${runId.slice(0, 6)}`);
   form.set("subcategory", "Komputer");
-  form.set("itemType", "Laptop");
   form.set("namaBarang", `Laptop Edge ${runId.slice(0, 6)}`);
   form.set("repairCost", "");
   form.set("deskripsi", `Edge smoke report ${runId}`);
@@ -399,7 +401,39 @@ async function setupUsers() {
 
 async function cleanup() {
   try {
+    const uploadedUrls = new Set<string>();
+
     if (createdReportIds.length > 0) {
+      try {
+        const [reports, attachments] = await Promise.all([
+          prisma.report.findMany({
+            where: { id: { in: createdReportIds } },
+            select: {
+              fotoUrl: true,
+              attachmentUrl: true,
+              completionPhotoUrl: true,
+            },
+          }),
+          prisma.reportAttachment.findMany({
+            where: { reportId: { in: createdReportIds } },
+            select: { url: true },
+          }),
+        ]);
+
+        for (const url of [
+          ...reports.flatMap((report) => [
+            report.fotoUrl,
+            report.attachmentUrl,
+            report.completionPhotoUrl,
+          ]),
+          ...attachments.map((attachment) => attachment.url),
+        ]) {
+          if (url?.startsWith("/uploads/")) uploadedUrls.add(url);
+        }
+      } catch {
+        // Cleanup still removes database records if a partial schema lacks upload columns.
+      }
+
       await prisma.report.deleteMany({
         where: {
           id: { in: createdReportIds },
@@ -435,6 +469,17 @@ async function cleanup() {
       });
     } catch {
       // The app creates AuditLog lazily, so early setup failures may happen before it exists.
+    }
+
+    const uploadRoot = path.resolve(process.cwd(), "public", "uploads");
+    for (const url of uploadedUrls) {
+      const filePath = path.resolve(process.cwd(), "public", `.${url}`);
+
+      if (!filePath.startsWith(`${uploadRoot}${path.sep}`)) continue;
+
+      await unlink(filePath).catch((error: NodeJS.ErrnoException) => {
+        if (error.code !== "ENOENT") throw error;
+      });
     }
   } finally {
     await prisma.$disconnect();
@@ -624,21 +669,79 @@ async function main() {
     cookie: superAdmin.cookie,
     body: {
       kind: "messageTemplate",
-      type: "COMPLETE",
-      title: `Edge Template ${runId}`,
-      body: `Template body ${runId}`,
+      type: "COMPLETION",
+      name: `Edge Template ${runId}`,
+      description: `Template description ${runId}`,
     },
+  });
+  await request("/api/admin/master-data", {
+    method: "POST",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "messageTemplate",
+      type: "COMPLETION",
+      name: `Edge Template ${runId}`,
+      description: `Updated template description ${runId}`,
+    },
+  });
+  const masterData = await request("/api/admin/master-data", {
+    cookie: superAdmin.cookie,
+  });
+  const savedTemplates = masterData.data?.messageTemplates?.filter(
+    (template: { name: string }) => template.name === `Edge Template ${runId}`,
+  );
+  assert(savedTemplates?.length === 1, "Saving the same template name should update it.");
+  assert(
+    savedTemplates[0].description === `Updated template description ${runId}`,
+    "Template description should be updated.",
+  );
+  assert(
+    !("title" in savedTemplates[0]) && !("body" in savedTemplates[0]),
+    "Template API should expose name/description instead of title/body.",
+  );
+  await request("/api/admin/master-data", {
+    method: "POST",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "messageTemplate",
+      type: "COMPLETION",
+      name: "",
+      description: "Missing name",
+    },
+    expectedStatus: 400,
+  });
+  await request("/api/admin/master-data", {
+    method: "POST",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "messageTemplate",
+      type: "UNKNOWN",
+      name: `Invalid Template ${runId}`,
+      description: "Invalid type",
+    },
+    expectedStatus: 400,
+  });
+  await request("/api/admin/master-data", {
+    method: "POST",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "messageTemplate",
+      type: "NOTES",
+      name: "x".repeat(192),
+      description: "Too long",
+    },
+    expectedStatus: 400,
   });
   await request("/api/admin/master-data", {
     method: "DELETE",
     cookie: superAdmin.cookie,
     body: {
       kind: "messageTemplate",
-      type: "COMPLETE",
-      title: `Edge Template ${runId}`,
+      type: "COMPLETION",
+      name: `Edge Template ${runId}`,
     },
   });
-  logStep("Super admin can create and delete response templates");
+  logStep("Response templates use validated name/description pairs and update cleanly");
 
   await requestForm("/api/reports", validReportForm(), {
     cookie: adminIt.cookie,
@@ -709,6 +812,30 @@ async function main() {
     `New report should wait for Admin 1, got ${report.status}`,
   );
   logStep(`Created report #${report.id} for authorization and workflow checks`);
+
+  const historyPage = await fetch(`${baseUrl}/dashboard/admin/history`, {
+    headers: { Cookie: superAdmin.cookie },
+  });
+  const historyHtml = await historyPage.text();
+  assert(historyPage.ok, "History page should open for a super admin.");
+  assert(
+    historyHtml.includes("Riwayat Laporan") &&
+      historyHtml.includes("Dalam Proses"),
+    "History page should render its status filter without an error.",
+  );
+  const historyApi = await request("/api/reports/admin", {
+    cookie: superAdmin.cookie,
+  });
+  const historyReport = historyApi.data?.reports?.find(
+    (item: { id: number }) => item.id === report.id,
+  );
+  assert(historyReport, "History API should include the newly created report.");
+  assert(
+    Array.isArray(historyReport.histories) &&
+      Array.isArray(historyReport.attachments),
+    "History report collections should always be arrays.",
+  );
+  logStep("History page and API open with complete report data");
 
   await request(`/api/reports/${report.id}/pdf`, {
     cookie: user.cookie,
@@ -1149,14 +1276,45 @@ async function main() {
   );
   logStep("Reporter can close a completed report as functioning properly");
 
-  await requestDownload(
-    `/api/reports/export?processState=UNFINISHED&responsibleRole=ADMIN_1&room=${encodeURIComponent(
-      "Ruang Edge",
-    )}&itemType=Laptop&budget=CUSTOM&budgetMin=0&budgetMax=2000000`,
+  const inProgressExport = await requestDownload(
+    `/api/reports/export?q=${runId}&status=DALAM_PROSES&fields=id,status`,
     {
       cookie: superAdmin.cookie,
     },
   );
+  const inProgressWorkbook = new ExcelJS.Workbook();
+  await inProgressWorkbook.xlsx.load(await inProgressExport.arrayBuffer());
+  const inProgressSheet = inProgressWorkbook.getWorksheet("Riwayat Laporan");
+  assert(inProgressSheet, "In-progress export should contain the history worksheet.");
+  assert(inProgressSheet.rowCount > 1, "In-progress export should contain matching reports.");
+  const exportedStatuses: string[] = [];
+  inProgressSheet.eachRow((row, rowNumber) => {
+    if (rowNumber > 1) exportedStatuses.push(String(row.getCell(2).value || ""));
+  });
+  assert(
+    exportedStatuses.every(
+      (status) =>
+        status.startsWith("Menunggu ") ||
+        status === "Menunggu Konfirmasi Pelapor",
+    ),
+    `In-progress export leaked another status: ${exportedStatuses.join(", ")}`,
+  );
+  await requestDownload(
+    `/api/reports/export?q=${runId}&status=STATUS_TIDAK_ADA&fields=id,status`,
+    {
+      cookie: superAdmin.cookie,
+      expectedStatus: 400,
+    },
+  );
+  await requestDownload(
+    `/api/reports/export?processState=UNFINISHED&responsibleRole=ADMIN_1&room=${encodeURIComponent(
+      "Ruang Edge",
+    )}&subcategory=Komputer&budget=CUSTOM&budgetMin=0&budgetMax=2000000`,
+    {
+      cookie: superAdmin.cookie,
+    },
+  );
+  logStep("History export honors Dalam Proses and rejects invalid status filters");
   await requestDownload(`/api/admin/users/export?q=${runId}`, {
     cookie: superAdmin.cookie,
   });

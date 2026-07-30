@@ -19,6 +19,10 @@ import {
   type ReportStatus,
 } from "@/lib/report-helpers";
 import { formatTicketFallback } from "@/src/lib/tickets";
+import {
+  IN_PROGRESS_STATUS_FILTER,
+  isInProgressStatus,
+} from "@/src/lib/report-status-filters";
 
 const EXPORTABLE_ROLES: AppRole[] = ["USER", ...ADMIN_ROLES, "SUPER_ADMIN", "EXECUTIVE"];
 const EXPORTABLE_CATEGORIES: AppCategoryScope[] = [
@@ -44,7 +48,6 @@ const EXPORT_COLUMNS = [
   { header: "NIP Pelapor", key: "nipPelapor", width: 22 },
   { header: "Jenis Perbaikan", key: "kategori", width: 24 },
   { header: "Subkategori", key: "subcategory", width: 20 },
-  { header: "Tipe Barang", key: "itemType", width: 24 },
   { header: "Nama Barang", key: "namaBarang", width: 24 },
   { header: "Kode Ruangan", key: "kodeRuangan", width: 18 },
   { header: "Lokasi", key: "lokasi", width: 22 },
@@ -66,13 +69,16 @@ const EXPORT_COLUMN_KEYS = EXPORT_COLUMNS.map((column) => column.key);
 
 type ReportExportFilter = {
   search: string;
-  status: ReportStatus | "SEMUA";
+  status:
+    | ReportStatus
+    | "SEMUA"
+    | typeof IN_PROGRESS_STATUS_FILTER
+    | "TIDAK_VALID";
   historyOnly: boolean;
   userId: number | null;
   userQuery: string;
   category: AppCategoryScope | "SEMUA";
   subcategory: string;
-  itemType: string;
   room: string;
   responsibleRole: AppRole | "SEMUA";
   processState:
@@ -131,12 +137,21 @@ function parseCategory(value: string | null): AppCategoryScope | "SEMUA" {
     : "SEMUA";
 }
 
-function parseStatus(value: string | null): ReportStatus | "SEMUA" {
+function parseStatus(
+  value: string | null,
+):
+  | ReportStatus
+  | "SEMUA"
+  | typeof IN_PROGRESS_STATUS_FILTER
+  | "TIDAK_VALID" {
   if (!value || value === "SEMUA") return "SEMUA";
+  if (value === IN_PROGRESS_STATUS_FILTER || value === "BERJALAN") {
+    return IN_PROGRESS_STATUS_FILTER;
+  }
 
   return EXPORTABLE_STATUSES.includes(value as ReportStatus)
     ? (value as ReportStatus)
-    : "SEMUA";
+    : "TIDAK_VALID";
 }
 
 function parseNumber(value: string | null) {
@@ -177,7 +192,6 @@ function parseExportFilter(req: Request): ReportExportFilter {
     userQuery: (url.searchParams.get("userQuery") || "").trim().toLowerCase(),
     category: parseCategory(url.searchParams.get("category")),
     subcategory: (url.searchParams.get("subcategory") || "").trim(),
-    itemType: (url.searchParams.get("itemType") || "").trim(),
     room: (url.searchParams.get("room") || "").trim().toLowerCase(),
     responsibleRole: parseRole(url.searchParams.get("responsibleRole")),
     processState:
@@ -202,7 +216,20 @@ function reportMatchesFilter(
   report: Awaited<ReturnType<typeof listReportsRaw>>[number],
   filter: ReportExportFilter,
 ) {
-  if (filter.status !== "SEMUA" && report.status !== filter.status) return false;
+  if (filter.status === "TIDAK_VALID") return false;
+  if (
+    filter.status === IN_PROGRESS_STATUS_FILTER &&
+    !isInProgressStatus(report.status)
+  ) {
+    return false;
+  }
+  if (
+    filter.status !== "SEMUA" &&
+    filter.status !== IN_PROGRESS_STATUS_FILTER &&
+    report.status !== filter.status
+  ) {
+    return false;
+  }
   if (
     filter.historyOnly &&
     filter.status === "SEMUA" &&
@@ -229,7 +256,6 @@ function reportMatchesFilter(
   if (filter.subcategory && report.subcategory !== filter.subcategory) {
     return false;
   }
-  if (filter.itemType && report.itemType !== filter.itemType) return false;
   if (
     filter.room &&
     ![report.namaRuangan, report.nomorRuangan, report.lokasi]
@@ -267,8 +293,7 @@ function reportMatchesFilter(
   }
   if (
     filter.processState === "ONGOING" &&
-    !report.status.startsWith("MENUNGGU_ADMIN") &&
-    report.status !== "MENUNGGU_KONFIRMASI"
+    !isInProgressStatus(report.status)
   ) {
     return false;
   }
@@ -309,7 +334,6 @@ function reportMatchesFilter(
       report.nup,
       report.ticket,
       report.subcategory,
-      report.itemType,
       report.lokasi,
       formatKategori(report.kategori),
       getCategoryScopeLabel(report.kategori),
@@ -425,6 +449,10 @@ export async function GET(req: Request) {
     }
 
     const filter = parseExportFilter(req);
+    if (filter.status === "TIDAK_VALID") {
+      return exportErrorResponse(req, "Filter status tidak valid.", 400);
+    }
+
     const canSeeAllCategories = hasSuperAdminAccess(authUser);
     const reports = (await listReportsRaw()).filter(
       (report) =>
@@ -471,7 +499,6 @@ export async function GET(req: Request) {
         nipPelapor: report.user.nip || "-",
         kategori: formatKategori(report.kategori),
         subcategory: report.subcategory || "-",
-        itemType: report.itemType || "-",
         namaBarang: report.namaBarang,
         kodeRuangan: report.nomorRuangan || "-",
         lokasi: report.namaRuangan || report.lokasi,
