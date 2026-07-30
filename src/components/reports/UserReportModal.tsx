@@ -7,6 +7,7 @@ import { FileText, RefreshCcw, Send, Upload, X } from "lucide-react";
 import { showError } from "@/src/components/ui/feedback";
 import {
   CATEGORY_MASTER,
+  getUniqueSubcategories,
   ROOM_MASTER,
   type CategoryMaster,
   type RoomMaster,
@@ -269,10 +270,7 @@ export default function UserReportModal({
     };
   }, [attachments]);
 
-  const selectedCategory =
-    masterData.categories.find((item) => item.value === kategori) ||
-    masterData.categories[0] ||
-    CATEGORY_MASTER[0];
+  const subcategoryOptions = getUniqueSubcategories(masterData.categories);
   if (!open) {
     return null;
   }
@@ -383,7 +381,6 @@ export default function UserReportModal({
 
   function handleCategoryChange(value: UserReportCategory) {
     setKategori(value);
-    setSubcategory("");
   }
 
   function handleSubcategoryChange(value: string) {
@@ -516,7 +513,7 @@ export default function UserReportModal({
                 required
               >
                 <option value="">Pilih subkategori</option>
-                {selectedCategory.subcategories.map((item) => (
+                {subcategoryOptions.map((item) => (
                   <option key={item.code} value={item.name}>
                     {item.name}
                   </option>

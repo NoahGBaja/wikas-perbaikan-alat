@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
@@ -259,7 +258,6 @@ function formatUserSearchLabel(user: UserSearchResult) {
 }
 
 export default function AdminHistoryPage() {
-  const router = useRouter();
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -614,7 +612,7 @@ export default function AdminHistoryPage() {
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
             <button
               type="button"
-              onClick={() => router.push("/dashboard/admin")}
+              onClick={() => window.location.assign("/dashboard/admin")}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
             >
               <ArrowLeft className="h-4 w-4 text-blue-600" />

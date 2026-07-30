@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Download,
@@ -103,7 +102,6 @@ async function readApiResponse(res: Response) {
 export default function AdminUsersPage({
   currentUserId,
 }: AdminUsersPageProps) {
-  const router = useRouter();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [drafts, setDrafts] = useState<DraftMap>({});
   const [passwordDrafts, setPasswordDrafts] = useState<PasswordDraftMap>({});
@@ -503,7 +501,7 @@ export default function AdminUsersPage({
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
             <button
               type="button"
-              onClick={() => router.push("/dashboard/admin")}
+              onClick={() => window.location.assign("/dashboard/admin")}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50"
             >
               <ArrowLeft className="h-4 w-4" />

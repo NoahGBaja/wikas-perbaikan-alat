@@ -211,7 +211,7 @@ export default function AdminStatistikPageClient({
             {canReturnToDashboard ? (
               <button
                 type="button"
-                onClick={() => router.push("/dashboard/admin")}
+                onClick={() => window.location.assign("/dashboard/admin")}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm transition hover:bg-blue-50"
               >
                 <ArrowLeft className="h-4 w-4 text-blue-600" />

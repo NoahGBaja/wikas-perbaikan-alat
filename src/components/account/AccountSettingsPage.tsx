@@ -217,7 +217,7 @@ export default function AccountSettingsPage({
             <button
               type="button"
               onClick={() =>
-                router.push(
+                window.location.assign(
                   hasAdminAccess(currentUser)
                     ? "/dashboard/admin"
                     : "/dashboard/user",

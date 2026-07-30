@@ -90,7 +90,7 @@ export default function UserReportPageClient({
     setOpen(nextOpen);
 
     if (!nextOpen) {
-      router.push("/dashboard/user");
+      window.location.assign("/dashboard/user");
     }
   }
 

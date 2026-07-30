@@ -8,7 +8,6 @@ import {
   type ReactNode,
   type SetStateAction,
 } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, RefreshCcw, Save, Search, Trash2, X } from "lucide-react";
 import type {
   CategoryMaster,
@@ -79,7 +78,6 @@ const ADD_BUTTON_CLASS =
   "inline-flex h-11 min-w-[190px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-500";
 
 export default function MasterDataPage() {
-  const router = useRouter();
   const [masterData, setMasterData] = useState<MasterDataState>(EMPTY_MASTER_DATA);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -290,7 +288,7 @@ export default function MasterDataPage() {
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
-              onClick={() => router.push("/dashboard/admin")}
+              onClick={() => window.location.assign("/dashboard/admin")}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50"
             >
               <ArrowLeft className="h-4 w-4" />

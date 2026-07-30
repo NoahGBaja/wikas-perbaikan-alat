@@ -152,3 +152,21 @@ export function getCategoryTicketCode(category: AppCategoryScope) {
 export function getCategoryMaster(category: AppCategoryScope) {
   return CATEGORY_MASTER.find((item) => item.value === category) || CATEGORY_MASTER[0];
 }
+
+export function getUniqueSubcategories(categories: CategoryMaster[]) {
+  const byName = new Map<string, SubcategoryMaster>();
+
+  for (const category of categories) {
+    for (const subcategory of category.subcategories) {
+      const key = subcategory.name.trim().toLocaleLowerCase("id-ID");
+
+      if (key && !byName.has(key)) {
+        byName.set(key, subcategory);
+      }
+    }
+  }
+
+  return Array.from(byName.values()).sort((left, right) =>
+    left.name.localeCompare(right.name, "id-ID"),
+  );
+}

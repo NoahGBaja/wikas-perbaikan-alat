@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { MESSAGE_TEMPLATE_MASTER } from "../src/lib/master-data.ts";
+import {
+  getUniqueSubcategories,
+  MESSAGE_TEMPLATE_MASTER,
+} from "../src/lib/master-data.ts";
 import {
   IN_PROGRESS_STATUS_FILTER,
   isInProgressStatus,
@@ -43,4 +46,33 @@ test("Dalam Proses includes waiting workflow states but excludes terminal states
   ]) {
     assert.equal(isInProgressStatus(status), false, status);
   }
+});
+
+test("report subcategory options include names from every category", () => {
+  const options = getUniqueSubcategories([
+    {
+      value: "FASILITAS_INVENTARIS",
+      code: "INF",
+      label: "Inventaris",
+      description: "",
+      subcategories: [
+        { code: "INVENTARIS", name: "Inventaris", itemTypes: [] },
+      ],
+    },
+    {
+      value: "IT_ELEKTRONIK",
+      code: "IT",
+      label: "IT",
+      description: "",
+      subcategories: [
+        { code: "KOMPUTER", name: "Komputer", itemTypes: [] },
+        { code: "PRINTER", name: "Printer", itemTypes: [] },
+      ],
+    },
+  ]);
+
+  assert.deepEqual(
+    options.map((option) => option.name),
+    ["Inventaris", "Komputer", "Printer"],
+  );
 });

@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -166,13 +165,13 @@ export default function ReportForm({
           </div>
 
           {headerBackHref ? (
-            <Link
+            <a
               href={headerBackHref}
               className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-5 py-3 font-semibold text-white transition hover:bg-white/15 sm:w-auto"
             >
               <ArrowLeft className="h-4 w-4" />
               {headerBackLabel}
-            </Link>
+            </a>
           ) : null}
         </div>
 
@@ -338,7 +337,7 @@ export default function ReportForm({
 
               <button
                 type="button"
-                onClick={() => router.push("/dashboard/user/status")}
+                onClick={() => window.location.assign("/dashboard/user/status")}
                 className="rounded-2xl border border-white/10 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/15"
               >
                 Kembali
