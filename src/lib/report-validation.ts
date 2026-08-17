@@ -1,3 +1,9 @@
+import {
+  getNupFromItemCode,
+  isValidItemCode,
+  normalizeStoredItemCode,
+} from "./item-code.ts";
+
 export const VALID_KATEGORI = [
   "FASILITAS_INVENTARIS",
   "IT_ELEKTRONIK",
@@ -61,6 +67,10 @@ export function parseReportFormData(formData: FormData): ReportInput {
 
 export function parseModalReportFormData(formData: FormData): ModalReportInput {
   const subcategory = trimmedValue(formData.get("subcategory"));
+  const kode = normalizeStoredItemCode(
+    trimmedValue(formData.get("kode")),
+    trimmedValue(formData.get("nup")),
+  );
 
   return {
     kategori: trimmedValue(formData.get("kategori")),
@@ -68,8 +78,8 @@ export function parseModalReportFormData(formData: FormData): ModalReportInput {
     nomorRuangan: trimmedValue(formData.get("nomorRuangan")),
     namaRuangan: trimmedValue(formData.get("namaRuangan")),
     kodeUakpb: trimmedValue(formData.get("kodeUakpb")),
-    kode: trimmedValue(formData.get("kode")),
-    nup: trimmedValue(formData.get("nup")),
+    kode,
+    nup: getNupFromItemCode(kode),
     subcategory,
     // Compatibility for existing reports and clients while the separate
     // "Tipe Barang" field is retired from the UI.
@@ -115,12 +125,12 @@ export function validateModalReportInput(input: ModalReportInput) {
     return "Nama barang atau subkategori maksimal 120 karakter.";
   }
 
-  if (input.nup.length > 80) {
-    return "NUP maksimal 80 karakter.";
+  if (!/^\d{1,3}$/.test(input.nup)) {
+    return "NUP wajib berupa 1 sampai 3 digit angka.";
   }
 
-  if (!/^\d{12}$/.test(input.kode)) {
-    return "Kode barang harus berisi tepat 12 digit angka.";
+  if (!isValidItemCode(input.kode)) {
+    return "Format kode barang harus x.xx.xx.xx.xxx.<NUP>.";
   }
 
   if (input.repairCost && !/^\d+$/.test(input.repairCost.replace(/\D/g, ""))) {

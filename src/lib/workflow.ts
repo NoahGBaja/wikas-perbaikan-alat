@@ -160,7 +160,13 @@ export function getWorkflowMessage(
     return `Belum giliran Anda. Laporan ini sedang menunggu ${getRoleLabel(requiredRole)}.`;
   }
 
-  return role === "ADMIN_1"
-    ? "Giliran Anda untuk melanjutkan atau menyelesaikan laporan."
-    : "Giliran Anda untuk melakukan Terima atau Tolak.";
+  if (role === "ADMIN_1") {
+    return "Giliran Anda untuk melanjutkan atau menyelesaikan laporan.";
+  }
+
+  if (role === "ADMIN_5") {
+    return "Giliran PP untuk menerima, menolak, atau menyelesaikan laporan. Bukti wajib diunggah jika memilih Selesai.";
+  }
+
+  return "Giliran Anda untuk melakukan Terima atau Tolak.";
 }

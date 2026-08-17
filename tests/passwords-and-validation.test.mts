@@ -6,6 +6,11 @@ import {
   validateModalReportInput,
   validateReportInput,
 } from "../src/lib/report-validation.ts";
+import {
+  formatItemCodeInput,
+  getNupFromItemCode,
+  isValidItemCode,
+} from "../src/lib/item-code.ts";
 
 test("validatePasswordStrength accepts a strong password", () => {
   assert.deepEqual(validatePasswordStrength("Password123!"), []);
@@ -61,8 +66,7 @@ test("modal report uses subcategory when the retired item type field is absent",
   form.set("nomorRuangan", "R-005");
   form.set("namaRuangan", "Ruang IT");
   form.set("kodeUakpb", "Komputer");
-  form.set("kode", "123456789012");
-  form.set("nup", "1");
+  form.set("kode", "1.23.45.67.890.1");
   form.set("subcategory", "Komputer");
   form.set("namaBarang", "Komputer");
   form.set("deskripsi", "Komputer tidak dapat menyala.");
@@ -71,5 +75,16 @@ test("modal report uses subcategory when the retired item type field is absent",
 
   assert.equal(input.subcategory, "Komputer");
   assert.equal(input.itemType, "Komputer");
+  assert.equal(input.kode, "1.23.45.67.890.1");
+  assert.equal(input.nup, "1");
   assert.equal(validateModalReportInput(input), null);
+});
+
+test("item code combines a ten-digit base code with a maximum three-digit NUP", () => {
+  const formatted = formatItemCodeInput("123456789012345");
+
+  assert.equal(formatted, "1.23.45.67.890.123");
+  assert.equal(getNupFromItemCode(formatted), "123");
+  assert.equal(isValidItemCode(formatted), true);
+  assert.equal(isValidItemCode("1.23.45.67.890.1234"), false);
 });

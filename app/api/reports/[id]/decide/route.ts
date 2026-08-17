@@ -254,6 +254,17 @@ export async function POST(
       );
     }
 
+    if (
+      payload.action === "SELESAI" &&
+      authUser.role !== "ADMIN_1" &&
+      authUser.role !== "ADMIN_5"
+    ) {
+      return NextResponse.json(
+        { message: "Hanya PJ dan PP yang dapat menyelesaikan laporan." },
+        { status: 403 },
+      );
+    }
+
     if (payload.action === "TOLAK" && authUser.role === "ADMIN_1") {
       return NextResponse.json(
         { message: "PJ Ruangan hanya dapat Lanjut atau Selesai." },
@@ -285,6 +296,16 @@ export async function POST(
     ) {
       return NextResponse.json(
         { message: "Anggaran wajib diisi sebelum PP menerima laporan." },
+        { status: 400 },
+      );
+    }
+    if (
+      isCompletion &&
+      authUser.role === "ADMIN_5" &&
+      payload.proofFiles.length === 0
+    ) {
+      return NextResponse.json(
+        { message: "PP wajib mengunggah minimal satu bukti penyelesaian." },
         { status: 400 },
       );
     }

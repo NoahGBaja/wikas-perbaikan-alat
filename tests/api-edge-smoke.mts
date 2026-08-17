@@ -252,8 +252,7 @@ function validReportForm(overrides: Record<string, string | Blob> = {}) {
   form.set("nomorRuangan", "R-EDGE");
   form.set("namaRuangan", "Ruang Edge");
   form.set("kodeUakpb", `Laptop Edge ${runId.slice(0, 6)}`);
-  form.set("kode", "123456789012");
-  form.set("nup", `NUP-${runId.slice(0, 6)}`);
+  form.set("kode", "1.23.45.67.890.123");
   form.set("subcategory", "Komputer");
   form.set("namaBarang", `Laptop Edge ${runId.slice(0, 6)}`);
   form.set("repairCost", "");
@@ -1071,6 +1070,17 @@ async function main() {
   await request(`/api/reports/${report.id}/decide`, {
     method: "POST",
     cookie: admin5.cookie,
+    body: {
+      action: "SELESAI",
+      note: `Completion without proof ${runId}`,
+      repairCost: "1000000",
+    },
+    expectedStatus: 400,
+  });
+
+  await request(`/api/reports/${report.id}/decide`, {
+    method: "POST",
+    cookie: admin5.cookie,
     body: { action: "ACC", note: `Accept without budget ${runId}` },
     expectedStatus: 400,
   });
@@ -1125,7 +1135,7 @@ async function main() {
       completion.data.report.attachments.length >= 3,
     "Completion should keep original report attachment and add multiple proof files.",
   );
-  logStep("Workflow reaches PP completion with an optional budget and multiple proof files");
+  logStep("Workflow requires PP proof and accepts multiple completion files");
 
   const ppDeclineReport = await createReport(user.cookie);
   for (const [cookie, label] of [

@@ -27,6 +27,7 @@ import { getCategoryScopeLabel, getRoleLabel } from "@/src/lib/roles";
 import { canRoleDecide, getWorkflowMessage } from "@/src/lib/workflow";
 import { formatRupiah } from "@/src/lib/formatting";
 import { formatTicketFallback } from "@/src/lib/tickets";
+import { normalizeStoredItemCode } from "@/src/lib/item-code";
 import NotificationBell from "@/src/components/notifications/NotificationBell";
 import {
   FeedbackBanner,
@@ -178,6 +179,8 @@ export default function AdminDashboard({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [messageTemplates, setMessageTemplates] = useState(DEFAULT_MESSAGE_TEMPLATES);
+  const canCompleteReport =
+    currentUser.role === "ADMIN_1" || currentUser.role === "ADMIN_5";
 
   async function loadReports() {
     try {
@@ -301,6 +304,13 @@ export default function AdminDashboard({
   async function submitDecision(action: "ACC" | "TOLAK" | "SELESAI") {
     if (!selectedReport) return;
 
+    if (action === "SELESAI" && !canCompleteReport) {
+      const text = "Hanya PJ dan PP yang dapat menyelesaikan laporan.";
+      setMessage(toFeedback(text, "error"));
+      showError("Akses ditolak", text);
+      return;
+    }
+
     if (action === "TOLAK" && !decisionNote.trim()) {
       const text = "Alasan penolakan wajib diisi.";
       setMessage(toFeedback(text, "error"));
@@ -319,6 +329,17 @@ export default function AdminDashboard({
       const text = "Deskripsi penyelesaian wajib diisi.";
       setMessage(toFeedback(text, "error"));
       showError("Deskripsi wajib diisi", text);
+      return;
+    }
+
+    if (
+      action === "SELESAI" &&
+      currentUser.role === "ADMIN_5" &&
+      completionProofs.length === 0
+    ) {
+      const text = "PP wajib mengunggah minimal satu bukti penyelesaian.";
+      setMessage(toFeedback(text, "error"));
+      showError("Bukti penyelesaian wajib", text);
       return;
     }
 
@@ -856,11 +877,10 @@ export default function AdminDashboard({
                       </InfoBox>
 
                       <InfoBox label="Kode Barang">
-                        {selectedReport.kode || "-"}
-                      </InfoBox>
-
-                      <InfoBox label="NUP">
-                        {selectedReport.nup || "-"}
+                        {normalizeStoredItemCode(
+                          selectedReport.kode || "",
+                          selectedReport.nup || "",
+                        ) || "-"}
                       </InfoBox>
 
                       <InfoBox label="Subkategori">
@@ -1043,10 +1063,10 @@ export default function AdminDashboard({
                   ) : null}
 
                   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="text-sm text-slate-500">Keputusan Admin</p>
+                    <p className="text-base font-semibold text-slate-600">Keputusan Admin</p>
 
                     <div className="mt-4 space-y-4">
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-base leading-7 text-slate-700">
                         {getWorkflowMessage(
                           currentUser.role,
                           selectedReport.status,
@@ -1068,7 +1088,7 @@ export default function AdminDashboard({
                                 key={template.name}
                                 type="button"
                                 onClick={() => setDecisionNote(template.description)}
-                                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
                               >
                                 {template.name}
                               </button>
@@ -1079,14 +1099,25 @@ export default function AdminDashboard({
                             value={decisionNote}
                             onChange={(event) => setDecisionNote(event.target.value)}
                             rows={5}
-                            placeholder="Catatan admin / alasan penolakan..."
-                            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                            placeholder={
+                              currentUser.role === "ADMIN_5"
+                                ? "Isi catatan, alasan penolakan, atau deskripsi penyelesaian PP..."
+                                : "Catatan admin / alasan penolakan / deskripsi penyelesaian..."
+                            }
+                            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                           />
 
                           {currentUser.role === "ADMIN_5" ? (
-                            <label className="grid gap-2 text-sm font-semibold text-slate-700">
+                            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-base leading-7 text-blue-900">
+                              Jika PP memilih <strong>Selesai</strong>, deskripsi
+                              penyelesaian dan minimal satu bukti wajib diisi.
+                            </div>
+                          ) : null}
+
+                          {currentUser.role === "ADMIN_5" ? (
+                            <label className="grid gap-2 text-base font-semibold text-slate-700">
                               <span>Anggaran PP</span>
-                              <span className="text-xs font-normal text-slate-500">
+                              <span className="text-sm font-normal text-slate-500">
                                 Wajib diisi saat memilih Terima. Tidak wajib saat
                                 memilih Tolak.
                               </span>
@@ -1108,14 +1139,19 @@ export default function AdminDashboard({
                             </label>
                           ) : null}
 
-                          {true ? (
-                            <label className="block cursor-pointer rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-700">
+                          {canCompleteReport ? (
+                            <label className="block cursor-pointer rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-base text-slate-700">
                               <span className="block font-semibold text-slate-900">
-                                Bukti penyelesaian (opsional)
+                                Bukti penyelesaian
+                                {currentUser.role === "ADMIN_5"
+                                  ? " (wajib untuk PP)"
+                                  : " (opsional untuk PJ)"}
                               </span>
-                              <span className="mt-1 block text-xs text-slate-500">
-                                Dipakai saat klik Selesai. Format JPG,
-                                PNG, WEBP, atau PDF. Maksimal 2MB.
+                              <span className="mt-1 block text-sm leading-6 text-slate-500">
+                                {currentUser.role === "ADMIN_5"
+                                  ? "Wajib unggah minimal satu bukti sebelum PP menyelesaikan laporan. "
+                                  : "Dapat dilampirkan saat PJ menyelesaikan laporan. "}
+                                Format JPG, PNG, WEBP, atau PDF. Maksimal 2MB per berkas.
                               </span>
                               <input
                                 type="file"
@@ -1139,7 +1175,7 @@ export default function AdminDashboard({
                                 </span>
                               </span>
                               {completionProofs.length > 0 ? (
-                                <ul className="mt-2 space-y-1 text-xs font-medium text-slate-700">
+                                <ul className="mt-2 space-y-1 text-sm font-medium text-slate-700">
                                   {completionProofs.map((proof) => (
                                     <li key={`${proof.name}-${proof.size}`}>
                                       Dipilih: {proof.name}
@@ -1164,14 +1200,20 @@ export default function AdminDashboard({
                                   : "Terima"}
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() => void submitDecision("SELESAI")}
-                              disabled={submitLoading}
-                              className="rounded-2xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:opacity-60"
-                            >
-                              {submitLoading ? "Memproses..." : "Selesai"}
-                            </button>
+                            {canCompleteReport ? (
+                              <button
+                                type="button"
+                                onClick={() => void submitDecision("SELESAI")}
+                                disabled={submitLoading}
+                                className="rounded-2xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:opacity-60"
+                              >
+                                {submitLoading
+                                  ? "Memproses..."
+                                  : currentUser.role === "ADMIN_5"
+                                    ? "Selesai & Kirim Bukti"
+                                    : "Selesai"}
+                              </button>
+                            ) : null}
 
                             {currentUser.role !== "ADMIN_1" ? (
                               <button
@@ -1212,8 +1254,8 @@ function InfoBox({
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <p className="text-sm text-slate-500">{label}</p>
-      <div className="mt-1 font-semibold text-slate-900">{children}</div>
+      <p className="text-base text-slate-500">{label}</p>
+      <div className="mt-1 text-base font-semibold text-slate-900">{children}</div>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
 import { getRoleLabel } from "@/src/lib/roles";
 import { formatRupiah } from "@/src/lib/formatting";
 import { formatTicketFallback } from "@/src/lib/tickets";
+import { normalizeStoredItemCode } from "@/src/lib/item-code";
 
 export type StatusReportStatus = ReportStatus;
 
@@ -276,14 +277,10 @@ export default function StatusCard({
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Kode Barang</p>
               <p className="mt-1 font-semibold text-slate-900">
-                {report.kode || "-"}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">NUP</p>
-              <p className="mt-1 font-semibold text-slate-900">
-                {report.nup || "-"}
+                {normalizeStoredItemCode(
+                  report.kode || "",
+                  report.nup || "",
+                ) || "-"}
               </p>
             </div>
 

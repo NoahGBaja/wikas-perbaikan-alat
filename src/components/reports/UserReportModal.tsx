@@ -12,6 +12,12 @@ import {
   type CategoryMaster,
   type RoomMaster,
 } from "@/src/lib/master-data";
+import {
+  formatItemCodeInput,
+  getNupFromItemCode,
+  isValidItemCode,
+  normalizeStoredItemCode,
+} from "@/src/lib/item-code";
 
 const MAX_ATTACHMENT_SIZE = 2 * 1024 * 1024;
 const MAX_ATTACHMENT_COUNT = 10;
@@ -99,12 +105,11 @@ function validateForm(
 
   if (!payload.kode.trim()) {
     errors.kode = "Kode barang wajib diisi.";
-  } else if (!/^\d{12}$/.test(payload.kode.trim())) {
-    errors.kode = "Kode barang harus berisi tepat 12 digit angka.";
-  }
-
-  if (!payload.nup.trim()) {
-    errors.nup = "NUP wajib diisi.";
+  } else if (!isValidItemCode(payload.kode)) {
+    errors.kode =
+      "Format kode harus x.xx.xx.xx.xxx.<NUP>, dengan NUP maksimal 3 digit.";
+  } else if (!/^\d{1,3}$/.test(payload.nup)) {
+    errors.kode = "NUP pada kode barang harus berisi 1 sampai 3 digit.";
   }
 
   if (!payload.subcategory.trim()) {
@@ -162,8 +167,12 @@ export default function UserReportModal({
   const [nomorRuangan, setNomorRuangan] = useState(defaultNomorRuangan);
   const [namaRuangan, setNamaRuangan] = useState(defaultNamaRuangan);
   const [kodeUakpb, setKodeUakpb] = useState(defaultKodeUakpb);
-  const [kode, setKode] = useState(defaultKode);
-  const [nup, setNup] = useState(defaultNup);
+  const [kode, setKode] = useState(() =>
+    normalizeStoredItemCode(defaultKode, defaultNup),
+  );
+  const [nup, setNup] = useState(() =>
+    getNupFromItemCode(normalizeStoredItemCode(defaultKode, defaultNup)),
+  );
   const [masterData, setMasterData] = useState<MasterDataState>({
     categories: CATEGORY_MASTER,
     rooms: ROOM_MASTER,
@@ -186,8 +195,9 @@ export default function UserReportModal({
     setNomorRuangan(defaultNomorRuangan);
     setNamaRuangan(defaultNamaRuangan);
     setKodeUakpb(defaultKodeUakpb);
-    setKode(defaultKode);
-    setNup(defaultNup);
+    const normalizedCode = normalizeStoredItemCode(defaultKode, defaultNup);
+    setKode(normalizedCode);
+    setNup(getNupFromItemCode(normalizedCode));
     setSubcategory(defaultSubcategory || "");
     setNamaBarang(defaultNamaBarang || defaultKodeUakpb);
     setRepairCost(defaultRepairCost);
@@ -405,7 +415,7 @@ export default function UserReportModal({
             <h2 id={titleId} className="text-2xl font-bold text-slate-950">
               Input Laporan
             </h2>
-            <p id={descriptionId} className="mt-1 text-sm text-slate-600">
+            <p id={descriptionId} className="mt-1 text-base text-slate-600">
               Lengkapi data laporan sebelum dikirim.
             </p>
           </div>
@@ -439,10 +449,10 @@ export default function UserReportModal({
                           : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50",
                       ].join(" ")}
                     >
-                      <span className="block text-sm font-bold">
+                      <span className="block text-base font-bold">
                         {option.label}
                       </span>
-                      <span className="mt-2 block text-xs leading-5 text-slate-500">
+                      <span className="mt-2 block text-sm leading-6 text-slate-500">
                         {option.description}
                       </span>
                     </button>
@@ -529,25 +539,21 @@ export default function UserReportModal({
             >
               <input
                 value={kode}
-                onChange={(event) =>
-                  setKode(event.target.value.replace(/\D/g, "").slice(0, 12))
-                }
+                onChange={(event) => {
+                  const formattedCode = formatItemCodeInput(event.target.value);
+                  setKode(formattedCode);
+                  setNup(getNupFromItemCode(formattedCode));
+                }}
                 inputMode="numeric"
-                maxLength={12}
-                pattern="\d{12}"
-                className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                maxLength={18}
+                placeholder="Contoh: 1.23.45.67.890.123"
+                className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 required
               />
-            </Field>
-
-            <Field label="NUP" required error={errors.nup}>
-              <input
-                value={nup}
-                onChange={(event) => setNup(event.target.value)}
-                className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="Masukkan NUP"
-                required
-              />
+              <p className="mt-2 text-sm text-slate-500">
+                Masukkan 10 digit kode dasar, lalu NUP maksimal 3 digit. Titik
+                ditambahkan otomatis.
+              </p>
             </Field>
 
             <Field
@@ -565,7 +571,7 @@ export default function UserReportModal({
                 placeholder="Jelaskan kendala atau kerusakan yang perlu diperbaiki"
                 required
               />
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-sm text-slate-500">
                 {deskripsi.trim().length}/2000 karakter
               </p>
             </Field>
@@ -581,7 +587,7 @@ export default function UserReportModal({
                 <span className="text-sm font-semibold text-slate-800">
                   Unggah gambar atau PDF
                 </span>
-                <span className="mt-1 text-xs text-slate-500">
+                <span className="mt-1 text-sm text-slate-500">
                   Maksimal 2 MB.
                 </span>
                 <input
@@ -600,7 +606,7 @@ export default function UserReportModal({
                     <p className="text-sm font-semibold text-slate-800">
                       {attachments.length} lampiran dipilih
                     </p>
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100">
                       <RefreshCcw className="h-3.5 w-3.5" />
                       Ganti Lampiran
                       <input
@@ -721,7 +727,7 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <label className="mb-2 block text-sm font-semibold text-slate-800">
+      <label className="mb-2 block text-base font-semibold text-slate-800">
         {label}
         {required ? <RequiredMark /> : null}
       </label>

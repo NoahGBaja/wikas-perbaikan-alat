@@ -167,8 +167,7 @@ async function createReport(cookie: string) {
   form.set("nomorRuangan", "R-005");
   form.set("namaRuangan", "Ruang IT");
   form.set("kodeUakpb", `Laptop Smoke ${runId.slice(0, 6)}`);
-  form.set("kode", "123456789012");
-  form.set("nup", `NUP-${runId.slice(0, 6)}`);
+  form.set("kode", "1.23.45.67.890.123");
   form.set("subcategory", "Komputer");
   form.set("namaBarang", `Laptop Smoke ${runId.slice(0, 6)}`);
   form.set("repairCost", "");

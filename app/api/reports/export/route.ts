@@ -19,6 +19,7 @@ import {
   type ReportStatus,
 } from "@/lib/report-helpers";
 import { formatTicketFallback } from "@/src/lib/tickets";
+import { normalizeStoredItemCode } from "@/src/lib/item-code";
 import {
   IN_PROGRESS_STATUS_FILTER,
   isInProgressStatus,
@@ -52,8 +53,7 @@ const EXPORT_COLUMNS = [
   { header: "Kode Ruangan", key: "kodeRuangan", width: 18 },
   { header: "Lokasi", key: "lokasi", width: 22 },
   { header: "Nama Barang", key: "kodeUakpb", width: 20 },
-  { header: "Kode Barang", key: "kode", width: 18 },
-  { header: "NUP", key: "nup", width: 16 },
+  { header: "Kode Barang", key: "kode", width: 24 },
   { header: "Biaya Perbaikan / Anggaran", key: "repairCost", width: 26 },
   { header: "Status", key: "status", width: 20 },
   { header: "Ditolak Oleh", key: "declinedBy", width: 28 },
@@ -503,8 +503,8 @@ export async function GET(req: Request) {
         kodeRuangan: report.nomorRuangan || "-",
         lokasi: report.namaRuangan || report.lokasi,
         kodeUakpb: report.namaBarang || report.kodeUakpb || "-",
-        kode: report.kode || "-",
-        nup: report.nup || "-",
+        kode:
+          normalizeStoredItemCode(report.kode || "", report.nup || "") || "-",
         repairCost,
         status: formatStatus(report.status),
         declinedBy: getDeclinedBy(report),

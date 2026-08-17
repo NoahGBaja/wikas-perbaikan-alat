@@ -39,6 +39,7 @@ import {
   toFeedback,
   type FeedbackMessage,
 } from "@/src/components/ui/feedback";
+import { normalizeStoredItemCode } from "@/src/lib/item-code";
 
 type ReportHistoryItem = {
   id: number;
@@ -63,6 +64,7 @@ type ReportItem = {
   nomorRuangan?: string | null;
   kodeUakpb?: string | null;
   kode?: string | null;
+  nup?: string | null;
   kategori: ReportKategori;
   namaBarang: string;
   lokasi: string;
@@ -531,6 +533,7 @@ export default function AdminHistoryPage() {
         report.nomorRuangan,
         report.kodeUakpb,
         report.kode,
+        report.nup,
         report.lokasi,
         formatKategori(report.kategori),
         getCategoryScopeLabel(report.kategori),
@@ -1078,7 +1081,10 @@ function ReportDetailModal({
                 {report.nomorRuangan || report.lokasi || "-"}
               </InfoBox>
               <InfoBox label="Kode UAKPB">{report.kodeUakpb || "-"}</InfoBox>
-              <InfoBox label="Kode">{report.kode || "-"}</InfoBox>
+              <InfoBox label="Kode">
+                {normalizeStoredItemCode(report.kode || "", report.nup || "") ||
+                  "-"}
+              </InfoBox>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
