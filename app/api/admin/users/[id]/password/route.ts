@@ -66,8 +66,8 @@ export async function POST(
       );
     }
 
-    const targetUser = await prisma.user.findUnique({
-      where: { id: userId },
+    const targetUser = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
       select: {
         id: true,
       },
@@ -100,7 +100,7 @@ export async function POST(
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { id: userId, deletedAt: null },
       data: {
         passwordHash: await hashPassword(password),
       },

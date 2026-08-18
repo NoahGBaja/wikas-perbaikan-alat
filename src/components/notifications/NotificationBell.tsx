@@ -19,7 +19,7 @@ type NotificationBellProps = {
   onReportClick?: (reportId: number) => boolean | Promise<boolean>;
 };
 
-const NOTIFICATION_POLL_INTERVAL_MS = 5_000;
+const NOTIFICATION_POLL_INTERVAL_MS = 30_000;
 
 function formatNotificationDate(value: string) {
   return new Intl.DateTimeFormat("id-ID", {

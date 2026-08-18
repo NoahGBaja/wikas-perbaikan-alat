@@ -27,16 +27,19 @@ function stripPasswordHash(user: SessionUserWithPasswordRow): SessionUserRow {
     role: user.role,
     isSuperAdmin: user.isSuperAdmin,
     categoryScope: user.categoryScope,
+    sessionVersion: user.sessionVersion,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
 }
 
-function hasValidSessionTag(
+function hasValidSession(
   user: SessionUserWithPasswordRow,
-  sessionTag: string
+  sessionTag: string,
+  sessionVersion: number,
 ) {
   return (
+    user.sessionVersion === sessionVersion &&
     createAuthSessionTag({
       passwordHash: user.passwordHash,
       role: user.role,
@@ -60,7 +63,7 @@ export const getSessionUser = cache(async () => {
 
   const user = await findUserByIdRaw(payload.userId, true);
 
-  if (!user || !hasValidSessionTag(user, payload.sessionTag)) {
+  if (!user || !hasValidSession(user, payload.sessionTag, payload.sessionVersion)) {
     return null;
   }
 
@@ -124,7 +127,7 @@ export async function getApiSessionUser() {
 
   const user = await findUserByIdRaw(payload.userId, true);
 
-  if (!user || !hasValidSessionTag(user, payload.sessionTag)) {
+  if (!user || !hasValidSession(user, payload.sessionTag, payload.sessionVersion)) {
     return null;
   }
 

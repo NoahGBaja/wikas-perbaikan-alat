@@ -28,10 +28,12 @@ export type AggregateUser = {
 
 export type UserAvgAggregateOutputType = {
   id: number | null
+  sessionVersion: number | null
 }
 
 export type UserSumAggregateOutputType = {
   id: number | null
+  sessionVersion: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -41,6 +43,7 @@ export type UserMinAggregateOutputType = {
   nip: string | null
   activeNip: string | null
   passwordHash: string | null
+  sessionVersion: number | null
   role: $Enums.Role | null
   isSuperAdmin: boolean | null
   categoryScope: $Enums.ReportCategory | null
@@ -56,6 +59,7 @@ export type UserMaxAggregateOutputType = {
   nip: string | null
   activeNip: string | null
   passwordHash: string | null
+  sessionVersion: number | null
   role: $Enums.Role | null
   isSuperAdmin: boolean | null
   categoryScope: $Enums.ReportCategory | null
@@ -71,6 +75,7 @@ export type UserCountAggregateOutputType = {
   nip: number
   activeNip: number
   passwordHash: number
+  sessionVersion: number
   role: number
   isSuperAdmin: number
   categoryScope: number
@@ -83,10 +88,12 @@ export type UserCountAggregateOutputType = {
 
 export type UserAvgAggregateInputType = {
   id?: true
+  sessionVersion?: true
 }
 
 export type UserSumAggregateInputType = {
   id?: true
+  sessionVersion?: true
 }
 
 export type UserMinAggregateInputType = {
@@ -96,6 +103,7 @@ export type UserMinAggregateInputType = {
   nip?: true
   activeNip?: true
   passwordHash?: true
+  sessionVersion?: true
   role?: true
   isSuperAdmin?: true
   categoryScope?: true
@@ -111,6 +119,7 @@ export type UserMaxAggregateInputType = {
   nip?: true
   activeNip?: true
   passwordHash?: true
+  sessionVersion?: true
   role?: true
   isSuperAdmin?: true
   categoryScope?: true
@@ -126,6 +135,7 @@ export type UserCountAggregateInputType = {
   nip?: true
   activeNip?: true
   passwordHash?: true
+  sessionVersion?: true
   role?: true
   isSuperAdmin?: true
   categoryScope?: true
@@ -228,6 +238,7 @@ export type UserGroupByOutputType = {
   nip: string | null
   activeNip: string | null
   passwordHash: string
+  sessionVersion: number
   role: $Enums.Role
   isSuperAdmin: boolean
   categoryScope: $Enums.ReportCategory | null
@@ -266,6 +277,7 @@ export type UserWhereInput = {
   nip?: Prisma.StringNullableFilter<"User"> | string | null
   activeNip?: Prisma.StringNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
+  sessionVersion?: Prisma.IntFilter<"User"> | number
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   isSuperAdmin?: Prisma.BoolFilter<"User"> | boolean
   categoryScope?: Prisma.EnumReportCategoryNullableFilter<"User"> | $Enums.ReportCategory | null
@@ -285,6 +297,7 @@ export type UserOrderByWithRelationInput = {
   nip?: Prisma.SortOrderInput | Prisma.SortOrder
   activeNip?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  sessionVersion?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isSuperAdmin?: Prisma.SortOrder
   categoryScope?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -308,6 +321,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   jabatan?: Prisma.StringNullableFilter<"User"> | string | null
   nip?: Prisma.StringNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
+  sessionVersion?: Prisma.IntFilter<"User"> | number
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   isSuperAdmin?: Prisma.BoolFilter<"User"> | boolean
   categoryScope?: Prisma.EnumReportCategoryNullableFilter<"User"> | $Enums.ReportCategory | null
@@ -327,6 +341,7 @@ export type UserOrderByWithAggregationInput = {
   nip?: Prisma.SortOrderInput | Prisma.SortOrder
   activeNip?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  sessionVersion?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isSuperAdmin?: Prisma.SortOrder
   categoryScope?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -350,6 +365,7 @@ export type UserScalarWhereWithAggregatesInput = {
   nip?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   activeNip?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
+  sessionVersion?: Prisma.IntWithAggregatesFilter<"User"> | number
   role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
   isSuperAdmin?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   categoryScope?: Prisma.EnumReportCategoryNullableWithAggregatesFilter<"User"> | $Enums.ReportCategory | null
@@ -364,6 +380,7 @@ export type UserCreateInput = {
   nip?: string | null
   activeNip?: string | null
   passwordHash: string
+  sessionVersion?: number
   role?: $Enums.Role
   isSuperAdmin?: boolean
   categoryScope?: $Enums.ReportCategory | null
@@ -383,6 +400,7 @@ export type UserUncheckedCreateInput = {
   nip?: string | null
   activeNip?: string | null
   passwordHash: string
+  sessionVersion?: number
   role?: $Enums.Role
   isSuperAdmin?: boolean
   categoryScope?: $Enums.ReportCategory | null
@@ -401,6 +419,7 @@ export type UserUpdateInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -420,6 +439,7 @@ export type UserUncheckedUpdateInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -439,6 +459,7 @@ export type UserCreateManyInput = {
   nip?: string | null
   activeNip?: string | null
   passwordHash: string
+  sessionVersion?: number
   role?: $Enums.Role
   isSuperAdmin?: boolean
   categoryScope?: $Enums.ReportCategory | null
@@ -453,6 +474,7 @@ export type UserUpdateManyMutationInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -468,6 +490,7 @@ export type UserUncheckedUpdateManyInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -489,6 +512,7 @@ export type UserCountOrderByAggregateInput = {
   nip?: Prisma.SortOrder
   activeNip?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  sessionVersion?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isSuperAdmin?: Prisma.SortOrder
   categoryScope?: Prisma.SortOrder
@@ -499,6 +523,7 @@ export type UserCountOrderByAggregateInput = {
 
 export type UserAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  sessionVersion?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -508,6 +533,7 @@ export type UserMaxOrderByAggregateInput = {
   nip?: Prisma.SortOrder
   activeNip?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  sessionVersion?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isSuperAdmin?: Prisma.SortOrder
   categoryScope?: Prisma.SortOrder
@@ -523,6 +549,7 @@ export type UserMinOrderByAggregateInput = {
   nip?: Prisma.SortOrder
   activeNip?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  sessionVersion?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isSuperAdmin?: Prisma.SortOrder
   categoryScope?: Prisma.SortOrder
@@ -533,6 +560,7 @@ export type UserMinOrderByAggregateInput = {
 
 export type UserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  sessionVersion?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -546,6 +574,14 @@ export type StringFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type EnumRoleFieldUpdateOperationsInput = {
@@ -566,14 +602,6 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
-}
-
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
 }
 
 export type UserCreateNestedOneWithoutReportsInput = {
@@ -638,6 +666,7 @@ export type UserCreateWithoutReportsInput = {
   nip?: string | null
   activeNip?: string | null
   passwordHash: string
+  sessionVersion?: number
   role?: $Enums.Role
   isSuperAdmin?: boolean
   categoryScope?: $Enums.ReportCategory | null
@@ -656,6 +685,7 @@ export type UserUncheckedCreateWithoutReportsInput = {
   nip?: string | null
   activeNip?: string | null
   passwordHash: string
+  sessionVersion?: number
   role?: $Enums.Role
   isSuperAdmin?: boolean
   categoryScope?: $Enums.ReportCategory | null
@@ -689,6 +719,7 @@ export type UserUpdateWithoutReportsInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -707,6 +738,7 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -724,6 +756,7 @@ export type UserCreateWithoutApprovalHistoriesInput = {
   nip?: string | null
   activeNip?: string | null
   passwordHash: string
+  sessionVersion?: number
   role?: $Enums.Role
   isSuperAdmin?: boolean
   categoryScope?: $Enums.ReportCategory | null
@@ -742,6 +775,7 @@ export type UserUncheckedCreateWithoutApprovalHistoriesInput = {
   nip?: string | null
   activeNip?: string | null
   passwordHash: string
+  sessionVersion?: number
   role?: $Enums.Role
   isSuperAdmin?: boolean
   categoryScope?: $Enums.ReportCategory | null
@@ -775,6 +809,7 @@ export type UserUpdateWithoutApprovalHistoriesInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -793,6 +828,7 @@ export type UserUncheckedUpdateWithoutApprovalHistoriesInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -810,6 +846,7 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   nip?: string | null
   activeNip?: string | null
   passwordHash: string
+  sessionVersion?: number
   role?: $Enums.Role
   isSuperAdmin?: boolean
   categoryScope?: $Enums.ReportCategory | null
@@ -828,6 +865,7 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   nip?: string | null
   activeNip?: string | null
   passwordHash: string
+  sessionVersion?: number
   role?: $Enums.Role
   isSuperAdmin?: boolean
   categoryScope?: $Enums.ReportCategory | null
@@ -861,6 +899,7 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -879,6 +918,7 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -896,6 +936,7 @@ export type UserCreateWithoutNotificationsInput = {
   nip?: string | null
   activeNip?: string | null
   passwordHash: string
+  sessionVersion?: number
   role?: $Enums.Role
   isSuperAdmin?: boolean
   categoryScope?: $Enums.ReportCategory | null
@@ -914,6 +955,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   nip?: string | null
   activeNip?: string | null
   passwordHash: string
+  sessionVersion?: number
   role?: $Enums.Role
   isSuperAdmin?: boolean
   categoryScope?: $Enums.ReportCategory | null
@@ -947,6 +989,7 @@ export type UserUpdateWithoutNotificationsInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -965,6 +1008,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   nip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeNip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryScope?: Prisma.NullableEnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory | null
@@ -1041,6 +1085,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   nip?: boolean
   activeNip?: boolean
   passwordHash?: boolean
+  sessionVersion?: boolean
   role?: boolean
   isSuperAdmin?: boolean
   categoryScope?: boolean
@@ -1063,6 +1108,7 @@ export type UserSelectScalar = {
   nip?: boolean
   activeNip?: boolean
   passwordHash?: boolean
+  sessionVersion?: boolean
   role?: boolean
   isSuperAdmin?: boolean
   categoryScope?: boolean
@@ -1071,7 +1117,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nama" | "jabatan" | "nip" | "activeNip" | "passwordHash" | "role" | "isSuperAdmin" | "categoryScope" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nama" | "jabatan" | "nip" | "activeNip" | "passwordHash" | "sessionVersion" | "role" | "isSuperAdmin" | "categoryScope" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   reports?: boolean | Prisma.User$reportsArgs<ExtArgs>
   passwordResetTokens?: boolean | Prisma.User$passwordResetTokensArgs<ExtArgs>
@@ -1095,6 +1141,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     nip: string | null
     activeNip: string | null
     passwordHash: string
+    sessionVersion: number
     role: $Enums.Role
     isSuperAdmin: boolean
     categoryScope: $Enums.ReportCategory | null
@@ -1480,6 +1527,7 @@ export interface UserFieldRefs {
   readonly nip: Prisma.FieldRef<"User", 'String'>
   readonly activeNip: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
+  readonly sessionVersion: Prisma.FieldRef<"User", 'Int'>
   readonly role: Prisma.FieldRef<"User", 'Role'>
   readonly isSuperAdmin: Prisma.FieldRef<"User", 'Boolean'>
   readonly categoryScope: Prisma.FieldRef<"User", 'ReportCategory'>

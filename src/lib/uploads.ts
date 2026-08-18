@@ -1,6 +1,8 @@
-import path from "path";
 import { randomUUID } from "crypto";
-import { promises as fs } from "fs";
+import {
+  deleteStoredObject,
+  putStoredObject,
+} from "@/src/lib/file-storage";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_REPORT_ATTACHMENT_BYTES = 2 * 1024 * 1024;
@@ -29,12 +31,17 @@ const REPORT_ATTACHMENT_EXTENSION_BY_TYPE = {
   "image/webp": ".webp",
 } as const;
 
-function sanitizeFileName(fileName: string) {
-  return fileName
-    .toLowerCase()
-    .replace(/[^a-z0-9.\-_]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+export class UploadValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UploadValidationError";
+  }
+}
+
+export function isUploadValidationError(
+  error: unknown,
+): error is UploadValidationError {
+  return error instanceof UploadValidationError;
 }
 
 export function validateImageUpload(file: File | null, options?: { required?: boolean }) {
@@ -156,29 +163,25 @@ export async function saveImageUpload(
   const validationError = validateImageUpload(file, { required: true });
 
   if (validationError) {
-    throw new Error(validationError);
+    throw new UploadValidationError(validationError);
   }
 
   const uploadFolder = options?.folder || "uploads";
-  const uploadDir = path.join(process.cwd(), "public", uploadFolder);
-  await fs.mkdir(uploadDir, { recursive: true });
-
   const bytes = Buffer.from(await file.arrayBuffer());
 
   if (!hasValidImageSignature(bytes, file.type)) {
-    throw new Error("Isi file gambar tidak valid.");
+    throw new UploadValidationError("Isi file gambar tidak valid.");
   }
 
   const extension =
     IMAGE_EXTENSION_BY_TYPE[file.type as keyof typeof IMAGE_EXTENSION_BY_TYPE];
 
-  const baseName = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
-  const finalFileName = `${Date.now()}-${randomUUID()}-${baseName || "file"}${extension}`;
-  const filePath = path.join(uploadDir, finalFileName);
-
-  await fs.writeFile(filePath, bytes);
-
-  return `/${uploadFolder}/${finalFileName}`;
+  const finalFileName = `${Date.now()}-${randomUUID()}${extension}`;
+  return putStoredObject({
+    key: `${uploadFolder}/${finalFileName}`,
+    bytes,
+    contentType: file.type,
+  });
 }
 
 export async function saveReportAttachmentUpload(
@@ -192,17 +195,15 @@ export async function saveReportAttachmentUpload(
   });
 
   if (validationError) {
-    throw new Error(validationError);
+    throw new UploadValidationError(validationError);
   }
 
   const uploadFolder = options?.folder || "uploads";
-  const uploadDir = path.join(process.cwd(), "public", uploadFolder);
-  await fs.mkdir(uploadDir, { recursive: true });
 
   const bytes = Buffer.from(await file.arrayBuffer());
 
   if (!hasValidReportAttachmentSignature(bytes, file.type)) {
-    throw new Error("Isi lampiran tidak valid.");
+    throw new UploadValidationError("Isi lampiran tidak valid.");
   }
 
   const extension =
@@ -210,27 +211,22 @@ export async function saveReportAttachmentUpload(
       file.type as keyof typeof REPORT_ATTACHMENT_EXTENSION_BY_TYPE
     ];
 
-  const baseName = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
-  const finalFileName = `${Date.now()}-${randomUUID()}-${baseName || "file"}${extension}`;
-  const filePath = path.join(uploadDir, finalFileName);
-
-  await fs.writeFile(filePath, bytes);
-
-  return `/${uploadFolder}/${finalFileName}`;
+  const finalFileName = `${Date.now()}-${randomUUID()}${extension}`;
+  return putStoredObject({
+    key: `${uploadFolder}/${finalFileName}`,
+    bytes,
+    contentType: file.type,
+  });
 }
 
 export async function deleteUploadedFileByUrl(fileUrl: string | null | undefined) {
-  if (!fileUrl || !fileUrl.startsWith("/uploads/")) {
+  if (
+    !fileUrl ||
+    (!fileUrl.startsWith("/uploads/") &&
+      !fileUrl.startsWith("private://uploads/"))
+  ) {
     return;
   }
 
-  const absolutePath = path.join(process.cwd(), "public", fileUrl.replace(/^\//, ""));
-
-  try {
-    await fs.unlink(absolutePath);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-      throw error;
-    }
-  }
+  await deleteStoredObject(fileUrl);
 }

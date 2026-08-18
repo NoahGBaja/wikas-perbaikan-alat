@@ -5,12 +5,19 @@ import {
   validatePasswordStrength,
 } from "../src/lib/passwords";
 
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL wajib diisi.");
+}
+
+const parsedDatabaseUrl = new URL(databaseUrl);
 const pool = createPool({
-  host: "127.0.0.1",
-  port: 3307,
-  user: "root",
-  password: "",
-  database: "wikas_perbaikan_alat_v2",
+  host: parsedDatabaseUrl.hostname,
+  port: parsedDatabaseUrl.port ? Number(parsedDatabaseUrl.port) : 3306,
+  user: decodeURIComponent(parsedDatabaseUrl.username),
+  password: decodeURIComponent(parsedDatabaseUrl.password),
+  database: parsedDatabaseUrl.pathname.replace(/^\//, ""),
   connectionLimit: 5,
 });
 
@@ -95,20 +102,24 @@ async function main() {
       await conn.query(
         `
         INSERT INTO \`user\`
-          (nama, nip, jabatan, role, isSuperAdmin, categoryScope, passwordHash, createdAt, updatedAt)
+          (nama, nip, activeNip, jabatan, role, isSuperAdmin, categoryScope, passwordHash, deletedAt, createdAt, updatedAt)
         VALUES
-          (?, ?, ?, ?, ?, ?, ?, NOW(3), NOW(3))
+          (?, ?, ?, ?, ?, ?, ?, ?, NULL, NOW(3), NOW(3))
         ON DUPLICATE KEY UPDATE
           nama = VALUES(nama),
+          nip = VALUES(nip),
+          activeNip = VALUES(activeNip),
           jabatan = VALUES(jabatan),
           role = VALUES(role),
           isSuperAdmin = VALUES(isSuperAdmin),
           categoryScope = VALUES(categoryScope),
           passwordHash = VALUES(passwordHash),
+          deletedAt = NULL,
           updatedAt = NOW(3)
         `,
         [
           account.nama,
+          account.nip,
           account.nip,
           account.jabatan,
           account.role,
@@ -123,7 +134,7 @@ async function main() {
 
     console.log("");
     console.log("✅ Seed selesai.");
-    console.log(`Password semua akun: ${DEFAULT_PASSWORD}`);
+    console.log("Password akun seed dibaca dari SEED_PASSWORD dan tidak dicetak.");
   } catch (error) {
     console.error("❌ Seed error:", error);
     throw error;

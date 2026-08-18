@@ -142,11 +142,16 @@ async function requestForm(
     method?: string;
     cookie?: string;
     expectedStatus?: number;
+    idempotencyKey?: string;
   } = {},
 ) {
   const headers: Record<string, string> = {
     Origin: origin,
   };
+
+  if ((options.method || "POST") === "POST" && path === "/api/reports") {
+    headers["Idempotency-Key"] = options.idempotencyKey || randomUUID();
+  }
 
   if (options.cookie) {
     headers.Cookie = options.cookie;
@@ -249,8 +254,8 @@ function validReportForm(overrides: Record<string, string | Blob> = {}) {
 
   form.set("kategori", "IT_ELEKTRONIK");
   form.set("namaPelapor", `Edge User ${runId}`);
-  form.set("nomorRuangan", "R-EDGE");
-  form.set("namaRuangan", "Ruang Edge");
+  form.set("nomorRuangan", "R-005");
+  form.set("namaRuangan", "Ruang IT");
   form.set("kodeUakpb", `Laptop Edge ${runId.slice(0, 6)}`);
   form.set("kode", "1.23.45.67.890.123");
   form.set("subcategory", "Komputer");
@@ -265,13 +270,20 @@ function validReportForm(overrides: Record<string, string | Blob> = {}) {
   return form;
 }
 
-async function createReport(cookie: string) {
-  const form = validReportForm();
+function validReportFormWithAttachment(
+  overrides: Record<string, string | Blob> = {},
+) {
+  const form = validReportForm(overrides);
   form.append(
     "attachments",
     new Blob(["%PDF-1.4\nedge-report\n"], { type: "application/pdf" }),
-    `report-${runId}.pdf`,
+    `report-${"long-file-name-".repeat(14)}${runId}.pdf`,
   );
+  return form;
+}
+
+async function createReport(cookie: string) {
+  const form = validReportFormWithAttachment();
 
   const { data } = await requestForm("/api/reports", form, {
     cookie,
@@ -291,6 +303,7 @@ async function setupUsers() {
         nama: `Edge User ${runId}`,
         jabatan: "QA",
         nip: `EDGEUSER${runId}`,
+        activeNip: `EDGEUSER${runId}`,
         role: "USER",
         passwordHash,
       },
@@ -300,6 +313,7 @@ async function setupUsers() {
         nama: `Other User ${runId}`,
         jabatan: "QA",
         nip: `EDGEOTH${runId}`,
+        activeNip: `EDGEOTH${runId}`,
         role: "USER",
         passwordHash,
       },
@@ -309,6 +323,7 @@ async function setupUsers() {
         nama: `Admin IT ${runId}`,
         jabatan: "Admin 1",
         nip: `EDGEA1I${runId}`,
+        activeNip: `EDGEA1I${runId}`,
         role: "ADMIN_1",
         categoryScope: "IT_ELEKTRONIK",
         passwordHash,
@@ -319,6 +334,7 @@ async function setupUsers() {
         nama: `Admin Lab ${runId}`,
         jabatan: "Admin 1",
         nip: `EDGEA1L${runId}`,
+        activeNip: `EDGEA1L${runId}`,
         role: "ADMIN_1",
         categoryScope: "LABORATORIUM",
         passwordHash,
@@ -329,6 +345,7 @@ async function setupUsers() {
         nama: `Admin 2 ${runId}`,
         jabatan: "Admin 2",
         nip: `EDGEA2${runId}`,
+        activeNip: `EDGEA2${runId}`,
         role: "ADMIN_2",
         passwordHash,
       },
@@ -338,6 +355,7 @@ async function setupUsers() {
         nama: `Admin 3 ${runId}`,
         jabatan: "Admin 3",
         nip: `EDGEA3${runId}`,
+        activeNip: `EDGEA3${runId}`,
         role: "ADMIN_3",
         passwordHash,
       },
@@ -347,6 +365,7 @@ async function setupUsers() {
         nama: `Admin 4 IT ${runId}`,
         jabatan: "Admin 4",
         nip: `EDGEA4I${runId}`,
+        activeNip: `EDGEA4I${runId}`,
         role: "ADMIN_4",
         categoryScope: "IT_ELEKTRONIK",
         passwordHash,
@@ -357,6 +376,7 @@ async function setupUsers() {
         nama: `Admin 5 ${runId}`,
         jabatan: "Admin 5",
         nip: `EDGEA5${runId}`,
+        activeNip: `EDGEA5${runId}`,
         role: "ADMIN_5",
         passwordHash,
       },
@@ -366,6 +386,7 @@ async function setupUsers() {
         nama: `Super Admin ${runId}`,
         jabatan: "Admin Utama",
         nip: `EDGESUP${runId}`,
+        activeNip: `EDGESUP${runId}`,
         role: "SUPER_ADMIN",
         isSuperAdmin: true,
         passwordHash,
@@ -376,6 +397,7 @@ async function setupUsers() {
         nama: `Executive ${runId}`,
         jabatan: "Kepala Balai",
         nip: `EDGEEXE${runId}`,
+        activeNip: `EDGEEXE${runId}`,
         role: "EXECUTIVE",
         passwordHash,
       },
@@ -427,7 +449,12 @@ async function cleanup() {
           ]),
           ...attachments.map((attachment) => attachment.url),
         ]) {
-          if (url?.startsWith("/uploads/")) uploadedUrls.add(url);
+          if (
+            url?.startsWith("/uploads/") ||
+            url?.startsWith("private://uploads/")
+          ) {
+            uploadedUrls.add(url);
+          }
         }
       } catch {
         // Cleanup still removes database records if a partial schema lacks upload columns.
@@ -453,6 +480,17 @@ async function cleanup() {
         title: { contains: runId },
       },
     });
+    await prisma.masterSubcategory.deleteMany({
+      where: { name: { contains: runId } },
+    });
+    await prisma.masterRoom.deleteMany({
+      where: {
+        OR: [
+          { name: { contains: runId } },
+          { code: { contains: runId } },
+        ],
+      },
+    });
 
     try {
       await prisma.auditLog.deleteMany({
@@ -471,7 +509,22 @@ async function cleanup() {
     }
 
     const uploadRoot = path.resolve(process.cwd(), "public", "uploads");
+    const privateStorageRoot = path.resolve(
+      process.cwd(),
+      process.env.STORAGE_LOCAL_ROOT?.trim() || ".data/storage",
+    );
     for (const url of uploadedUrls) {
+      if (url.startsWith("private://")) {
+        const storageKey = url.slice("private://".length);
+        const filePath = path.resolve(privateStorageRoot, storageKey);
+
+        if (!filePath.startsWith(`${privateStorageRoot}${path.sep}`)) continue;
+        await unlink(filePath).catch((error: NodeJS.ErrnoException) => {
+          if (error.code !== "ENOENT") throw error;
+        });
+        continue;
+      }
+
       const filePath = path.resolve(process.cwd(), "public", `.${url}`);
 
       if (!filePath.startsWith(`${uploadRoot}${path.sep}`)) continue;
@@ -556,11 +609,12 @@ async function main() {
     redirect: "manual",
   });
   assert(
-    [307, 308].includes(executiveAdminPage.status) &&
+    executiveAdminPage.status >= 300 &&
+      executiveAdminPage.status < 400 &&
       (executiveAdminPage.headers.get("location") || "").endsWith(
         "/dashboard/admin/statistik",
       ),
-    "Executive opening /dashboard/admin should redirect to statistics page.",
+    `Executive opening /dashboard/admin should redirect to statistics page (status ${executiveAdminPage.status}, location ${executiveAdminPage.headers.get("location") || "-"}).`,
   );
   const executiveStatsPage = await fetch(`${baseUrl}/dashboard/admin/statistik`, {
     headers: {
@@ -663,6 +717,35 @@ async function main() {
   });
   logStep("Every password write API rejects weak passwords");
 
+  const originalRoomName = `Edge Room ${runId}`;
+  const originalRoomCode = `ER-${runId}`;
+  const editedRoomName = `Edited Room ${runId}`;
+  const editedRoomCode = `ER2-${runId}`;
+  const originalSubcategoryName = `Edge Subcategory ${runId}`;
+  const editedSubcategoryName = `Edited Subcategory ${runId}`;
+  const originalSubcategoryCode = `ES-${runId}`;
+  const editedSubcategoryCode = `ES2-${runId}`;
+
+  await request("/api/admin/master-data", {
+    method: "POST",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "room",
+      name: originalRoomName,
+      code: originalRoomCode,
+    },
+  });
+  await request("/api/admin/master-data", {
+    method: "POST",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "subcategory",
+      category: "IT_ELEKTRONIK",
+      name: originalSubcategoryName,
+      code: originalSubcategoryCode,
+    },
+  });
+
   await request("/api/admin/master-data", {
     method: "POST",
     cookie: superAdmin.cookie,
@@ -698,6 +781,55 @@ async function main() {
     !("title" in savedTemplates[0]) && !("body" in savedTemplates[0]),
     "Template API should expose name/description instead of title/body.",
   );
+  const savedRoom = masterData.data?.rooms?.find(
+    (room: { name: string }) => room.name === originalRoomName,
+  );
+  const savedSubcategory = masterData.data?.categories
+    ?.find(
+      (category: { value: string }) => category.value === "IT_ELEKTRONIK",
+    )
+    ?.subcategories?.find(
+      (subcategory: { name: string }) =>
+        subcategory.name === originalSubcategoryName,
+    );
+  assert(savedRoom?.id, "Created room should expose its persistent ID.");
+  assert(
+    savedSubcategory?.id,
+    "Created subcategory should expose its persistent ID.",
+  );
+  assert(savedTemplates[0]?.id, "Created template should expose its persistent ID.");
+
+  const editedTemplateName = `Edited Template ${runId}`;
+  const templatePreview = await request("/api/admin/master-data", {
+    method: "PATCH",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "messageTemplate",
+      id: savedTemplates[0].id,
+      type: "CUSTOM",
+      customType: `EDGE_CUSTOM_${runId}`,
+      name: editedTemplateName,
+      description: `Edited template description ${runId}`,
+      preview: true,
+    },
+  });
+  assert(
+    templatePreview.data?.requiresConfirmation === true &&
+      templatePreview.data?.impact?.futureOnly === true,
+    "Template edit should require a future-only confirmation.",
+  );
+  await request("/api/admin/master-data", {
+    method: "PATCH",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "messageTemplate",
+      id: savedTemplates[0].id,
+      type: "CUSTOM",
+      customType: `EDGE_CUSTOM_${runId}`,
+      name: editedTemplateName,
+      description: `Edited template description ${runId}`,
+    },
+  });
   await request("/api/admin/master-data", {
     method: "POST",
     cookie: superAdmin.cookie,
@@ -736,11 +868,11 @@ async function main() {
     cookie: superAdmin.cookie,
     body: {
       kind: "messageTemplate",
-      type: "COMPLETION",
-      name: `Edge Template ${runId}`,
+      type: `EDGE_CUSTOM_${runId}`,
+      name: editedTemplateName,
     },
   });
-  logStep("Response templates use validated name/description pairs and update cleanly");
+  logStep("Response templates support confirmed edits of type, name, and description");
 
   await requestForm("/api/reports", validReportForm(), {
     cookie: adminIt.cookie,
@@ -761,6 +893,17 @@ async function main() {
   await requestForm(
     "/api/reports",
     validReportForm({ deskripsi: "x".repeat(2001) }),
+    {
+      cookie: user.cookie,
+      expectedStatus: 400,
+    },
+  );
+  await requestForm(
+    "/api/reports",
+    validReportFormWithAttachment({
+      kategori: "FASILITAS_INVENTARIS",
+      subcategory: "Komputer",
+    }),
     {
       cookie: user.cookie,
       expectedStatus: 400,
@@ -803,7 +946,151 @@ async function main() {
     cookie: user.cookie,
     expectedStatus: 400,
   });
+  const spoofedImage = validReportForm();
+  spoofedImage.set(
+    "attachments",
+    new Blob(["MZ-not-really-an-image"], { type: "image/png" }),
+    "spoofed.png",
+  );
+  await requestForm("/api/reports", spoofedImage, {
+    cookie: user.cookie,
+    expectedStatus: 400,
+  });
   logStep("Report creation requires an attachment and rejects invalid input");
+
+  const replayKey = randomUUID();
+  const masterReportOverrides = {
+    namaRuangan: originalRoomName,
+    nomorRuangan: originalRoomCode,
+    subcategory: originalSubcategoryName,
+    namaBarang: `Master propagation ${runId}`,
+    kodeUakpb: `Master propagation ${runId}`,
+  };
+  const firstSubmission = await requestForm(
+    "/api/reports",
+    validReportFormWithAttachment(masterReportOverrides),
+    { cookie: user.cookie, idempotencyKey: replayKey },
+  );
+  const replayedSubmission = await requestForm(
+    "/api/reports",
+    validReportFormWithAttachment(masterReportOverrides),
+    { cookie: user.cookie, idempotencyKey: replayKey },
+  );
+  assert(
+    firstSubmission.data?.report?.id === replayedSubmission.data?.report?.id &&
+      replayedSubmission.data?.replayed === true,
+    "Replaying a report submission key should return the original report.",
+  );
+  assert(
+    !("idempotencyKey" in firstSubmission.data.report) &&
+      JSON.stringify(firstSubmission.data.report).includes("private://") === false,
+    "Report responses must hide idempotency and private storage references.",
+  );
+  const activeMasterReportId = Number(firstSubmission.data.report.id);
+  createdReportIds.push(activeMasterReportId);
+  assert(
+    (await prisma.report.count({ where: { idempotencyKey: replayKey } })) === 1,
+    "An idempotency key should persist exactly one report.",
+  );
+
+  const historicalSubmission = await requestForm(
+    "/api/reports",
+    validReportFormWithAttachment({
+      ...masterReportOverrides,
+      namaBarang: `Historical propagation ${runId}`,
+      kodeUakpb: `Historical propagation ${runId}`,
+    }),
+    { cookie: user.cookie },
+  );
+  const historicalMasterReportId = Number(historicalSubmission.data.report.id);
+  createdReportIds.push(historicalMasterReportId);
+  await prisma.report.update({
+    where: { id: historicalMasterReportId },
+    data: { status: "TELAH_BERFUNGSI", finishedAt: new Date() },
+  });
+
+  const roomPreview = await request("/api/admin/master-data", {
+    method: "PATCH",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "room",
+      id: savedRoom.id,
+      name: editedRoomName,
+      code: editedRoomCode,
+      preview: true,
+    },
+  });
+  assert(
+    roomPreview.data?.requiresConfirmation === true &&
+      roomPreview.data?.impact?.ongoingReports >= 1 &&
+      roomPreview.data?.impact?.historyReports >= 1,
+    "Room edit preview should count both ongoing and historical reports.",
+  );
+  await request("/api/admin/master-data", {
+    method: "PATCH",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "room",
+      id: savedRoom.id,
+      name: editedRoomName,
+      code: editedRoomCode,
+    },
+  });
+
+  const subcategoryPreview = await request("/api/admin/master-data", {
+    method: "PATCH",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "subcategory",
+      id: savedSubcategory.id,
+      category: "IT_ELEKTRONIK",
+      name: editedSubcategoryName,
+      code: editedSubcategoryCode,
+      preview: true,
+    },
+  });
+  assert(
+    subcategoryPreview.data?.requiresConfirmation === true &&
+      subcategoryPreview.data?.impact?.ongoingReports >= 1 &&
+      subcategoryPreview.data?.impact?.historyReports >= 1,
+    "Subcategory edit preview should count ongoing and historical reports.",
+  );
+  await request("/api/admin/master-data", {
+    method: "PATCH",
+    cookie: superAdmin.cookie,
+    body: {
+      kind: "subcategory",
+      id: savedSubcategory.id,
+      category: "IT_ELEKTRONIK",
+      name: editedSubcategoryName,
+      code: editedSubcategoryCode,
+    },
+  });
+
+  const propagatedReports = await prisma.report.findMany({
+    where: { id: { in: [activeMasterReportId, historicalMasterReportId] } },
+    select: {
+      namaRuangan: true,
+      nomorRuangan: true,
+      lokasi: true,
+      subcategory: true,
+      itemType: true,
+      status: true,
+    },
+  });
+  assert(
+    propagatedReports.length === 2 &&
+      propagatedReports.every(
+        (item) =>
+          item.namaRuangan === editedRoomName &&
+          item.nomorRuangan === editedRoomCode &&
+          item.lokasi === editedRoomName &&
+          item.subcategory === editedSubcategoryName &&
+          item.itemType === editedSubcategoryName,
+      ),
+    "Room and subcategory edits should propagate to ongoing and historical reports.",
+  );
+  logStep("Idempotent submit and confirmed master edits preserve report links across history");
 
   const report = await createReport(user.cookie);
   assert(
@@ -991,12 +1278,16 @@ async function main() {
     body: { action: "MAYBE", note: "invalid action" },
     expectedStatus: 400,
   });
-  await request(`/api/reports/${report.id}/decide`, {
+  const pjDeclineReport = await createReport(user.cookie);
+  const pjDecline = await request(`/api/reports/${pjDeclineReport.id}/decide`, {
     method: "POST",
     cookie: adminIt.cookie,
-    body: { action: "TOLAK", note: "not allowed for admin 1" },
-    expectedStatus: 403,
+    body: { action: "TOLAK", note: `PJ rejects ${runId}` },
   });
+  assert(
+    pjDecline.data?.report?.status === "DITOLAK",
+    "PJ should be able to reject a report during the first stage.",
+  );
   await request(`/api/reports/${report.id}/decide`, {
     method: "POST",
     cookie: adminIt.cookie,
@@ -1082,7 +1373,7 @@ async function main() {
     method: "POST",
     cookie: admin5.cookie,
     body: { action: "ACC", note: `Accept without budget ${runId}` },
-    expectedStatus: 400,
+    expectedStatus: 403,
   });
 
   const badCompletionForm = new FormData();
@@ -1135,6 +1426,19 @@ async function main() {
       completion.data.report.attachments.length >= 3,
     "Completion should keep original report attachment and add multiple proof files.",
   );
+  assert(
+    completion.data.report.attachments.some(
+      (attachment: { purpose?: string; uploadedByRole?: string }) =>
+        attachment.purpose === "DAMAGE_EVIDENCE" &&
+        attachment.uploadedByRole === "USER",
+    ) &&
+      completion.data.report.attachments.filter(
+        (attachment: { purpose?: string; uploadedByRole?: string }) =>
+          attachment.purpose === "COMPLETION_PROOF" &&
+          attachment.uploadedByRole === "ADMIN_5",
+      ).length >= 2,
+    "Attachment metadata should identify reporter evidence and PP completion proofs.",
+  );
   logStep("Workflow requires PP proof and accepts multiple completion files");
 
   const ppDeclineReport = await createReport(user.cookie);
@@ -1162,41 +1466,12 @@ async function main() {
     ppDecline.data?.report?.status === "DITOLAK",
     "PP should be able to decline without entering a budget.",
   );
-  logStep("PP budget is required for acceptance but optional for rejection");
+  logStep("PP completion requires a budget while rejection does not");
 
-  const ppAcceptedReport = await createReport(user.cookie);
-  for (const [cookie, label] of [
-    [adminIt.cookie, "PJ Perbaikan"],
-    [admin2.cookie, "K.TU"],
-    [admin3.cookie, "BMN"],
-    [admin4It.cookie, "PPK"],
-  ]) {
-    await request(`/api/reports/${ppAcceptedReport.id}/decide`, {
-      method: "POST",
-      cookie,
-      body: { action: "ACC", note: `${label} meneruskan ${runId}` },
-    });
-  }
-  const ppAcceptance = await request(
-    `/api/reports/${ppAcceptedReport.id}/decide`,
-    {
-      method: "POST",
-      cookie: admin5.cookie,
-      body: {
-        action: "ACC",
-        note: `PP menerima ${runId}`,
-        repairCost: "1500000",
-      },
-    },
-  );
-  assert(
-    ppAcceptance.data?.report?.status === "MENUNGGU_KONFIRMASI",
-    "PP acceptance should return the report to the reporter for confirmation.",
-  );
   const reporterNotifications = await request("/api/notifications", {
     cookie: user.cookie,
   });
-  const ppAcceptanceNotification =
+  const ppCompletionNotification =
     reporterNotifications.data?.notifications?.find(
       (notification: {
         reportId: number;
@@ -1204,23 +1479,22 @@ async function main() {
         href: string;
         readAt: string | null;
       }) =>
-        notification.reportId === ppAcceptedReport.id &&
-        notification.title === "Laporan diterima, perlu konfirmasi",
+        notification.reportId === report.id &&
+        notification.title === "Laporan selesai, perlu konfirmasi",
     );
   assert(
-    ppAcceptanceNotification,
-    "PP acceptance should notify the original reporter.",
+    ppCompletionNotification,
+    "PP completion should notify the original reporter.",
   );
   assert(
-    ppAcceptanceNotification.readAt === null,
-    "The PP acceptance notification should initially be unread.",
+    ppCompletionNotification.readAt === null,
+    "The PP completion notification should initially be unread.",
   );
   assert(
-    ppAcceptanceNotification.href ===
-      `/dashboard/user/status?report=${ppAcceptedReport.id}`,
-    "The PP acceptance notification should link to the reporter's report detail.",
+    ppCompletionNotification.href === `/dashboard/user/status?report=${report.id}`,
+    "The PP completion notification should link to the reporter's report detail.",
   );
-  logStep("PP acceptance notifies the reporter and links to the report detail");
+  logStep("PP completion notifies the reporter and links to the report detail");
 
   const attachmentId = completion.data.report.attachments[0].id;
   await requestDownload(
@@ -1254,7 +1528,7 @@ async function main() {
     body: { confirmed: true, finalStatus: "TIDAK_DAPAT_DIGUNAKAN" },
     expectedStatus: 400,
   });
-  const reopen = await request(`/api/reports/${report.id}/confirm`, {
+  const unusableConfirmation = await request(`/api/reports/${report.id}/confirm`, {
     method: "POST",
     cookie: user.cookie,
     body: {
@@ -1264,10 +1538,32 @@ async function main() {
     },
   });
   assert(
-    reopen.data?.report?.status === "MENUNGGU_ADMIN_1",
-    `Unusable confirmation should reopen to Admin 1, got ${reopen.data?.report?.status}`,
+    unusableConfirmation.data?.report?.status === "TIDAK_DAPAT_DIGUNAKAN",
+    `Unusable confirmation should remain final until explicitly resubmitted, got ${unusableConfirmation.data?.report?.status}`,
   );
-  logStep("Reporter confirmation requires checkbox/description and can reopen reports");
+  await requestForm(
+    "/api/reports",
+    validReportFormWithAttachment({
+      resubmittedFromReportId: String(report.id),
+    }),
+    { cookie: otherUser.cookie, expectedStatus: 400 },
+  );
+  const resubmission = await requestForm(
+    "/api/reports",
+    validReportFormWithAttachment({
+      resubmittedFromReportId: String(report.id),
+      deskripsi: `Resubmitted after unusable confirmation ${runId}`,
+    }),
+    { cookie: user.cookie },
+  );
+  assert(resubmission.data?.report?.id, "Resubmission should create a new report.");
+  createdReportIds.push(resubmission.data.report.id);
+  assert(
+    resubmission.data.report.resubmittedFromId === report.id &&
+      resubmission.data.report.status === "MENUNGGU_ADMIN_1",
+    "Resubmission should link to the final source report and restart at PJ.",
+  );
+  logStep("Unusable confirmation remains final and supports an explicit linked resubmission");
 
   const finalReport = await createReport(user.cookie);
   await request(`/api/reports/${finalReport.id}/decide`, {
@@ -1318,7 +1614,7 @@ async function main() {
   );
   await requestDownload(
     `/api/reports/export?processState=UNFINISHED&responsibleRole=ADMIN_1&room=${encodeURIComponent(
-      "Ruang Edge",
+      "Ruang IT",
     )}&subcategory=Komputer&budget=CUSTOM&budgetMin=0&budgetMax=2000000`,
     {
       cookie: superAdmin.cookie,

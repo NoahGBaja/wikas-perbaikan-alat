@@ -28,12 +28,14 @@ export type AggregateReport = {
 
 export type ReportAvgAggregateOutputType = {
   id: number | null
+  resubmittedFromId: number | null
   userId: number | null
   repairCost: runtime.Decimal | null
 }
 
 export type ReportSumAggregateOutputType = {
   id: number | null
+  resubmittedFromId: number | null
   userId: number | null
   repairCost: runtime.Decimal | null
 }
@@ -41,6 +43,8 @@ export type ReportSumAggregateOutputType = {
 export type ReportMinAggregateOutputType = {
   id: number | null
   ticket: string | null
+  idempotencyKey: string | null
+  resubmittedFromId: number | null
   userId: number | null
   namaPelapor: string | null
   nomorRuangan: string | null
@@ -80,6 +84,8 @@ export type ReportMinAggregateOutputType = {
 export type ReportMaxAggregateOutputType = {
   id: number | null
   ticket: string | null
+  idempotencyKey: string | null
+  resubmittedFromId: number | null
   userId: number | null
   namaPelapor: string | null
   nomorRuangan: string | null
@@ -119,6 +125,8 @@ export type ReportMaxAggregateOutputType = {
 export type ReportCountAggregateOutputType = {
   id: number
   ticket: number
+  idempotencyKey: number
+  resubmittedFromId: number
   userId: number
   namaPelapor: number
   nomorRuangan: number
@@ -159,12 +167,14 @@ export type ReportCountAggregateOutputType = {
 
 export type ReportAvgAggregateInputType = {
   id?: true
+  resubmittedFromId?: true
   userId?: true
   repairCost?: true
 }
 
 export type ReportSumAggregateInputType = {
   id?: true
+  resubmittedFromId?: true
   userId?: true
   repairCost?: true
 }
@@ -172,6 +182,8 @@ export type ReportSumAggregateInputType = {
 export type ReportMinAggregateInputType = {
   id?: true
   ticket?: true
+  idempotencyKey?: true
+  resubmittedFromId?: true
   userId?: true
   namaPelapor?: true
   nomorRuangan?: true
@@ -211,6 +223,8 @@ export type ReportMinAggregateInputType = {
 export type ReportMaxAggregateInputType = {
   id?: true
   ticket?: true
+  idempotencyKey?: true
+  resubmittedFromId?: true
   userId?: true
   namaPelapor?: true
   nomorRuangan?: true
@@ -250,6 +264,8 @@ export type ReportMaxAggregateInputType = {
 export type ReportCountAggregateInputType = {
   id?: true
   ticket?: true
+  idempotencyKey?: true
+  resubmittedFromId?: true
   userId?: true
   namaPelapor?: true
   nomorRuangan?: true
@@ -376,6 +392,8 @@ export type ReportGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 export type ReportGroupByOutputType = {
   id: number
   ticket: string | null
+  idempotencyKey: string | null
+  resubmittedFromId: number | null
   userId: number
   namaPelapor: string | null
   nomorRuangan: string | null
@@ -438,6 +456,8 @@ export type ReportWhereInput = {
   NOT?: Prisma.ReportWhereInput | Prisma.ReportWhereInput[]
   id?: Prisma.IntFilter<"Report"> | number
   ticket?: Prisma.StringNullableFilter<"Report"> | string | null
+  idempotencyKey?: Prisma.StringNullableFilter<"Report"> | string | null
+  resubmittedFromId?: Prisma.IntNullableFilter<"Report"> | number | null
   userId?: Prisma.IntFilter<"Report"> | number
   namaPelapor?: Prisma.StringNullableFilter<"Report"> | string | null
   nomorRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
@@ -473,6 +493,8 @@ export type ReportWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Report"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  resubmittedFrom?: Prisma.XOR<Prisma.ReportNullableScalarRelationFilter, Prisma.ReportWhereInput> | null
+  resubmissions?: Prisma.ReportListRelationFilter
   histories?: Prisma.ReportApprovalHistoryListRelationFilter
   attachments?: Prisma.ReportAttachmentListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
@@ -481,6 +503,8 @@ export type ReportWhereInput = {
 export type ReportOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   ticket?: Prisma.SortOrderInput | Prisma.SortOrder
+  idempotencyKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  resubmittedFromId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   namaPelapor?: Prisma.SortOrderInput | Prisma.SortOrder
   nomorRuangan?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -516,6 +540,8 @@ export type ReportOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
+  resubmittedFrom?: Prisma.ReportOrderByWithRelationInput
+  resubmissions?: Prisma.ReportOrderByRelationAggregateInput
   histories?: Prisma.ReportApprovalHistoryOrderByRelationAggregateInput
   attachments?: Prisma.ReportAttachmentOrderByRelationAggregateInput
   notifications?: Prisma.NotificationOrderByRelationAggregateInput
@@ -525,9 +551,11 @@ export type ReportOrderByWithRelationInput = {
 export type ReportWhereUniqueInput = Prisma.AtLeast<{
   id?: number
   ticket?: string
+  idempotencyKey?: string
   AND?: Prisma.ReportWhereInput | Prisma.ReportWhereInput[]
   OR?: Prisma.ReportWhereInput[]
   NOT?: Prisma.ReportWhereInput | Prisma.ReportWhereInput[]
+  resubmittedFromId?: Prisma.IntNullableFilter<"Report"> | number | null
   userId?: Prisma.IntFilter<"Report"> | number
   namaPelapor?: Prisma.StringNullableFilter<"Report"> | string | null
   nomorRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
@@ -563,14 +591,18 @@ export type ReportWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Report"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  resubmittedFrom?: Prisma.XOR<Prisma.ReportNullableScalarRelationFilter, Prisma.ReportWhereInput> | null
+  resubmissions?: Prisma.ReportListRelationFilter
   histories?: Prisma.ReportApprovalHistoryListRelationFilter
   attachments?: Prisma.ReportAttachmentListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
-}, "id" | "ticket">
+}, "id" | "ticket" | "idempotencyKey">
 
 export type ReportOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   ticket?: Prisma.SortOrderInput | Prisma.SortOrder
+  idempotencyKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  resubmittedFromId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   namaPelapor?: Prisma.SortOrderInput | Prisma.SortOrder
   nomorRuangan?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -618,6 +650,8 @@ export type ReportScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ReportScalarWhereWithAggregatesInput | Prisma.ReportScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Report"> | number
   ticket?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  idempotencyKey?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  resubmittedFromId?: Prisma.IntNullableWithAggregatesFilter<"Report"> | number | null
   userId?: Prisma.IntWithAggregatesFilter<"Report"> | number
   namaPelapor?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
   nomorRuangan?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
@@ -656,6 +690,7 @@ export type ReportScalarWhereWithAggregatesInput = {
 
 export type ReportCreateInput = {
   ticket?: string | null
+  idempotencyKey?: string | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
   namaRuangan?: string | null
@@ -690,6 +725,8 @@ export type ReportCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReportsInput
+  resubmittedFrom?: Prisma.ReportCreateNestedOneWithoutResubmissionsInput
+  resubmissions?: Prisma.ReportCreateNestedManyWithoutResubmittedFromInput
   histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
   attachments?: Prisma.ReportAttachmentCreateNestedManyWithoutReportInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutReportInput
@@ -698,6 +735,8 @@ export type ReportCreateInput = {
 export type ReportUncheckedCreateInput = {
   id?: number
   ticket?: string | null
+  idempotencyKey?: string | null
+  resubmittedFromId?: number | null
   userId: number
   namaPelapor?: string | null
   nomorRuangan?: string | null
@@ -732,6 +771,7 @@ export type ReportUncheckedCreateInput = {
   finishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  resubmissions?: Prisma.ReportUncheckedCreateNestedManyWithoutResubmittedFromInput
   histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
   attachments?: Prisma.ReportAttachmentUncheckedCreateNestedManyWithoutReportInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutReportInput
@@ -739,6 +779,7 @@ export type ReportUncheckedCreateInput = {
 
 export type ReportUpdateInput = {
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -773,6 +814,8 @@ export type ReportUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  resubmittedFrom?: Prisma.ReportUpdateOneWithoutResubmissionsNestedInput
+  resubmissions?: Prisma.ReportUpdateManyWithoutResubmittedFromNestedInput
   histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
   attachments?: Prisma.ReportAttachmentUpdateManyWithoutReportNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutReportNestedInput
@@ -781,6 +824,8 @@ export type ReportUpdateInput = {
 export type ReportUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resubmittedFromId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -815,6 +860,7 @@ export type ReportUncheckedUpdateInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  resubmissions?: Prisma.ReportUncheckedUpdateManyWithoutResubmittedFromNestedInput
   histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
   attachments?: Prisma.ReportAttachmentUncheckedUpdateManyWithoutReportNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutReportNestedInput
@@ -823,6 +869,8 @@ export type ReportUncheckedUpdateInput = {
 export type ReportCreateManyInput = {
   id?: number
   ticket?: string | null
+  idempotencyKey?: string | null
+  resubmittedFromId?: number | null
   userId: number
   namaPelapor?: string | null
   nomorRuangan?: string | null
@@ -861,6 +909,7 @@ export type ReportCreateManyInput = {
 
 export type ReportUpdateManyMutationInput = {
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -899,6 +948,8 @@ export type ReportUpdateManyMutationInput = {
 export type ReportUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resubmittedFromId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -945,6 +996,11 @@ export type ReportOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type ReportNullableScalarRelationFilter = {
+  is?: Prisma.ReportWhereInput | null
+  isNot?: Prisma.ReportWhereInput | null
+}
+
 export type ReportOrderByRelevanceInput = {
   fields: Prisma.ReportOrderByRelevanceFieldEnum | Prisma.ReportOrderByRelevanceFieldEnum[]
   sort: Prisma.SortOrder
@@ -954,6 +1010,8 @@ export type ReportOrderByRelevanceInput = {
 export type ReportCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   ticket?: Prisma.SortOrder
+  idempotencyKey?: Prisma.SortOrder
+  resubmittedFromId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   namaPelapor?: Prisma.SortOrder
   nomorRuangan?: Prisma.SortOrder
@@ -992,6 +1050,7 @@ export type ReportCountOrderByAggregateInput = {
 
 export type ReportAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  resubmittedFromId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   repairCost?: Prisma.SortOrder
 }
@@ -999,6 +1058,8 @@ export type ReportAvgOrderByAggregateInput = {
 export type ReportMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   ticket?: Prisma.SortOrder
+  idempotencyKey?: Prisma.SortOrder
+  resubmittedFromId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   namaPelapor?: Prisma.SortOrder
   nomorRuangan?: Prisma.SortOrder
@@ -1038,6 +1099,8 @@ export type ReportMaxOrderByAggregateInput = {
 export type ReportMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   ticket?: Prisma.SortOrder
+  idempotencyKey?: Prisma.SortOrder
+  resubmittedFromId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   namaPelapor?: Prisma.SortOrder
   nomorRuangan?: Prisma.SortOrder
@@ -1076,6 +1139,7 @@ export type ReportMinOrderByAggregateInput = {
 
 export type ReportSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  resubmittedFromId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   repairCost?: Prisma.SortOrder
 }
@@ -1083,11 +1147,6 @@ export type ReportSumOrderByAggregateInput = {
 export type ReportScalarRelationFilter = {
   is?: Prisma.ReportWhereInput
   isNot?: Prisma.ReportWhereInput
-}
-
-export type ReportNullableScalarRelationFilter = {
-  is?: Prisma.ReportWhereInput | null
-  isNot?: Prisma.ReportWhereInput | null
 }
 
 export type ReportCreateNestedManyWithoutUserInput = {
@@ -1132,6 +1191,26 @@ export type ReportUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
 }
 
+export type ReportCreateNestedOneWithoutResubmissionsInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutResubmissionsInput, Prisma.ReportUncheckedCreateWithoutResubmissionsInput>
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutResubmissionsInput
+  connect?: Prisma.ReportWhereUniqueInput
+}
+
+export type ReportCreateNestedManyWithoutResubmittedFromInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutResubmittedFromInput, Prisma.ReportUncheckedCreateWithoutResubmittedFromInput> | Prisma.ReportCreateWithoutResubmittedFromInput[] | Prisma.ReportUncheckedCreateWithoutResubmittedFromInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutResubmittedFromInput | Prisma.ReportCreateOrConnectWithoutResubmittedFromInput[]
+  createMany?: Prisma.ReportCreateManyResubmittedFromInputEnvelope
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+}
+
+export type ReportUncheckedCreateNestedManyWithoutResubmittedFromInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutResubmittedFromInput, Prisma.ReportUncheckedCreateWithoutResubmittedFromInput> | Prisma.ReportCreateWithoutResubmittedFromInput[] | Prisma.ReportUncheckedCreateWithoutResubmittedFromInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutResubmittedFromInput | Prisma.ReportCreateOrConnectWithoutResubmittedFromInput[]
+  createMany?: Prisma.ReportCreateManyResubmittedFromInputEnvelope
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+}
+
 export type EnumReportCategoryFieldUpdateOperationsInput = {
   set?: $Enums.ReportCategory
 }
@@ -1150,6 +1229,52 @@ export type NullableDecimalFieldUpdateOperationsInput = {
 
 export type EnumReportStatusFieldUpdateOperationsInput = {
   set?: $Enums.ReportStatus
+}
+
+export type ReportUpdateOneWithoutResubmissionsNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutResubmissionsInput, Prisma.ReportUncheckedCreateWithoutResubmissionsInput>
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutResubmissionsInput
+  upsert?: Prisma.ReportUpsertWithoutResubmissionsInput
+  disconnect?: Prisma.ReportWhereInput | boolean
+  delete?: Prisma.ReportWhereInput | boolean
+  connect?: Prisma.ReportWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ReportUpdateToOneWithWhereWithoutResubmissionsInput, Prisma.ReportUpdateWithoutResubmissionsInput>, Prisma.ReportUncheckedUpdateWithoutResubmissionsInput>
+}
+
+export type ReportUpdateManyWithoutResubmittedFromNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutResubmittedFromInput, Prisma.ReportUncheckedCreateWithoutResubmittedFromInput> | Prisma.ReportCreateWithoutResubmittedFromInput[] | Prisma.ReportUncheckedCreateWithoutResubmittedFromInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutResubmittedFromInput | Prisma.ReportCreateOrConnectWithoutResubmittedFromInput[]
+  upsert?: Prisma.ReportUpsertWithWhereUniqueWithoutResubmittedFromInput | Prisma.ReportUpsertWithWhereUniqueWithoutResubmittedFromInput[]
+  createMany?: Prisma.ReportCreateManyResubmittedFromInputEnvelope
+  set?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  disconnect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  delete?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  update?: Prisma.ReportUpdateWithWhereUniqueWithoutResubmittedFromInput | Prisma.ReportUpdateWithWhereUniqueWithoutResubmittedFromInput[]
+  updateMany?: Prisma.ReportUpdateManyWithWhereWithoutResubmittedFromInput | Prisma.ReportUpdateManyWithWhereWithoutResubmittedFromInput[]
+  deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type ReportUncheckedUpdateManyWithoutResubmittedFromNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutResubmittedFromInput, Prisma.ReportUncheckedCreateWithoutResubmittedFromInput> | Prisma.ReportCreateWithoutResubmittedFromInput[] | Prisma.ReportUncheckedCreateWithoutResubmittedFromInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutResubmittedFromInput | Prisma.ReportCreateOrConnectWithoutResubmittedFromInput[]
+  upsert?: Prisma.ReportUpsertWithWhereUniqueWithoutResubmittedFromInput | Prisma.ReportUpsertWithWhereUniqueWithoutResubmittedFromInput[]
+  createMany?: Prisma.ReportCreateManyResubmittedFromInputEnvelope
+  set?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  disconnect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  delete?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  update?: Prisma.ReportUpdateWithWhereUniqueWithoutResubmittedFromInput | Prisma.ReportUpdateWithWhereUniqueWithoutResubmittedFromInput[]
+  updateMany?: Prisma.ReportUpdateManyWithWhereWithoutResubmittedFromInput | Prisma.ReportUpdateManyWithWhereWithoutResubmittedFromInput[]
+  deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
 }
 
 export type ReportCreateNestedOneWithoutAttachmentsInput = {
@@ -1198,6 +1323,7 @@ export type ReportUpdateOneWithoutNotificationsNestedInput = {
 
 export type ReportCreateWithoutUserInput = {
   ticket?: string | null
+  idempotencyKey?: string | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
   namaRuangan?: string | null
@@ -1231,6 +1357,8 @@ export type ReportCreateWithoutUserInput = {
   finishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  resubmittedFrom?: Prisma.ReportCreateNestedOneWithoutResubmissionsInput
+  resubmissions?: Prisma.ReportCreateNestedManyWithoutResubmittedFromInput
   histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
   attachments?: Prisma.ReportAttachmentCreateNestedManyWithoutReportInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutReportInput
@@ -1239,6 +1367,8 @@ export type ReportCreateWithoutUserInput = {
 export type ReportUncheckedCreateWithoutUserInput = {
   id?: number
   ticket?: string | null
+  idempotencyKey?: string | null
+  resubmittedFromId?: number | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
   namaRuangan?: string | null
@@ -1272,6 +1402,7 @@ export type ReportUncheckedCreateWithoutUserInput = {
   finishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  resubmissions?: Prisma.ReportUncheckedCreateNestedManyWithoutResubmittedFromInput
   histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
   attachments?: Prisma.ReportAttachmentUncheckedCreateNestedManyWithoutReportInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutReportInput
@@ -1309,6 +1440,8 @@ export type ReportScalarWhereInput = {
   NOT?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
   id?: Prisma.IntFilter<"Report"> | number
   ticket?: Prisma.StringNullableFilter<"Report"> | string | null
+  idempotencyKey?: Prisma.StringNullableFilter<"Report"> | string | null
+  resubmittedFromId?: Prisma.IntNullableFilter<"Report"> | number | null
   userId?: Prisma.IntFilter<"Report"> | number
   namaPelapor?: Prisma.StringNullableFilter<"Report"> | string | null
   nomorRuangan?: Prisma.StringNullableFilter<"Report"> | string | null
@@ -1345,8 +1478,9 @@ export type ReportScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
 }
 
-export type ReportCreateWithoutAttachmentsInput = {
+export type ReportCreateWithoutResubmissionsInput = {
   ticket?: string | null
+  idempotencyKey?: string | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
   namaRuangan?: string | null
@@ -1381,13 +1515,17 @@ export type ReportCreateWithoutAttachmentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReportsInput
+  resubmittedFrom?: Prisma.ReportCreateNestedOneWithoutResubmissionsInput
   histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
+  attachments?: Prisma.ReportAttachmentCreateNestedManyWithoutReportInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutReportInput
 }
 
-export type ReportUncheckedCreateWithoutAttachmentsInput = {
+export type ReportUncheckedCreateWithoutResubmissionsInput = {
   id?: number
   ticket?: string | null
+  idempotencyKey?: string | null
+  resubmittedFromId?: number | null
   userId: number
   namaPelapor?: string | null
   nomorRuangan?: string | null
@@ -1422,6 +1560,310 @@ export type ReportUncheckedCreateWithoutAttachmentsInput = {
   finishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
+  attachments?: Prisma.ReportAttachmentUncheckedCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutReportInput
+}
+
+export type ReportCreateOrConnectWithoutResubmissionsInput = {
+  where: Prisma.ReportWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReportCreateWithoutResubmissionsInput, Prisma.ReportUncheckedCreateWithoutResubmissionsInput>
+}
+
+export type ReportCreateWithoutResubmittedFromInput = {
+  ticket?: string | null
+  idempotencyKey?: string | null
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  namaRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
+  nup?: string | null
+  kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
+  namaBarang: string
+  lokasi: string
+  deskripsi: string
+  severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
+  status?: $Enums.ReportStatus
+  alasanPenolakan?: string | null
+  assignedTechnician?: string | null
+  adminNotes?: string | null
+  completionNotes?: string | null
+  completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  processedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutReportsInput
+  resubmissions?: Prisma.ReportCreateNestedManyWithoutResubmittedFromInput
+  histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
+  attachments?: Prisma.ReportAttachmentCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutReportInput
+}
+
+export type ReportUncheckedCreateWithoutResubmittedFromInput = {
+  id?: number
+  ticket?: string | null
+  idempotencyKey?: string | null
+  userId: number
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  namaRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
+  nup?: string | null
+  kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
+  namaBarang: string
+  lokasi: string
+  deskripsi: string
+  severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
+  status?: $Enums.ReportStatus
+  alasanPenolakan?: string | null
+  assignedTechnician?: string | null
+  adminNotes?: string | null
+  completionNotes?: string | null
+  completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  processedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  resubmissions?: Prisma.ReportUncheckedCreateNestedManyWithoutResubmittedFromInput
+  histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
+  attachments?: Prisma.ReportAttachmentUncheckedCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutReportInput
+}
+
+export type ReportCreateOrConnectWithoutResubmittedFromInput = {
+  where: Prisma.ReportWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReportCreateWithoutResubmittedFromInput, Prisma.ReportUncheckedCreateWithoutResubmittedFromInput>
+}
+
+export type ReportCreateManyResubmittedFromInputEnvelope = {
+  data: Prisma.ReportCreateManyResubmittedFromInput | Prisma.ReportCreateManyResubmittedFromInput[]
+  skipDuplicates?: boolean
+}
+
+export type ReportUpsertWithoutResubmissionsInput = {
+  update: Prisma.XOR<Prisma.ReportUpdateWithoutResubmissionsInput, Prisma.ReportUncheckedUpdateWithoutResubmissionsInput>
+  create: Prisma.XOR<Prisma.ReportCreateWithoutResubmissionsInput, Prisma.ReportUncheckedCreateWithoutResubmissionsInput>
+  where?: Prisma.ReportWhereInput
+}
+
+export type ReportUpdateToOneWithWhereWithoutResubmissionsInput = {
+  where?: Prisma.ReportWhereInput
+  data: Prisma.XOR<Prisma.ReportUpdateWithoutResubmissionsInput, Prisma.ReportUncheckedUpdateWithoutResubmissionsInput>
+}
+
+export type ReportUpdateWithoutResubmissionsInput = {
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
+  lokasi?: Prisma.StringFieldUpdateOperationsInput | string
+  deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  resubmittedFrom?: Prisma.ReportUpdateOneWithoutResubmissionsNestedInput
+  histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
+  attachments?: Prisma.ReportAttachmentUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutReportNestedInput
+}
+
+export type ReportUncheckedUpdateWithoutResubmissionsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resubmittedFromId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
+  lokasi?: Prisma.StringFieldUpdateOperationsInput | string
+  deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
+  attachments?: Prisma.ReportAttachmentUncheckedUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutReportNestedInput
+}
+
+export type ReportUpsertWithWhereUniqueWithoutResubmittedFromInput = {
+  where: Prisma.ReportWhereUniqueInput
+  update: Prisma.XOR<Prisma.ReportUpdateWithoutResubmittedFromInput, Prisma.ReportUncheckedUpdateWithoutResubmittedFromInput>
+  create: Prisma.XOR<Prisma.ReportCreateWithoutResubmittedFromInput, Prisma.ReportUncheckedCreateWithoutResubmittedFromInput>
+}
+
+export type ReportUpdateWithWhereUniqueWithoutResubmittedFromInput = {
+  where: Prisma.ReportWhereUniqueInput
+  data: Prisma.XOR<Prisma.ReportUpdateWithoutResubmittedFromInput, Prisma.ReportUncheckedUpdateWithoutResubmittedFromInput>
+}
+
+export type ReportUpdateManyWithWhereWithoutResubmittedFromInput = {
+  where: Prisma.ReportScalarWhereInput
+  data: Prisma.XOR<Prisma.ReportUpdateManyMutationInput, Prisma.ReportUncheckedUpdateManyWithoutResubmittedFromInput>
+}
+
+export type ReportCreateWithoutAttachmentsInput = {
+  ticket?: string | null
+  idempotencyKey?: string | null
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  namaRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
+  nup?: string | null
+  kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
+  namaBarang: string
+  lokasi: string
+  deskripsi: string
+  severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
+  status?: $Enums.ReportStatus
+  alasanPenolakan?: string | null
+  assignedTechnician?: string | null
+  adminNotes?: string | null
+  completionNotes?: string | null
+  completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  processedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutReportsInput
+  resubmittedFrom?: Prisma.ReportCreateNestedOneWithoutResubmissionsInput
+  resubmissions?: Prisma.ReportCreateNestedManyWithoutResubmittedFromInput
+  histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutReportInput
+}
+
+export type ReportUncheckedCreateWithoutAttachmentsInput = {
+  id?: number
+  ticket?: string | null
+  idempotencyKey?: string | null
+  resubmittedFromId?: number | null
+  userId: number
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  namaRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
+  nup?: string | null
+  kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
+  namaBarang: string
+  lokasi: string
+  deskripsi: string
+  severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
+  status?: $Enums.ReportStatus
+  alasanPenolakan?: string | null
+  assignedTechnician?: string | null
+  adminNotes?: string | null
+  completionNotes?: string | null
+  completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  processedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  resubmissions?: Prisma.ReportUncheckedCreateNestedManyWithoutResubmittedFromInput
   histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutReportInput
 }
@@ -1444,6 +1886,7 @@ export type ReportUpdateToOneWithWhereWithoutAttachmentsInput = {
 
 export type ReportUpdateWithoutAttachmentsInput = {
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1478,6 +1921,8 @@ export type ReportUpdateWithoutAttachmentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  resubmittedFrom?: Prisma.ReportUpdateOneWithoutResubmissionsNestedInput
+  resubmissions?: Prisma.ReportUpdateManyWithoutResubmittedFromNestedInput
   histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutReportNestedInput
 }
@@ -1485,6 +1930,8 @@ export type ReportUpdateWithoutAttachmentsInput = {
 export type ReportUncheckedUpdateWithoutAttachmentsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resubmittedFromId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1519,12 +1966,14 @@ export type ReportUncheckedUpdateWithoutAttachmentsInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  resubmissions?: Prisma.ReportUncheckedUpdateManyWithoutResubmittedFromNestedInput
   histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutReportNestedInput
 }
 
 export type ReportCreateWithoutHistoriesInput = {
   ticket?: string | null
+  idempotencyKey?: string | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
   namaRuangan?: string | null
@@ -1559,6 +2008,8 @@ export type ReportCreateWithoutHistoriesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReportsInput
+  resubmittedFrom?: Prisma.ReportCreateNestedOneWithoutResubmissionsInput
+  resubmissions?: Prisma.ReportCreateNestedManyWithoutResubmittedFromInput
   attachments?: Prisma.ReportAttachmentCreateNestedManyWithoutReportInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutReportInput
 }
@@ -1566,6 +2017,8 @@ export type ReportCreateWithoutHistoriesInput = {
 export type ReportUncheckedCreateWithoutHistoriesInput = {
   id?: number
   ticket?: string | null
+  idempotencyKey?: string | null
+  resubmittedFromId?: number | null
   userId: number
   namaPelapor?: string | null
   nomorRuangan?: string | null
@@ -1600,6 +2053,7 @@ export type ReportUncheckedCreateWithoutHistoriesInput = {
   finishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  resubmissions?: Prisma.ReportUncheckedCreateNestedManyWithoutResubmittedFromInput
   attachments?: Prisma.ReportAttachmentUncheckedCreateNestedManyWithoutReportInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutReportInput
 }
@@ -1622,6 +2076,7 @@ export type ReportUpdateToOneWithWhereWithoutHistoriesInput = {
 
 export type ReportUpdateWithoutHistoriesInput = {
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1656,6 +2111,8 @@ export type ReportUpdateWithoutHistoriesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  resubmittedFrom?: Prisma.ReportUpdateOneWithoutResubmissionsNestedInput
+  resubmissions?: Prisma.ReportUpdateManyWithoutResubmittedFromNestedInput
   attachments?: Prisma.ReportAttachmentUpdateManyWithoutReportNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutReportNestedInput
 }
@@ -1663,6 +2120,8 @@ export type ReportUpdateWithoutHistoriesInput = {
 export type ReportUncheckedUpdateWithoutHistoriesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resubmittedFromId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1697,12 +2156,14 @@ export type ReportUncheckedUpdateWithoutHistoriesInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  resubmissions?: Prisma.ReportUncheckedUpdateManyWithoutResubmittedFromNestedInput
   attachments?: Prisma.ReportAttachmentUncheckedUpdateManyWithoutReportNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutReportNestedInput
 }
 
 export type ReportCreateWithoutNotificationsInput = {
   ticket?: string | null
+  idempotencyKey?: string | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
   namaRuangan?: string | null
@@ -1737,6 +2198,8 @@ export type ReportCreateWithoutNotificationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutReportsInput
+  resubmittedFrom?: Prisma.ReportCreateNestedOneWithoutResubmissionsInput
+  resubmissions?: Prisma.ReportCreateNestedManyWithoutResubmittedFromInput
   histories?: Prisma.ReportApprovalHistoryCreateNestedManyWithoutReportInput
   attachments?: Prisma.ReportAttachmentCreateNestedManyWithoutReportInput
 }
@@ -1744,6 +2207,8 @@ export type ReportCreateWithoutNotificationsInput = {
 export type ReportUncheckedCreateWithoutNotificationsInput = {
   id?: number
   ticket?: string | null
+  idempotencyKey?: string | null
+  resubmittedFromId?: number | null
   userId: number
   namaPelapor?: string | null
   nomorRuangan?: string | null
@@ -1778,6 +2243,7 @@ export type ReportUncheckedCreateWithoutNotificationsInput = {
   finishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  resubmissions?: Prisma.ReportUncheckedCreateNestedManyWithoutResubmittedFromInput
   histories?: Prisma.ReportApprovalHistoryUncheckedCreateNestedManyWithoutReportInput
   attachments?: Prisma.ReportAttachmentUncheckedCreateNestedManyWithoutReportInput
 }
@@ -1800,6 +2266,7 @@ export type ReportUpdateToOneWithWhereWithoutNotificationsInput = {
 
 export type ReportUpdateWithoutNotificationsInput = {
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1834,6 +2301,8 @@ export type ReportUpdateWithoutNotificationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  resubmittedFrom?: Prisma.ReportUpdateOneWithoutResubmissionsNestedInput
+  resubmissions?: Prisma.ReportUpdateManyWithoutResubmittedFromNestedInput
   histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
   attachments?: Prisma.ReportAttachmentUpdateManyWithoutReportNestedInput
 }
@@ -1841,6 +2310,8 @@ export type ReportUpdateWithoutNotificationsInput = {
 export type ReportUncheckedUpdateWithoutNotificationsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resubmittedFromId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1875,6 +2346,7 @@ export type ReportUncheckedUpdateWithoutNotificationsInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  resubmissions?: Prisma.ReportUncheckedUpdateManyWithoutResubmittedFromNestedInput
   histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
   attachments?: Prisma.ReportAttachmentUncheckedUpdateManyWithoutReportNestedInput
 }
@@ -1882,6 +2354,8 @@ export type ReportUncheckedUpdateWithoutNotificationsInput = {
 export type ReportCreateManyUserInput = {
   id?: number
   ticket?: string | null
+  idempotencyKey?: string | null
+  resubmittedFromId?: number | null
   namaPelapor?: string | null
   nomorRuangan?: string | null
   namaRuangan?: string | null
@@ -1919,6 +2393,7 @@ export type ReportCreateManyUserInput = {
 
 export type ReportUpdateWithoutUserInput = {
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1952,6 +2427,8 @@ export type ReportUpdateWithoutUserInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  resubmittedFrom?: Prisma.ReportUpdateOneWithoutResubmissionsNestedInput
+  resubmissions?: Prisma.ReportUpdateManyWithoutResubmittedFromNestedInput
   histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
   attachments?: Prisma.ReportAttachmentUpdateManyWithoutReportNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutReportNestedInput
@@ -1960,6 +2437,8 @@ export type ReportUpdateWithoutUserInput = {
 export type ReportUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resubmittedFromId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1993,6 +2472,7 @@ export type ReportUncheckedUpdateWithoutUserInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  resubmissions?: Prisma.ReportUncheckedUpdateManyWithoutResubmittedFromNestedInput
   histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
   attachments?: Prisma.ReportAttachmentUncheckedUpdateManyWithoutReportNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutReportNestedInput
@@ -2001,6 +2481,175 @@ export type ReportUncheckedUpdateWithoutUserInput = {
 export type ReportUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resubmittedFromId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
+  lokasi?: Prisma.StringFieldUpdateOperationsInput | string
+  deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ReportCreateManyResubmittedFromInput = {
+  id?: number
+  ticket?: string | null
+  idempotencyKey?: string | null
+  userId: number
+  namaPelapor?: string | null
+  nomorRuangan?: string | null
+  namaRuangan?: string | null
+  kodeUakpb?: string | null
+  kode?: string | null
+  nup?: string | null
+  kategori: $Enums.ReportCategory
+  subcategory?: string | null
+  itemType?: string | null
+  namaBarang: string
+  lokasi: string
+  deskripsi: string
+  severity: $Enums.ReportSeverity
+  repairCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: string | null
+  attachmentUrl?: string | null
+  attachmentType?: string | null
+  attachmentName?: string | null
+  status?: $Enums.ReportStatus
+  alasanPenolakan?: string | null
+  assignedTechnician?: string | null
+  adminNotes?: string | null
+  completionNotes?: string | null
+  completionPhotoUrl?: string | null
+  reporterConfirmed?: boolean
+  reporterConfirmedAt?: Date | string | null
+  reporterConfirmationStatus?: string | null
+  approvedAt?: Date | string | null
+  rejectedAt?: Date | string | null
+  processedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ReportUpdateWithoutResubmittedFromInput = {
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
+  lokasi?: Prisma.StringFieldUpdateOperationsInput | string
+  deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  resubmissions?: Prisma.ReportUpdateManyWithoutResubmittedFromNestedInput
+  histories?: Prisma.ReportApprovalHistoryUpdateManyWithoutReportNestedInput
+  attachments?: Prisma.ReportAttachmentUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutReportNestedInput
+}
+
+export type ReportUncheckedUpdateWithoutResubmittedFromInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kodeUakpb?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nup?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kategori?: Prisma.EnumReportCategoryFieldUpdateOperationsInput | $Enums.ReportCategory
+  subcategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  itemType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  namaBarang?: Prisma.StringFieldUpdateOperationsInput | string
+  lokasi?: Prisma.StringFieldUpdateOperationsInput | string
+  deskripsi?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.EnumReportSeverityFieldUpdateOperationsInput | $Enums.ReportSeverity
+  repairCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attachmentName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  alasanPenolakan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assignedTechnician?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  completionPhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reporterConfirmed?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  reporterConfirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reporterConfirmationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  processedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  resubmissions?: Prisma.ReportUncheckedUpdateManyWithoutResubmittedFromNestedInput
+  histories?: Prisma.ReportApprovalHistoryUncheckedUpdateManyWithoutReportNestedInput
+  attachments?: Prisma.ReportAttachmentUncheckedUpdateManyWithoutReportNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutReportNestedInput
+}
+
+export type ReportUncheckedUpdateManyWithoutResubmittedFromInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  ticket?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
   namaPelapor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nomorRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   namaRuangan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2042,12 +2691,14 @@ export type ReportUncheckedUpdateManyWithoutUserInput = {
  */
 
 export type ReportCountOutputType = {
+  resubmissions: number
   histories: number
   attachments: number
   notifications: number
 }
 
 export type ReportCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  resubmissions?: boolean | ReportCountOutputTypeCountResubmissionsArgs
   histories?: boolean | ReportCountOutputTypeCountHistoriesArgs
   attachments?: boolean | ReportCountOutputTypeCountAttachmentsArgs
   notifications?: boolean | ReportCountOutputTypeCountNotificationsArgs
@@ -2061,6 +2712,13 @@ export type ReportCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exten
    * Select specific fields to fetch from the ReportCountOutputType
    */
   select?: Prisma.ReportCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * ReportCountOutputType without action
+ */
+export type ReportCountOutputTypeCountResubmissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReportWhereInput
 }
 
 /**
@@ -2088,6 +2746,8 @@ export type ReportCountOutputTypeCountNotificationsArgs<ExtArgs extends runtime.
 export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   ticket?: boolean
+  idempotencyKey?: boolean
+  resubmittedFromId?: boolean
   userId?: boolean
   namaPelapor?: boolean
   nomorRuangan?: boolean
@@ -2123,6 +2783,8 @@ export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  resubmittedFrom?: boolean | Prisma.Report$resubmittedFromArgs<ExtArgs>
+  resubmissions?: boolean | Prisma.Report$resubmissionsArgs<ExtArgs>
   histories?: boolean | Prisma.Report$historiesArgs<ExtArgs>
   attachments?: boolean | Prisma.Report$attachmentsArgs<ExtArgs>
   notifications?: boolean | Prisma.Report$notificationsArgs<ExtArgs>
@@ -2134,6 +2796,8 @@ export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
 export type ReportSelectScalar = {
   id?: boolean
   ticket?: boolean
+  idempotencyKey?: boolean
+  resubmittedFromId?: boolean
   userId?: boolean
   namaPelapor?: boolean
   nomorRuangan?: boolean
@@ -2170,9 +2834,11 @@ export type ReportSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ticket" | "userId" | "namaPelapor" | "nomorRuangan" | "namaRuangan" | "kodeUakpb" | "kode" | "nup" | "kategori" | "subcategory" | "itemType" | "namaBarang" | "lokasi" | "deskripsi" | "severity" | "repairCost" | "fotoUrl" | "attachmentUrl" | "attachmentType" | "attachmentName" | "status" | "alasanPenolakan" | "assignedTechnician" | "adminNotes" | "completionNotes" | "completionPhotoUrl" | "reporterConfirmed" | "reporterConfirmedAt" | "reporterConfirmationStatus" | "approvedAt" | "rejectedAt" | "processedAt" | "finishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["report"]>
+export type ReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ticket" | "idempotencyKey" | "resubmittedFromId" | "userId" | "namaPelapor" | "nomorRuangan" | "namaRuangan" | "kodeUakpb" | "kode" | "nup" | "kategori" | "subcategory" | "itemType" | "namaBarang" | "lokasi" | "deskripsi" | "severity" | "repairCost" | "fotoUrl" | "attachmentUrl" | "attachmentType" | "attachmentName" | "status" | "alasanPenolakan" | "assignedTechnician" | "adminNotes" | "completionNotes" | "completionPhotoUrl" | "reporterConfirmed" | "reporterConfirmedAt" | "reporterConfirmationStatus" | "approvedAt" | "rejectedAt" | "processedAt" | "finishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["report"]>
 export type ReportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  resubmittedFrom?: boolean | Prisma.Report$resubmittedFromArgs<ExtArgs>
+  resubmissions?: boolean | Prisma.Report$resubmissionsArgs<ExtArgs>
   histories?: boolean | Prisma.Report$historiesArgs<ExtArgs>
   attachments?: boolean | Prisma.Report$attachmentsArgs<ExtArgs>
   notifications?: boolean | Prisma.Report$notificationsArgs<ExtArgs>
@@ -2183,6 +2849,8 @@ export type $ReportPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   name: "Report"
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
+    resubmittedFrom: Prisma.$ReportPayload<ExtArgs> | null
+    resubmissions: Prisma.$ReportPayload<ExtArgs>[]
     histories: Prisma.$ReportApprovalHistoryPayload<ExtArgs>[]
     attachments: Prisma.$ReportAttachmentPayload<ExtArgs>[]
     notifications: Prisma.$NotificationPayload<ExtArgs>[]
@@ -2190,6 +2858,8 @@ export type $ReportPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     ticket: string | null
+    idempotencyKey: string | null
+    resubmittedFromId: number | null
     userId: number
     namaPelapor: string | null
     nomorRuangan: string | null
@@ -2565,6 +3235,8 @@ readonly fields: ReportFieldRefs;
 export interface Prisma__ReportClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  resubmittedFrom<T extends Prisma.Report$resubmittedFromArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Report$resubmittedFromArgs<ExtArgs>>): Prisma.Prisma__ReportClient<runtime.Types.Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  resubmissions<T extends Prisma.Report$resubmissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Report$resubmissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   histories<T extends Prisma.Report$historiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Report$historiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportApprovalHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attachments<T extends Prisma.Report$attachmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Report$attachmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportAttachmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notifications<T extends Prisma.Report$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Report$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2599,6 +3271,8 @@ export interface Prisma__ReportClient<T, Null = never, ExtArgs extends runtime.T
 export interface ReportFieldRefs {
   readonly id: Prisma.FieldRef<"Report", 'Int'>
   readonly ticket: Prisma.FieldRef<"Report", 'String'>
+  readonly idempotencyKey: Prisma.FieldRef<"Report", 'String'>
+  readonly resubmittedFromId: Prisma.FieldRef<"Report", 'Int'>
   readonly userId: Prisma.FieldRef<"Report", 'Int'>
   readonly namaPelapor: Prisma.FieldRef<"Report", 'String'>
   readonly nomorRuangan: Prisma.FieldRef<"Report", 'String'>
@@ -2978,6 +3652,49 @@ export type ReportDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Limit how many Reports to delete.
    */
   limit?: number
+}
+
+/**
+ * Report.resubmittedFrom
+ */
+export type Report$resubmittedFromArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Report
+   */
+  select?: Prisma.ReportSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Report
+   */
+  omit?: Prisma.ReportOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReportInclude<ExtArgs> | null
+  where?: Prisma.ReportWhereInput
+}
+
+/**
+ * Report.resubmissions
+ */
+export type Report$resubmissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Report
+   */
+  select?: Prisma.ReportSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Report
+   */
+  omit?: Prisma.ReportOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReportInclude<ExtArgs> | null
+  where?: Prisma.ReportWhereInput
+  orderBy?: Prisma.ReportOrderByWithRelationInput | Prisma.ReportOrderByWithRelationInput[]
+  cursor?: Prisma.ReportWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReportScalarFieldEnum | Prisma.ReportScalarFieldEnum[]
 }
 
 /**

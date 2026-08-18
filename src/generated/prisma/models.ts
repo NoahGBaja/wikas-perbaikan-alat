@@ -10,6 +10,8 @@
  */
 export type * from './models/User.ts'
 export type * from './models/Report.ts'
+export type * from './models/TicketSequence.ts'
+export type * from './models/RateLimitBucket.ts'
 export type * from './models/ReportAttachment.ts'
 export type * from './models/ReportApprovalHistory.ts'
 export type * from './models/PasswordResetToken.ts'

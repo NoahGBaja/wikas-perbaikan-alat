@@ -10,7 +10,9 @@ export type FeedbackMessage = {
 };
 
 export function showError(title: string, description?: string) {
+  toast.dismiss("app-feedback-success");
   toast.error(title, {
+    id: "app-feedback-error",
     description,
     classNames: {
       toast: "!border-rose-700 !bg-rose-600 !text-white",
@@ -23,7 +25,9 @@ export function showError(title: string, description?: string) {
 }
 
 export function showSuccess(title: string, description?: string) {
+  toast.dismiss();
   toast.success(title, {
+    id: "app-feedback-success",
     description,
     classNames: {
       toast: "!border-emerald-700 !bg-emerald-600 !text-white",

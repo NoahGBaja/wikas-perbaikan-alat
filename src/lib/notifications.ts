@@ -31,6 +31,7 @@ export async function findWorkflowRecipientIds(input: {
   const users = await prisma.user.findMany({
     where: {
       role: input.role,
+      deletedAt: null,
     },
     select: {
       id: true,

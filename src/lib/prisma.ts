@@ -15,6 +15,7 @@ function createPrismaClient() {
 
   const parsed = new URL(connectionString);
   const database = parsed.pathname.replace(/^\//, "");
+  const connectionLimit = Number(process.env.DATABASE_CONNECTION_LIMIT || 10);
 
   if (!database) {
     throw new Error("Nama database pada DATABASE_URL tidak valid.");
@@ -27,7 +28,10 @@ function createPrismaClient() {
       user: decodeURIComponent(parsed.username || ""),
       password: decodeURIComponent(parsed.password || ""),
       database,
-      connectionLimit: 10,
+      connectionLimit:
+        Number.isInteger(connectionLimit) && connectionLimit > 0
+          ? Math.min(connectionLimit, 100)
+          : 10,
       acquireTimeout: 10_000,
       connectTimeout: 10_000,
     },

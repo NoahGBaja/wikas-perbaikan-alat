@@ -63,3 +63,11 @@ export const ReportDecisionAction = {
 } as const
 
 export type ReportDecisionAction = (typeof ReportDecisionAction)[keyof typeof ReportDecisionAction]
+
+
+export const ReportAttachmentPurpose = {
+  DAMAGE_EVIDENCE: 'DAMAGE_EVIDENCE',
+  COMPLETION_PROOF: 'COMPLETION_PROOF'
+} as const
+
+export type ReportAttachmentPurpose = (typeof ReportAttachmentPurpose)[keyof typeof ReportAttachmentPurpose]

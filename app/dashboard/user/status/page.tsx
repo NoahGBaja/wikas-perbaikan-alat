@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import StatusList from "@/src/components/dashboard/StatusList";
@@ -14,7 +20,6 @@ import {
 import { getRoleLabel } from "@/src/lib/roles";
 import StatusCard, {
   type StatusReportItem,
-  type StatusReportStatus,
 } from "@/src/components/dashboard/StatusCard";
 
 type StatusFilter =
@@ -48,32 +53,51 @@ function formatFilterLabel(filter: StatusFilter) {
   return labels[filter];
 }
 
-function isWaitingStatus(status: StatusReportStatus) {
-  return status.startsWith("MENUNGGU_ADMIN");
-}
-
 export default function UserStatusPage() {
   const router = useRouter();
+  const reportRequestId = useRef(0);
   const [reports, setReports] = useState<StatusReportItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [reportTotal, setReportTotal] = useState(0);
+  const [hasMoreReports, setHasMoreReports] = useState(false);
+  const [reportSummary, setReportSummary] = useState({
+    total: 0,
+    menunggu: 0,
+    telahBerfungsi: 0,
+    ditolak: 0,
+  });
   const [deletingReportId, setDeletingReportId] = useState<number | null>(null);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const [filter, setFilter] = useState<StatusFilter>("SEMUA");
-  const [visibleLimit, setVisibleLimit] = useState(STATUS_PAGE_SIZE);
   const [focusedReportId, setFocusedReportId] = useState<number | null>(null);
+  const [focusedReportOverride, setFocusedReportOverride] =
+    useState<StatusReportItem | null>(null);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
 
-  async function loadReports() {
+  async function loadReports(options?: { append?: boolean }) {
+    const append = options?.append === true;
+    const requestId = ++reportRequestId.current;
+
     try {
-      setLoading(true);
+      if (append) setLoadingMore(true);
+      else setLoading(true);
       setMessage(null);
 
-      const res = await fetch("/api/reports", {
+      const params = new URLSearchParams({
+        limit: String(STATUS_PAGE_SIZE),
+        offset: String(append ? reports.length : 0),
+      });
+      if (filter !== "SEMUA") params.set("status", filter);
+
+      const res = await fetch(`/api/reports?${params.toString()}`, {
         method: "GET",
         cache: "no-store",
       });
 
       const data = await res.json();
+
+      if (requestId !== reportRequestId.current) return;
 
       if (!res.ok) {
         const text = data.message || "Gagal memuat status laporan.";
@@ -82,20 +106,38 @@ export default function UserStatusPage() {
         return;
       }
 
-      setReports(data.reports || []);
+      const nextReports = Array.isArray(data.reports) ? data.reports : [];
+      setReports((current) => (append ? [...current, ...nextReports] : nextReports));
+      setReportTotal(Number(data.total || 0));
+      setHasMoreReports(data.hasMore === true);
+      if (data.summary) {
+        setReportSummary({
+          total: Number(data.summary.total || 0),
+          menunggu: Number(data.summary.menunggu || 0),
+          telahBerfungsi: Number(data.summary.telahBerfungsi || 0),
+          ditolak: Number(data.summary.ditolak || 0),
+        });
+      }
     } catch (error) {
       console.error("LOAD_USER_STATUS_ERROR:", error);
       const text = "Terjadi kesalahan saat memuat status laporan.";
       setMessage(toFeedback(text, "error"));
       showError("Gagal memuat status laporan", text);
     } finally {
-      setLoading(false);
+      if (requestId === reportRequestId.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   }
 
-  useEffect(() => {
-    void loadReports();
+  const loadReportsForEffect = useEffectEvent(loadReports);
 
+  useEffect(() => {
+    void loadReportsForEffect();
+  }, [filter]);
+
+  useEffect(() => {
     const rawReportId = new URLSearchParams(window.location.search).get("report");
     const reportId = Number(rawReportId);
 
@@ -104,20 +146,6 @@ export default function UserStatusPage() {
       setFilter("SEMUA");
     }
   }, []);
-
-  useEffect(() => {
-    setVisibleLimit(STATUS_PAGE_SIZE);
-  }, [filter]);
-
-  useEffect(() => {
-    if (!focusedReportId || reports.length === 0) return;
-
-    const reportIndex = reports.findIndex((report) => report.id === focusedReportId);
-
-    if (reportIndex >= 0) {
-      setVisibleLimit((current) => Math.max(current, reportIndex + 1));
-    }
-  }, [focusedReportId, reports]);
 
   async function handleDeleteReport(reportId: number) {
     const confirmed = window.confirm(
@@ -157,27 +185,41 @@ export default function UserStatusPage() {
     }
   }
 
-  const filteredReports = useMemo(() => {
-    if (filter === "SEMUA") return reports;
-    if (filter === "PENDING") {
-      return reports.filter((item) => isWaitingStatus(item.status));
+  const visibleReports = reports;
+  const hiddenReportsCount = Math.max(reportTotal - reports.length, 0);
+  const focusedReport = useMemo(
+    () =>
+      reports.find((report) => report.id === focusedReportId) ||
+      focusedReportOverride,
+    [focusedReportId, focusedReportOverride, reports],
+  );
+
+  useEffect(() => {
+    if (
+      !focusedReportId ||
+      reports.some((report) => report.id === focusedReportId)
+    ) {
+      setFocusedReportOverride(null);
+      return;
     }
 
-    return reports.filter((item) => item.status === filter);
-  }, [filter, reports]);
+    let cancelled = false;
 
-  const visibleReports = useMemo(
-    () => filteredReports.slice(0, visibleLimit),
-    [filteredReports, visibleLimit]
-  );
-  const hiddenReportsCount = Math.max(
-    filteredReports.length - visibleReports.length,
-    0
-  );
-  const focusedReport = useMemo(
-    () => reports.find((report) => report.id === focusedReportId) || null,
-    [focusedReportId, reports],
-  );
+    void fetch(`/api/reports/${focusedReportId}`, { cache: "no-store" })
+      .then(async (response) => ({ response, data: await response.json() }))
+      .then(({ response, data }) => {
+        if (!cancelled && response.ok && data.report) {
+          setFocusedReportOverride(data.report as StatusReportItem);
+        }
+      })
+      .catch((error) => {
+        console.error("LOAD_FOCUSED_REPORT_ERROR:", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [focusedReportId, reports]);
 
   useEffect(() => {
     if (focusedReport) {
@@ -195,16 +237,15 @@ export default function UserStatusPage() {
     }
   }, [focusedReportId, visibleReports]);
 
-  const totalReports = reports.length;
-  const waitingReports = reports.filter((r) => isWaitingStatus(r.status)).length;
-  const approvedReports = reports.filter(
-    (r) => r.status === "TELAH_BERFUNGSI"
-  ).length;
-  const rejectedReports = reports.filter((r) => r.status === "DITOLAK").length;
+  const totalReports = reportSummary.total;
+  const waitingReports = reportSummary.menunggu;
+  const approvedReports = reportSummary.telahBerfungsi;
+  const rejectedReports = reportSummary.ditolak;
 
   function closeNotificationModal() {
     setNotificationModalOpen(false);
     setFocusedReportId(null);
+    setFocusedReportOverride(null);
     router.replace("/dashboard/user/status", { scroll: false });
   }
 
@@ -341,13 +382,13 @@ export default function UserStatusPage() {
               <div className="mt-6 flex justify-center">
                 <button
                   type="button"
-                  onClick={() =>
-                    setVisibleLimit((current) => current + STATUS_PAGE_SIZE)
-                  }
+                  onClick={() => void loadReports({ append: true })}
+                  disabled={loadingMore || !hasMoreReports}
                   className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50 hover:text-blue-700"
                 >
-                  Tampilkan {Math.min(hiddenReportsCount, STATUS_PAGE_SIZE)}{" "}
-                  laporan lagi
+                  {loadingMore
+                    ? "Memuat..."
+                    : `Tampilkan ${Math.min(hiddenReportsCount, STATUS_PAGE_SIZE)} laporan lagi`}
                 </button>
               </div>
             ) : null}

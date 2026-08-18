@@ -1,7 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import {
   ArrowLeft,
   CalendarDays,
@@ -24,11 +31,9 @@ import {
 } from "@/lib/report-helpers";
 import {
   IN_PROGRESS_STATUS_FILTER,
-  isInProgressStatus,
 } from "@/src/lib/report-status-filters";
 import {
   ADMIN_ROLES,
-  getCategoryScopeLabel,
   getRoleLabel,
   type AppCategoryScope,
   type AppRole,
@@ -40,6 +45,11 @@ import {
   type FeedbackMessage,
 } from "@/src/components/ui/feedback";
 import { normalizeStoredItemCode } from "@/src/lib/item-code";
+import {
+  formatAttachmentFileSize,
+  formatAttachmentPurpose,
+  getReportAttachmentUrl,
+} from "@/src/lib/report-attachment-urls";
 
 type ReportHistoryItem = {
   id: number;
@@ -79,6 +89,10 @@ type ReportItem = {
     fileType: string;
     fileName: string;
     fileSize: number;
+    purpose?: "DAMAGE_EVIDENCE" | "COMPLETION_PROOF" | null;
+    uploadedByName?: string | null;
+    uploadedByRole?: AppRole | null;
+    createdAt?: string;
   }[];
   status: ReportStatus;
   alasanPenolakan: string | null;
@@ -194,9 +208,14 @@ function getReportAttachments(report: ReportItem) {
     .filter((attachment) => attachment.url)
     .map((attachment, index) => ({
       id: attachment.id,
-      url: attachment.url,
-      downloadUrl: `/api/reports/${report.id}/attachments/${attachment.id}/download`,
+      url: getReportAttachmentUrl(report.id, attachment.id, { inline: true }),
+      downloadUrl: getReportAttachmentUrl(report.id, attachment.id),
       fileType: attachment.fileType,
+      fileSize: attachment.fileSize,
+      purpose: attachment.purpose,
+      uploadedByName: attachment.uploadedByName,
+      uploadedByRole: attachment.uploadedByRole,
+      createdAt: attachment.createdAt,
       fileName:
         attachment.fileName ||
         `${getHistoryTicket(report)}-lampiran-${index + 1}.${getAttachmentExtension(
@@ -218,9 +237,14 @@ function getReportAttachments(report: ReportItem) {
   return [
     {
       id: 0,
-      url: legacyUrl,
-      downloadUrl: `/api/reports/${report.id}/attachments/legacy/download`,
+      url: getReportAttachmentUrl(report.id, "legacy", { inline: true }),
+      downloadUrl: getReportAttachmentUrl(report.id, "legacy"),
       fileType: report.attachmentType || "image/*",
+      fileSize: 0,
+      purpose: "DAMAGE_EVIDENCE" as const,
+      uploadedByName: report.namaPelapor || report.user.nama,
+      uploadedByRole: "USER" as const,
+      createdAt: report.createdAt,
       fileName:
         report.attachmentName ||
         `${getHistoryTicket(report)}-lampiran.${getAttachmentExtension(
@@ -260,6 +284,7 @@ function formatUserSearchLabel(user: UserSearchResult) {
 }
 
 export default function AdminHistoryPage() {
+  const historyRequestId = useRef(0);
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -284,23 +309,53 @@ export default function AdminHistoryPage() {
   const [dateFromFilter, setDateFromFilter] = useState("");
   const [dateToFilter, setDateToFilter] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [reportTotal, setReportTotal] = useState(0);
+  const [hasMoreReports, setHasMoreReports] = useState(false);
+  const [serverSummary, setServerSummary] = useState({
+    approvedFinal: 0,
+    ongoing: 0,
+    ditolak: 0,
+  });
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
-  const [visibleLimit, setVisibleLimit] = useState(HISTORY_PAGE_SIZE);
   const [showExportFilters, setShowExportFilters] = useState(false);
   const [selectedExportFields, setSelectedExportFields] =
     useState<ExportFieldKey[]>(DEFAULT_EXPORT_FIELDS);
 
-  async function loadHistory() {
+  async function loadHistory(options?: { append?: boolean }) {
+    const append = options?.append === true;
+    const requestId = ++historyRequestId.current;
+
     try {
-      setLoading(true);
+      if (append) setLoadingMore(true);
+      else setLoading(true);
       setMessage(null);
 
-      const res = await fetch("/api/reports/admin", {
+      const params = new URLSearchParams({
+        limit: String(HISTORY_PAGE_SIZE),
+        offset: String(append ? reports.length : 0),
+      });
+      if (debouncedSearchTerm.trim()) params.set("q", debouncedSearchTerm.trim());
+      if (statusFilter !== "SEMUA") params.set("status", statusFilter);
+      if (selectedExportUser) params.set("userId", String(selectedExportUser.id));
+      else if (debouncedUserQuery.trim()) {
+        params.set("userQuery", debouncedUserQuery.trim());
+      }
+      if (categoryFilter !== "SEMUA") params.set("category", categoryFilter);
+      if (rejectedByRoleFilter !== "SEMUA") {
+        params.set("rejectedByRole", rejectedByRoleFilter);
+      }
+      if (dateFromFilter) params.set("dateFrom", dateFromFilter);
+      if (dateToFilter) params.set("dateTo", dateToFilter);
+
+      const res = await fetch(`/api/reports/admin?${params.toString()}`, {
         cache: "no-store",
       });
 
       const data = await res.json().catch(() => null);
+
+      if (requestId !== historyRequestId.current) return;
 
       if (!res.ok) {
         const text = data?.message || "Gagal memuat riwayat laporan.";
@@ -313,31 +368,52 @@ export default function AdminHistoryPage() {
         throw new Error("Respons riwayat laporan tidak valid.");
       }
 
-      setReports(
-        data.reports.map((report: ReportItem) => ({
+      const nextReports = data.reports.map((report: ReportItem) => ({
           ...report,
           histories: Array.isArray(report.histories) ? report.histories : [],
           attachments: Array.isArray(report.attachments) ? report.attachments : [],
-        })),
-      );
+        }));
+      setReports((current) => (append ? [...current, ...nextReports] : nextReports));
+      setReportTotal(Number(data.total || 0));
+      setHasMoreReports(data.hasMore === true);
+      if (data.summary) {
+        setServerSummary({
+          approvedFinal: Number(data.summary.approvedFinal || 0),
+          ongoing: Number(data.summary.ongoing || 0),
+          ditolak: Number(data.summary.ditolak || 0),
+        });
+      }
     } catch (error) {
       console.error("LOAD_ADMIN_HISTORY_ERROR:", error);
       const text = "Terjadi kesalahan saat memuat riwayat laporan.";
       setMessage(toFeedback(text, "error"));
       showError("Gagal memuat riwayat", text);
     } finally {
-      setLoading(false);
+      if (requestId === historyRequestId.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   }
 
+  const loadHistoryForEffect = useEffectEvent(loadHistory);
+
   useEffect(() => {
-    void loadHistory();
-  }, []);
+    void loadHistoryForEffect();
+  }, [
+    debouncedSearchTerm,
+    statusFilter,
+    selectedExportUser,
+    debouncedUserQuery,
+    categoryFilter,
+    rejectedByRoleFilter,
+    dateFromFilter,
+    dateToFilter,
+  ]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-      setVisibleLimit(HISTORY_PAGE_SIZE);
     }, SERVER_SEARCH_DELAY_MS);
 
     return () => {
@@ -348,7 +424,6 @@ export default function AdminHistoryPage() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedUserQuery(userQuery);
-      setVisibleLimit(HISTORY_PAGE_SIZE);
     }, SERVER_SEARCH_DELAY_MS);
 
     return () => {
@@ -405,18 +480,6 @@ export default function AdminHistoryPage() {
       cancelled = true;
     };
   }, [debouncedUserQuery, selectedExportUser]);
-
-  useEffect(() => {
-    setVisibleLimit(HISTORY_PAGE_SIZE);
-  }, [
-    statusFilter,
-    debouncedUserQuery,
-    selectedExportUser,
-    categoryFilter,
-    rejectedByRoleFilter,
-    dateFromFilter,
-    dateToFilter,
-  ]);
 
   async function handleExportExcel() {
     try {
@@ -480,99 +543,12 @@ export default function AdminHistoryPage() {
     }
   }
 
-  const visibleReports = useMemo(() => {
-    const normalizedSearch = debouncedSearchTerm.trim().toLowerCase();
-
-    return reports.filter((report) => {
-      const matchesStatus =
-        statusFilter === "SEMUA" ||
-        (statusFilter === IN_PROGRESS_STATUS_FILTER
-          ? isInProgressStatus(report.status)
-          : report.status === statusFilter);
-      const normalizedUserQuery = debouncedUserQuery.trim().toLowerCase();
-      const matchesUser =
-        selectedExportUser
-          ? report.user.id === selectedExportUser.id
-          : !normalizedUserQuery ||
-        [report.user.nama, report.user.nip]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(normalizedUserQuery);
-      const matchesCategory =
-        categoryFilter === "SEMUA" || report.kategori === categoryFilter;
-      const rejectingAdmin = getRejectingAdmin(report);
-      const matchesRejectedByRole =
-        rejectedByRoleFilter === "SEMUA" ||
-        rejectingAdmin?.role === rejectedByRoleFilter;
-      const statusDate = new Date(getReportStatusDate(report));
-      const matchesDateFrom =
-        !dateFromFilter || statusDate >= new Date(`${dateFromFilter}T00:00:00`);
-      const matchesDateTo =
-        !dateToFilter || statusDate <= new Date(`${dateToFilter}T23:59:59`);
-
-      if (
-        !matchesStatus ||
-        !matchesUser ||
-        !matchesCategory ||
-        !matchesRejectedByRole ||
-        !matchesDateFrom ||
-        !matchesDateTo
-      ) {
-        return false;
-      }
-
-      if (!normalizedSearch) return true;
-
-      const haystack = [
-        report.id,
-        report.namaBarang,
-        report.user.nama,
-        report.user.nip,
-        report.namaPelapor,
-        report.nomorRuangan,
-        report.kodeUakpb,
-        report.kode,
-        report.nup,
-        report.lokasi,
-        formatKategori(report.kategori),
-        getCategoryScopeLabel(report.kategori),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return haystack.includes(normalizedSearch);
-    });
-  }, [
-    reports,
-    debouncedSearchTerm,
-    statusFilter,
-    debouncedUserQuery,
-    selectedExportUser,
-    categoryFilter,
-    rejectedByRoleFilter,
-    dateFromFilter,
-    dateToFilter,
-  ]);
-
-  const approvedFinalCount = reports.filter(
-    (report) => report.status === "DISETUJUI_FINAL",
-  ).length;
-  const ongoingCount = reports.filter((report) =>
-    isInProgressStatus(report.status),
-  ).length;
-  const rejectedCount = reports.filter(
-    (report) => report.status === "DITOLAK",
-  ).length;
-  const pagedReports = useMemo(
-    () => visibleReports.slice(0, visibleLimit),
-    [visibleReports, visibleLimit],
-  );
-  const hiddenReportCount = Math.max(
-    visibleReports.length - pagedReports.length,
-    0,
-  );
+  const visibleReports = reports;
+  const approvedFinalCount = serverSummary.approvedFinal;
+  const ongoingCount = serverSummary.ongoing;
+  const rejectedCount = serverSummary.ditolak;
+  const pagedReports = reports;
+  const hiddenReportCount = Math.max(reportTotal - reports.length, 0);
   const activeExportFilterCount = [
     selectedExportUser || debouncedUserQuery.trim(),
     categoryFilter !== "SEMUA",
@@ -673,7 +649,7 @@ export default function AdminHistoryPage() {
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
                     Menampilkan {pagedReports.length} dari{" "}
-                    {visibleReports.length} laporan.
+                    {reportTotal} laporan.
                   </p>
                 </div>
 
@@ -991,13 +967,13 @@ export default function AdminHistoryPage() {
                 <div className="border-t border-slate-100 bg-white p-4 text-center">
                   <button
                     type="button"
-                    onClick={() =>
-                      setVisibleLimit((current) => current + HISTORY_PAGE_SIZE)
-                    }
+                    onClick={() => void loadHistory({ append: true })}
+                    disabled={loadingMore || !hasMoreReports}
                     className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
                   >
-                    Tampilkan {Math.min(HISTORY_PAGE_SIZE, hiddenReportCount)}{" "}
-                    laporan lagi
+                    {loadingMore
+                      ? "Memuat..."
+                      : `Tampilkan ${Math.min(HISTORY_PAGE_SIZE, hiddenReportCount)} laporan lagi`}
                   </button>
                 </div>
               ) : null}
@@ -1222,9 +1198,35 @@ function ReportDetailModal({
                         <p className="truncate text-sm font-semibold text-slate-800">
                           {attachment.fileName}
                         </p>
-                        <p className="text-xs text-slate-500">
-                          {attachment.fileType || "Lampiran"}
+                        <p className="text-xs font-semibold text-blue-700">
+                          {formatAttachmentPurpose(attachment.purpose)}
                         </p>
+                        <dl className="mt-2 grid grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs leading-5">
+                          <dt className="text-slate-500">Diunggah oleh</dt>
+                          <dd className="font-semibold text-slate-800">
+                            {attachment.uploadedByName || "Metadata lama tidak tersedia"}
+                          </dd>
+                          <dt className="text-slate-500">Peran</dt>
+                          <dd className="font-semibold text-slate-800">
+                            {attachment.uploadedByRole
+                              ? getRoleLabel(attachment.uploadedByRole)
+                              : "Tidak tersedia"}
+                          </dd>
+                          <dt className="text-slate-500">Waktu unggah</dt>
+                          <dd className="font-semibold text-slate-800">
+                            {attachment.createdAt
+                              ? formatTanggal(attachment.createdAt)
+                              : "Tidak tersedia"}
+                          </dd>
+                          <dt className="text-slate-500">Format</dt>
+                          <dd className="break-all font-semibold text-slate-800">
+                            {attachment.fileType || "Tidak tersedia"}
+                          </dd>
+                          <dt className="text-slate-500">Ukuran</dt>
+                          <dd className="font-semibold text-slate-800">
+                            {formatAttachmentFileSize(attachment.fileSize)}
+                          </dd>
+                        </dl>
                       </div>
 
                       <button

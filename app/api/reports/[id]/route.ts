@@ -8,14 +8,19 @@ import {
 } from "@/src/lib/report-validation";
 import {
   deleteUploadedFileByUrl,
+  isUploadValidationError,
   saveReportAttachmentUpload,
   validateReportAttachmentUploads,
 } from "@/src/lib/uploads";
 import { validateMutationRequest } from "@/src/lib/request-security";
-import { hasAdminAccess, isReadOnlyExecutive } from "@/src/lib/roles";
+import { hasAdminAccess } from "@/src/lib/roles";
 import { canAdminAccessReport } from "@/src/lib/workflow";
-import { getRoomCodeByNameFromMaster } from "@/src/lib/master-data-db";
+import {
+  findActiveRoomByNameFromMaster,
+  findActiveSubcategoryForCategory,
+} from "@/src/lib/master-data-db";
 import { recordAuditLog } from "@/src/lib/audit";
+import { protectReportAttachmentReferences } from "@/src/lib/report-attachment-urls";
 
 function parseReportId(id: string) {
   const reportId = Number(id);
@@ -131,7 +136,9 @@ export async function GET(
       return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
-    return NextResponse.json({ report });
+    return NextResponse.json({
+      report: protectReportAttachmentReferences(report),
+    });
   } catch (error) {
     console.error("GET_REPORT_DETAIL_ERROR:", error);
 
@@ -146,6 +153,9 @@ export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
+  const savedAttachmentUrls: string[] = [];
+  let updateCommitted = false;
+
   try {
     const requestError = validateMutationRequest(req, { body: "multipart" });
 
@@ -184,31 +194,17 @@ export async function PATCH(
     }
 
     const isOwner = existingReport.userId === authUser.id;
-    const isWritableAdmin =
-      hasAdminAccess(authUser) &&
-      !isReadOnlyExecutive(authUser.role) &&
-      canAdminAccessReport({
-        role: authUser.role,
-        isSuperAdmin: authUser.isSuperAdmin,
-        categoryScope: authUser.categoryScope,
-        reportCategory: existingReport.kategori,
-      });
 
-    if (!isOwner && !isWritableAdmin) {
+    if (!isOwner) {
       return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
-    if (
-      ["DITOLAK", "TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN"].includes(
-        existingReport.status,
-      )
-    ) {
+    if (existingReport.status !== "MENUNGGU_ADMIN_1") {
       return NextResponse.json(
         {
-          message:
-            "Laporan tidak bisa diubah setelah persetujuan atau penolakan final.",
+          message: "Laporan hanya bisa diubah sebelum diproses PJ Perbaikan.",
         },
-        { status: 400 }
+        { status: 409 }
       );
     }
 
@@ -242,33 +238,55 @@ export async function PATCH(
 
     for (const file of files) {
       const url = await saveReportAttachmentUpload(file);
+      savedAttachmentUrls.push(url);
 
       savedAttachments.push({
         url,
         fileType: file.type,
         fileName: file.name,
         fileSize: file.size,
+        purpose: "DAMAGE_EVIDENCE" as const,
+        uploadedByName: authUser.nama,
+        uploadedByRole: authUser.role,
       });
+    }
+
+    const [masterRoom, masterSubcategory] = await Promise.all([
+      findActiveRoomByNameFromMaster(reportInput.namaRuangan),
+      findActiveSubcategoryForCategory(
+        reportInput.kategori as ValidKategori,
+        reportInput.subcategory,
+      ),
+    ]);
+
+    if (!masterRoom) {
+      return NextResponse.json(
+        { message: "Ruangan tidak ditemukan pada master data aktif." },
+        { status: 400 },
+      );
+    }
+
+    if (!masterSubcategory) {
+      return NextResponse.json(
+        { message: "Subkategori tidak sesuai dengan kategori yang dipilih." },
+        { status: 400 },
+      );
     }
 
     const primaryAttachment = savedAttachments[0] || null;
     const hasNewAttachments = savedAttachments.length > 0;
-    const roomCode =
-      (await getRoomCodeByNameFromMaster(reportInput.namaRuangan)) ||
-      reportInput.nomorRuangan;
-
     const nextData = {
       namaPelapor: reportInput.namaPelapor,
-      nomorRuangan: roomCode,
-      namaRuangan: reportInput.namaRuangan,
+      nomorRuangan: masterRoom.code,
+      namaRuangan: masterRoom.name,
       kodeUakpb: reportInput.namaBarang || reportInput.kodeUakpb,
       kode: reportInput.kode,
       nup: reportInput.nup,
       kategori: reportInput.kategori as ValidKategori,
-      subcategory: reportInput.subcategory,
-      itemType: reportInput.subcategory,
+      subcategory: masterSubcategory.name,
+      itemType: masterSubcategory.name,
       namaBarang: reportInput.namaBarang,
-      lokasi: reportInput.namaRuangan,
+      lokasi: masterRoom.name,
       deskripsi: reportInput.deskripsi,
       severity: "SEDANG" as const,
     };
@@ -309,6 +327,7 @@ export async function PATCH(
       },
       include: reportInclude,
     });
+    updateCommitted = true;
 
     if (hasNewAttachments) {
       await Promise.all([
@@ -316,7 +335,9 @@ export async function PATCH(
           deleteUploadedFileByUrl(attachment.url),
         ),
         deleteUploadedFileByUrl(existingReport.attachmentUrl || existingReport.fotoUrl),
-      ]);
+      ]).catch((cleanupError) => {
+        console.error("REPLACED_REPORT_UPLOAD_CLEANUP_ERROR:", cleanupError);
+      });
     }
 
     await recordAuditLog({
@@ -343,9 +364,21 @@ export async function PATCH(
 
     return NextResponse.json({
       message: "Laporan berhasil diperbarui.",
-      report: updatedReport,
+      report: protectReportAttachmentReferences(updatedReport),
     });
   } catch (error) {
+    if (!updateCommitted) {
+      await Promise.all(
+        savedAttachmentUrls.map((url) => deleteUploadedFileByUrl(url)),
+      ).catch((cleanupError) => {
+        console.error("UPDATE_REPORT_UPLOAD_CLEANUP_ERROR:", cleanupError);
+      });
+    }
+
+    if (isUploadValidationError(error)) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+
     console.error("UPDATE_REPORT_ERROR:", error);
 
     return NextResponse.json(
@@ -409,17 +442,12 @@ export async function DELETE(
       return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
-    if (
-      ["DITOLAK", "TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN"].includes(
-        existingReport.status,
-      )
-    ) {
+    if (existingReport.status !== "MENUNGGU_ADMIN_1") {
       return NextResponse.json(
         {
-          message:
-            "Laporan tidak bisa dihapus setelah persetujuan atau penolakan final.",
+          message: "Laporan hanya bisa dihapus sebelum diproses PJ Perbaikan.",
         },
-        { status: 400 }
+        { status: 409 }
       );
     }
 
@@ -445,7 +473,9 @@ export async function DELETE(
         deleteUploadedFileByUrl(attachment.url),
       ),
       deleteUploadedFileByUrl(existingReport.attachmentUrl || existingReport.fotoUrl),
-    ]);
+    ]).catch((cleanupError) => {
+      console.error("DELETE_REPORT_UPLOAD_CLEANUP_ERROR:", cleanupError);
+    });
 
     return NextResponse.json({
       message: "Laporan berhasil dihapus.",

@@ -1,4 +1,3 @@
-import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
@@ -6,6 +5,10 @@ import { getApiSessionUser } from "@/src/lib/session";
 import { hasAdminAccess } from "@/src/lib/roles";
 import { canAdminAccessReport } from "@/src/lib/workflow";
 import { recordAuditLog } from "@/src/lib/audit";
+import {
+  isStoredObjectNotFoundError,
+  readStoredObject,
+} from "@/src/lib/file-storage";
 
 function parseReportId(id: string) {
   const reportId = Number(id);
@@ -27,7 +30,7 @@ function getExtensionFromUrl(url: string) {
 }
 
 export async function GET(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ id: string; attachmentId: string }> },
 ) {
   try {
@@ -69,48 +72,58 @@ export async function GET(
       return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
+    const legacyUrl = report.attachmentUrl || report.fotoUrl || "";
+    const completionUrl = report.completionPhotoUrl || "";
+    const matchingLegacyAttachment = report.attachments.find(
+      (item) => item.url === legacyUrl,
+    );
+    const matchingCompletionAttachment = report.attachments.find(
+      (item) => item.url === completionUrl,
+    );
     const attachment =
       attachmentId === "legacy"
         ? {
             id: 0,
-            url: report.attachmentUrl || report.fotoUrl || "",
-            fileType: report.attachmentType || "application/octet-stream",
+            url: legacyUrl,
+            fileType:
+              matchingLegacyAttachment?.fileType ||
+              report.attachmentType ||
+              "application/octet-stream",
             fileName:
+              matchingLegacyAttachment?.fileName ||
               report.attachmentName ||
               `lampiran-${report.ticket || report.id}${getExtensionFromUrl(
-                report.attachmentUrl || report.fotoUrl || "",
+                legacyUrl,
               )}`,
           }
         : attachmentId === "completion"
           ? {
               id: 0,
-              url: report.completionPhotoUrl || "",
-              fileType: "application/octet-stream",
-              fileName: `bukti-penyelesaian-${report.ticket || report.id}${getExtensionFromUrl(
-                report.completionPhotoUrl || "",
-              )}`,
+              url: completionUrl,
+              fileType:
+                matchingCompletionAttachment?.fileType ||
+                "application/octet-stream",
+              fileName:
+                matchingCompletionAttachment?.fileName ||
+                `bukti-penyelesaian-${report.ticket || report.id}${getExtensionFromUrl(
+                  completionUrl,
+                )}`,
             }
           : report.attachments.find(
               (item) => String(item.id) === attachmentId,
             );
 
-    if (!attachment?.url || !attachment.url.startsWith("/uploads/")) {
+    if (
+      !attachment?.url ||
+      (!attachment.url.startsWith("/uploads/") &&
+        !attachment.url.startsWith("private://uploads/"))
+    ) {
       return NextResponse.json({ message: "Lampiran tidak ditemukan." }, { status: 404 });
     }
 
-    const uploadsRoot = path.resolve(process.cwd(), "public", "uploads");
-    const filePath = path.resolve(
-      process.cwd(),
-      "public",
-      attachment.url.replace(/^\//, ""),
-    );
-
-    if (!filePath.startsWith(uploadsRoot + path.sep)) {
-      return NextResponse.json({ message: "Lampiran tidak valid." }, { status: 400 });
-    }
-
-    const bytes = await fs.readFile(filePath);
+    const bytes = await readStoredObject(attachment.url);
     const fileName = sanitizeDownloadName(attachment.fileName);
+    const inline = new URL(req.url).searchParams.get("disposition") === "inline";
 
     await recordAuditLog({
       actorUserId: authUser.id,
@@ -129,11 +142,23 @@ export async function GET(
     return new NextResponse(bytes, {
       headers: {
         "Content-Type": attachment.fileType || "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${fileName}"`,
-        "Cache-Control": "no-store",
+        "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="${fileName}"`,
+        "Cache-Control": "private, max-age=300",
+        "X-Content-Type-Options": "nosniff",
+        Vary: "Cookie",
       },
     });
   } catch (error) {
+    if (
+      isStoredObjectNotFoundError(error) ||
+      (error as NodeJS.ErrnoException).code === "ENOENT"
+    ) {
+      return NextResponse.json(
+        { message: "Lampiran tidak ditemukan pada penyimpanan." },
+        { status: 404 },
+      );
+    }
+
     console.error("DOWNLOAD_REPORT_ATTACHMENT_ERROR:", error);
 
     return NextResponse.json(

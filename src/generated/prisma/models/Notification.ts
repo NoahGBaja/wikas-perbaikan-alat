@@ -507,14 +507,6 @@ export type NotificationUncheckedUpdateManyWithoutReportNestedInput = {
   deleteMany?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type NotificationCreateWithoutUserInput = {
   title: string
   message: string

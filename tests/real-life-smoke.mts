@@ -186,6 +186,7 @@ async function createReport(cookie: string) {
       headers: {
         Origin: origin,
         Cookie: cookie,
+        "Idempotency-Key": randomUUID(),
       },
       body: form,
     });
@@ -218,6 +219,7 @@ async function setupUsers() {
       nama: `Smoke User ${runId}`,
       jabatan: "QA",
       nip: userNip,
+      activeNip: userNip,
       role: "USER",
       passwordHash,
     },
@@ -228,6 +230,7 @@ async function setupUsers() {
       nama: `Smoke Admin ${runId}`,
       jabatan: "Admin 1",
       nip: adminNip,
+      activeNip: adminNip,
       role: "ADMIN_1",
       categoryScope: "IT_ELEKTRONIK",
       passwordHash,

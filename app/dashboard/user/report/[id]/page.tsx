@@ -40,9 +40,7 @@ export default async function EditReportPage({
   if (
     !report ||
     report.userId !== currentUser.id ||
-    ["DITOLAK", "TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN"].includes(
-      report.status,
-    )
+    report.status !== "MENUNGGU_ADMIN_1"
   ) {
     redirect("/dashboard/user/status");
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import UserReportModal, {
   type UserReportCategory,
@@ -24,6 +24,20 @@ type UserReportPageClientProps = {
     deskripsi: string;
     kategori: UserReportCategory;
   };
+  repeatReport?: {
+    id: number;
+    ticket?: string | null;
+    namaPelapor: string | null;
+    nomorRuangan: string | null;
+    namaRuangan?: string | null;
+    kodeUakpb: string | null;
+    kode: string | null;
+    nup?: string | null;
+    subcategory?: string | null;
+    namaBarang?: string | null;
+    deskripsi: string;
+    kategori: UserReportCategory;
+  } | null;
 };
 
 async function readApiResponse(res: Response) {
@@ -45,11 +59,17 @@ async function readApiResponse(res: Response) {
 export default function UserReportPageClient({
   defaultNamaPelapor,
   initialReport,
+  repeatReport,
 }: UserReportPageClientProps) {
   const router = useRouter();
   const [open, setOpen] = useState(true);
+  const submissionKeyRef = useRef<string | null>(null);
+  const requestInFlightRef = useRef(false);
 
   async function handleSubmit(payload: UserReportModalPayload) {
+    if (requestInFlightRef.current) return;
+
+    requestInFlightRef.current = true;
     const formData = new FormData();
 
     formData.append("kategori", payload.kategori);
@@ -63,27 +83,42 @@ export default function UserReportPageClient({
     formData.append("namaBarang", payload.namaBarang);
     formData.append("repairCost", payload.repairCost);
     formData.append("deskripsi", payload.deskripsi);
+    if (repeatReport) {
+      formData.append("resubmittedFromReportId", String(repeatReport.id));
+    }
 
     payload.attachments.forEach((attachment) => {
       formData.append("attachments", attachment);
     });
 
-    const res = await fetch(
-      initialReport ? `/api/reports/${initialReport.id}` : "/api/reports",
-      {
-        method: initialReport ? "PATCH" : "POST",
-        body: formData,
+    try {
+      if (!initialReport && !submissionKeyRef.current) {
+        submissionKeyRef.current = crypto.randomUUID();
       }
-    );
 
-    const data = await readApiResponse(res);
+      const res = await fetch(
+        initialReport ? `/api/reports/${initialReport.id}` : "/api/reports",
+        {
+          method: initialReport ? "PATCH" : "POST",
+          headers: initialReport
+            ? undefined
+            : { "Idempotency-Key": submissionKeyRef.current || "" },
+          body: formData,
+        },
+      );
 
-    if (!res.ok) {
-      throw new Error(data.message || "Gagal mengirim laporan.");
+      const data = await readApiResponse(res);
+
+      if (!res.ok) {
+        throw new Error(data.message || "Gagal mengirim laporan.");
+      }
+
+      submissionKeyRef.current = null;
+      router.push("/dashboard/user/status");
+      router.refresh();
+    } finally {
+      requestInFlightRef.current = false;
     }
-
-    router.push("/dashboard/user/status");
-    router.refresh();
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -94,6 +129,9 @@ export default function UserReportPageClient({
     }
   }
 
+  const formDefaults = initialReport || repeatReport;
+  const isResubmission = !initialReport && !!repeatReport;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 px-8 py-10 text-slate-900 sm:px-12 lg:px-20 xl:px-24">
       <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center text-center">
@@ -102,11 +140,22 @@ export default function UserReportPageClient({
             Dasbor Pegawai
           </p>
           <h1 className="mt-3 text-3xl font-bold md:text-5xl">
-            Buat Laporan Perbaikan Alat
+            {isResubmission
+              ? "Kirim Ulang Laporan Perbaikan"
+              : "Buat Laporan Perbaikan Alat"}
           </h1>
           <p className="mt-4 max-w-2xl text-slate-600">
-            Isi data melalui jendela formulir, lalu laporan akan masuk ke alur persetujuan{" "}
-            {getRoleLabel("ADMIN_1")} sampai {getRoleLabel("ADMIN_5")}.
+            {isResubmission ? (
+              <>
+                Form sudah diisi dari laporan {repeatReport.ticket || `#${repeatReport.id}`}.
+                Periksa kembali datanya dan unggah lampiran terbaru sebelum dikirim.
+              </>
+            ) : (
+              <>
+                Isi data melalui jendela formulir, lalu laporan akan masuk ke alur
+                persetujuan {getRoleLabel("ADMIN_1")} sampai {getRoleLabel("ADMIN_5")}.
+              </>
+            )}
           </p>
 
           <button
@@ -123,19 +172,25 @@ export default function UserReportPageClient({
         open={open}
         onOpenChange={handleOpenChange}
         onSubmit={handleSubmit}
-        defaultKategori={initialReport?.kategori || "FASILITAS_INVENTARIS"}
-        defaultNamaPelapor={initialReport?.namaPelapor || defaultNamaPelapor}
-        defaultNomorRuangan={initialReport?.nomorRuangan || ""}
-        defaultNamaRuangan={initialReport?.namaRuangan || ""}
-        defaultKodeUakpb={initialReport?.kodeUakpb || ""}
-        defaultKode={initialReport?.kode || ""}
-        defaultNup={initialReport?.nup || ""}
-        defaultSubcategory={initialReport?.subcategory || ""}
-        defaultNamaBarang={initialReport?.namaBarang || initialReport?.kodeUakpb || ""}
+        defaultKategori={formDefaults?.kategori || "FASILITAS_INVENTARIS"}
+        defaultNamaPelapor={formDefaults?.namaPelapor || defaultNamaPelapor}
+        defaultNomorRuangan={formDefaults?.nomorRuangan || ""}
+        defaultNamaRuangan={formDefaults?.namaRuangan || ""}
+        defaultKodeUakpb={formDefaults?.kodeUakpb || ""}
+        defaultKode={formDefaults?.kode || ""}
+        defaultNup={formDefaults?.nup || ""}
+        defaultSubcategory={formDefaults?.subcategory || ""}
+        defaultNamaBarang={formDefaults?.namaBarang || formDefaults?.kodeUakpb || ""}
         defaultRepairCost={initialReport?.repairCost || ""}
-        defaultDeskripsi={initialReport?.deskripsi || ""}
+        defaultDeskripsi={formDefaults?.deskripsi || ""}
         attachmentRequired={!initialReport}
-        submitLabel={initialReport ? "Simpan Perubahan" : "Kirim Laporan"}
+        submitLabel={
+          initialReport
+            ? "Simpan Perubahan"
+            : isResubmission
+              ? "Kirim Ulang Request"
+              : "Kirim Laporan"
+        }
       />
     </div>
   );

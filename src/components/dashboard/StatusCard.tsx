@@ -1,10 +1,9 @@
 "use client";
 
-"use client";
-
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, RotateCcw } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import {
   formatKategori,
@@ -17,6 +16,12 @@ import { getRoleLabel } from "@/src/lib/roles";
 import { formatRupiah } from "@/src/lib/formatting";
 import { formatTicketFallback } from "@/src/lib/tickets";
 import { normalizeStoredItemCode } from "@/src/lib/item-code";
+import {
+  findAttachmentIdForReference,
+  formatAttachmentFileSize,
+  formatAttachmentPurpose,
+  getReportAttachmentUrl,
+} from "@/src/lib/report-attachment-urls";
 
 export type StatusReportStatus = ReportStatus;
 
@@ -45,6 +50,10 @@ export type StatusReportItem = {
     fileType: string;
     fileName: string;
     fileSize: number;
+    purpose?: "DAMAGE_EVIDENCE" | "COMPLETION_PROOF" | null;
+    uploadedByName?: string | null;
+    uploadedByRole?: string | null;
+    createdAt?: string;
   }[];
   repairCost?: string | null;
   completionPhotoUrl?: string | null;
@@ -97,6 +106,18 @@ function getStatusUpdateLabel(report: StatusReportItem) {
     return `Sedang menunggu persetujuan ${formatStatus(report.status)}`;
   }
 
+  if (report.status === "MENUNGGU_KONFIRMASI") {
+    return "Menunggu konfirmasi kondisi barang dari pelapor";
+  }
+
+  if (report.status === "TELAH_BERFUNGSI") {
+    return `Dikonfirmasi telah berfungsi pada ${formatTanggal(report.finishedAt || null)}`;
+  }
+
+  if (report.status === "TIDAK_DAPAT_DIGUNAKAN") {
+    return `Dikonfirmasi tidak dapat digunakan pada ${formatTanggal(report.finishedAt || null)}`;
+  }
+
   return "Status laporan tidak diketahui";
 }
 
@@ -126,6 +147,20 @@ export default function StatusCard({
   const [confirmMessage, setConfirmMessage] = useState("");
   const canEditOrDelete = report.status === "MENUNGGU_ADMIN_1";
   const displayAttachmentUrl = report.attachmentUrl || report.fotoUrl;
+  const displayAttachmentId = findAttachmentIdForReference(
+    report.attachments,
+    displayAttachmentUrl,
+  );
+  const protectedDisplayAttachmentUrl = displayAttachmentUrl
+    ? getReportAttachmentUrl(
+        report.id,
+        displayAttachmentId || "legacy",
+        { inline: true },
+      )
+    : null;
+  const protectedCompletionUrl = report.completionPhotoUrl
+    ? getReportAttachmentUrl(report.id, "completion", { inline: true })
+    : null;
   const ticket = formatTicketFallback(report);
   const attachments =
     report.attachments && report.attachments.length > 0
@@ -138,6 +173,10 @@ export default function StatusCard({
               fileType: report.attachmentType || "",
               fileName: report.attachmentName || "Lampiran laporan",
               fileSize: 0,
+              purpose: "DAMAGE_EVIDENCE" as const,
+              uploadedByName: report.namaPelapor || null,
+              uploadedByRole: "USER",
+              createdAt: report.createdAt,
               legacy: true,
             },
           ]
@@ -199,10 +238,10 @@ export default function StatusCard({
     >
       <div className="grid grid-cols-1 gap-0 lg:grid-cols-[340px_minmax(0,1fr)]">
         <div className="border-b border-slate-200 bg-slate-50 p-4 lg:border-b-0 lg:border-r">
-          {displayAttachmentUrl && isImageAttachment ? (
+          {protectedDisplayAttachmentUrl && isImageAttachment ? (
             <div className="overflow-hidden rounded-2xl border border-slate-200">
               <Image
-                src={displayAttachmentUrl}
+                src={protectedDisplayAttachmentUrl}
                 alt={report.namaBarang}
                 width={1200}
                 height={900}
@@ -210,9 +249,9 @@ export default function StatusCard({
                 unoptimized
               />
             </div>
-          ) : displayAttachmentUrl ? (
+          ) : protectedDisplayAttachmentUrl ? (
             <a
-              href={displayAttachmentUrl}
+              href={protectedDisplayAttachmentUrl}
               target="_blank"
               rel="noreferrer"
               className="flex h-[240px] flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white text-center text-sm text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"
@@ -416,24 +455,79 @@ export default function StatusCard({
             </div>
           ) : null}
 
+          {report.status === "TIDAK_DAPAT_DIGUNAKAN" ? (
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-semibold text-amber-900">
+                Barang masih belum dapat digunakan?
+              </p>
+              <p className="mt-2 text-sm leading-6 text-amber-800">
+                Buat request baru memakai data laporan ini. Periksa kembali
+                informasinya dan unggah lampiran kondisi terbaru sebelum mengirim.
+              </p>
+              <Link
+                href={`/dashboard/user/report?repeat=${report.id}`}
+                className="mt-3 inline-flex items-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-600"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Kirim Ulang Request
+              </Link>
+            </div>
+          ) : null}
+
           {attachments.length > 0 ? (
             <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
               <p className="text-sm font-semibold text-slate-900">
                 Unduh Lampiran
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {attachments.map((attachment, index) => (
-                  <a
+                  <div
                     key={`${attachment.id}-${attachment.url}`}
-                    href={`/api/reports/${report.id}/attachments/${
-                      "legacy" in attachment ? "legacy" : attachment.id
-                    }/download`}
-                    download
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-3"
                   >
-                    <Download className="h-4 w-4" />
-                    {attachment.fileName || `Lampiran ${index + 1}`}
-                  </a>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+                      {formatAttachmentPurpose(attachment.purpose)}
+                    </p>
+                    <p className="mt-1 truncate text-sm font-semibold text-slate-900">
+                      {attachment.fileName || `Lampiran ${index + 1}`}
+                    </p>
+                    <dl className="mt-3 grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-xs leading-5">
+                      <dt className="text-slate-500">Diunggah oleh</dt>
+                      <dd className="font-semibold text-slate-800">
+                        {attachment.uploadedByName || "Metadata lama tidak tersedia"}
+                      </dd>
+                      <dt className="text-slate-500">Peran</dt>
+                      <dd className="font-semibold text-slate-800">
+                        {attachment.uploadedByRole
+                          ? getRoleLabel(attachment.uploadedByRole)
+                          : "Tidak tersedia"}
+                      </dd>
+                      <dt className="text-slate-500">Waktu unggah</dt>
+                      <dd className="font-semibold text-slate-800">
+                        {attachment.createdAt
+                          ? formatTanggal(attachment.createdAt)
+                          : "Tidak tersedia"}
+                      </dd>
+                      <dt className="text-slate-500">Format</dt>
+                      <dd className="break-all font-semibold text-slate-800">
+                        {attachment.fileType || "Tidak tersedia"}
+                      </dd>
+                      <dt className="text-slate-500">Ukuran</dt>
+                      <dd className="font-semibold text-slate-800">
+                        {formatAttachmentFileSize(attachment.fileSize)}
+                      </dd>
+                    </dl>
+                    <a
+                      href={`/api/reports/${report.id}/attachments/${
+                        "legacy" in attachment ? "legacy" : attachment.id
+                      }/download`}
+                      download
+                      className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-600"
+                    >
+                      <Download className="h-4 w-4" />
+                      Unduh lampiran
+                    </a>
+                  </div>
                 ))}
               </div>
             </div>
@@ -446,7 +540,7 @@ export default function StatusCard({
               </p>
               {isPdfUrl(report.completionPhotoUrl) ? (
                 <a
-                  href={report.completionPhotoUrl}
+                  href={protectedCompletionUrl || "#"}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-3 flex min-h-28 flex-col items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 text-center text-sm text-emerald-700 transition hover:bg-emerald-100"
@@ -457,7 +551,7 @@ export default function StatusCard({
               ) : (
                 <div className="mt-3 overflow-hidden rounded-2xl border border-emerald-100">
                   <Image
-                    src={report.completionPhotoUrl}
+                    src={protectedCompletionUrl || ""}
                     alt="Bukti penyelesaian"
                     width={1200}
                     height={900}

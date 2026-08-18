@@ -45,6 +45,9 @@ export type ReportAttachmentMinAggregateOutputType = {
   fileType: string | null
   fileName: string | null
   fileSize: number | null
+  purpose: $Enums.ReportAttachmentPurpose | null
+  uploadedByName: string | null
+  uploadedByRole: $Enums.Role | null
   createdAt: Date | null
 }
 
@@ -55,6 +58,9 @@ export type ReportAttachmentMaxAggregateOutputType = {
   fileType: string | null
   fileName: string | null
   fileSize: number | null
+  purpose: $Enums.ReportAttachmentPurpose | null
+  uploadedByName: string | null
+  uploadedByRole: $Enums.Role | null
   createdAt: Date | null
 }
 
@@ -65,6 +71,9 @@ export type ReportAttachmentCountAggregateOutputType = {
   fileType: number
   fileName: number
   fileSize: number
+  purpose: number
+  uploadedByName: number
+  uploadedByRole: number
   createdAt: number
   _all: number
 }
@@ -89,6 +98,9 @@ export type ReportAttachmentMinAggregateInputType = {
   fileType?: true
   fileName?: true
   fileSize?: true
+  purpose?: true
+  uploadedByName?: true
+  uploadedByRole?: true
   createdAt?: true
 }
 
@@ -99,6 +111,9 @@ export type ReportAttachmentMaxAggregateInputType = {
   fileType?: true
   fileName?: true
   fileSize?: true
+  purpose?: true
+  uploadedByName?: true
+  uploadedByRole?: true
   createdAt?: true
 }
 
@@ -109,6 +124,9 @@ export type ReportAttachmentCountAggregateInputType = {
   fileType?: true
   fileName?: true
   fileSize?: true
+  purpose?: true
+  uploadedByName?: true
+  uploadedByRole?: true
   createdAt?: true
   _all?: true
 }
@@ -206,6 +224,9 @@ export type ReportAttachmentGroupByOutputType = {
   fileType: string
   fileName: string
   fileSize: number
+  purpose: $Enums.ReportAttachmentPurpose | null
+  uploadedByName: string | null
+  uploadedByRole: $Enums.Role | null
   createdAt: Date
   _count: ReportAttachmentCountAggregateOutputType | null
   _avg: ReportAttachmentAvgAggregateOutputType | null
@@ -239,6 +260,9 @@ export type ReportAttachmentWhereInput = {
   fileType?: Prisma.StringFilter<"ReportAttachment"> | string
   fileName?: Prisma.StringFilter<"ReportAttachment"> | string
   fileSize?: Prisma.IntFilter<"ReportAttachment"> | number
+  purpose?: Prisma.EnumReportAttachmentPurposeNullableFilter<"ReportAttachment"> | $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: Prisma.StringNullableFilter<"ReportAttachment"> | string | null
+  uploadedByRole?: Prisma.EnumRoleNullableFilter<"ReportAttachment"> | $Enums.Role | null
   createdAt?: Prisma.DateTimeFilter<"ReportAttachment"> | Date | string
   report?: Prisma.XOR<Prisma.ReportScalarRelationFilter, Prisma.ReportWhereInput>
 }
@@ -250,6 +274,9 @@ export type ReportAttachmentOrderByWithRelationInput = {
   fileType?: Prisma.SortOrder
   fileName?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
+  purpose?: Prisma.SortOrderInput | Prisma.SortOrder
+  uploadedByName?: Prisma.SortOrderInput | Prisma.SortOrder
+  uploadedByRole?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   report?: Prisma.ReportOrderByWithRelationInput
   _relevance?: Prisma.ReportAttachmentOrderByRelevanceInput
@@ -265,6 +292,9 @@ export type ReportAttachmentWhereUniqueInput = Prisma.AtLeast<{
   fileType?: Prisma.StringFilter<"ReportAttachment"> | string
   fileName?: Prisma.StringFilter<"ReportAttachment"> | string
   fileSize?: Prisma.IntFilter<"ReportAttachment"> | number
+  purpose?: Prisma.EnumReportAttachmentPurposeNullableFilter<"ReportAttachment"> | $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: Prisma.StringNullableFilter<"ReportAttachment"> | string | null
+  uploadedByRole?: Prisma.EnumRoleNullableFilter<"ReportAttachment"> | $Enums.Role | null
   createdAt?: Prisma.DateTimeFilter<"ReportAttachment"> | Date | string
   report?: Prisma.XOR<Prisma.ReportScalarRelationFilter, Prisma.ReportWhereInput>
 }, "id">
@@ -276,6 +306,9 @@ export type ReportAttachmentOrderByWithAggregationInput = {
   fileType?: Prisma.SortOrder
   fileName?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
+  purpose?: Prisma.SortOrderInput | Prisma.SortOrder
+  uploadedByName?: Prisma.SortOrderInput | Prisma.SortOrder
+  uploadedByRole?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ReportAttachmentCountOrderByAggregateInput
   _avg?: Prisma.ReportAttachmentAvgOrderByAggregateInput
@@ -294,6 +327,9 @@ export type ReportAttachmentScalarWhereWithAggregatesInput = {
   fileType?: Prisma.StringWithAggregatesFilter<"ReportAttachment"> | string
   fileName?: Prisma.StringWithAggregatesFilter<"ReportAttachment"> | string
   fileSize?: Prisma.IntWithAggregatesFilter<"ReportAttachment"> | number
+  purpose?: Prisma.EnumReportAttachmentPurposeNullableWithAggregatesFilter<"ReportAttachment"> | $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: Prisma.StringNullableWithAggregatesFilter<"ReportAttachment"> | string | null
+  uploadedByRole?: Prisma.EnumRoleNullableWithAggregatesFilter<"ReportAttachment"> | $Enums.Role | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ReportAttachment"> | Date | string
 }
 
@@ -302,6 +338,9 @@ export type ReportAttachmentCreateInput = {
   fileType: string
   fileName: string
   fileSize: number
+  purpose?: $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: string | null
+  uploadedByRole?: $Enums.Role | null
   createdAt?: Date | string
   report: Prisma.ReportCreateNestedOneWithoutAttachmentsInput
 }
@@ -313,6 +352,9 @@ export type ReportAttachmentUncheckedCreateInput = {
   fileType: string
   fileName: string
   fileSize: number
+  purpose?: $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: string | null
+  uploadedByRole?: $Enums.Role | null
   createdAt?: Date | string
 }
 
@@ -321,6 +363,9 @@ export type ReportAttachmentUpdateInput = {
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  purpose?: Prisma.NullableEnumReportAttachmentPurposeFieldUpdateOperationsInput | $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  uploadedByRole?: Prisma.NullableEnumRoleFieldUpdateOperationsInput | $Enums.Role | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   report?: Prisma.ReportUpdateOneRequiredWithoutAttachmentsNestedInput
 }
@@ -332,6 +377,9 @@ export type ReportAttachmentUncheckedUpdateInput = {
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  purpose?: Prisma.NullableEnumReportAttachmentPurposeFieldUpdateOperationsInput | $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  uploadedByRole?: Prisma.NullableEnumRoleFieldUpdateOperationsInput | $Enums.Role | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -342,6 +390,9 @@ export type ReportAttachmentCreateManyInput = {
   fileType: string
   fileName: string
   fileSize: number
+  purpose?: $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: string | null
+  uploadedByRole?: $Enums.Role | null
   createdAt?: Date | string
 }
 
@@ -350,6 +401,9 @@ export type ReportAttachmentUpdateManyMutationInput = {
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  purpose?: Prisma.NullableEnumReportAttachmentPurposeFieldUpdateOperationsInput | $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  uploadedByRole?: Prisma.NullableEnumRoleFieldUpdateOperationsInput | $Enums.Role | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -360,6 +414,9 @@ export type ReportAttachmentUncheckedUpdateManyInput = {
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  purpose?: Prisma.NullableEnumReportAttachmentPurposeFieldUpdateOperationsInput | $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  uploadedByRole?: Prisma.NullableEnumRoleFieldUpdateOperationsInput | $Enums.Role | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -386,6 +443,9 @@ export type ReportAttachmentCountOrderByAggregateInput = {
   fileType?: Prisma.SortOrder
   fileName?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
+  purpose?: Prisma.SortOrder
+  uploadedByName?: Prisma.SortOrder
+  uploadedByRole?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -402,6 +462,9 @@ export type ReportAttachmentMaxOrderByAggregateInput = {
   fileType?: Prisma.SortOrder
   fileName?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
+  purpose?: Prisma.SortOrder
+  uploadedByName?: Prisma.SortOrder
+  uploadedByRole?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -412,6 +475,9 @@ export type ReportAttachmentMinOrderByAggregateInput = {
   fileType?: Prisma.SortOrder
   fileName?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
+  purpose?: Prisma.SortOrder
+  uploadedByName?: Prisma.SortOrder
+  uploadedByRole?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -463,11 +529,22 @@ export type ReportAttachmentUncheckedUpdateManyWithoutReportNestedInput = {
   deleteMany?: Prisma.ReportAttachmentScalarWhereInput | Prisma.ReportAttachmentScalarWhereInput[]
 }
 
+export type NullableEnumReportAttachmentPurposeFieldUpdateOperationsInput = {
+  set?: $Enums.ReportAttachmentPurpose | null
+}
+
+export type NullableEnumRoleFieldUpdateOperationsInput = {
+  set?: $Enums.Role | null
+}
+
 export type ReportAttachmentCreateWithoutReportInput = {
   url: string
   fileType: string
   fileName: string
   fileSize: number
+  purpose?: $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: string | null
+  uploadedByRole?: $Enums.Role | null
   createdAt?: Date | string
 }
 
@@ -477,6 +554,9 @@ export type ReportAttachmentUncheckedCreateWithoutReportInput = {
   fileType: string
   fileName: string
   fileSize: number
+  purpose?: $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: string | null
+  uploadedByRole?: $Enums.Role | null
   createdAt?: Date | string
 }
 
@@ -516,6 +596,9 @@ export type ReportAttachmentScalarWhereInput = {
   fileType?: Prisma.StringFilter<"ReportAttachment"> | string
   fileName?: Prisma.StringFilter<"ReportAttachment"> | string
   fileSize?: Prisma.IntFilter<"ReportAttachment"> | number
+  purpose?: Prisma.EnumReportAttachmentPurposeNullableFilter<"ReportAttachment"> | $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: Prisma.StringNullableFilter<"ReportAttachment"> | string | null
+  uploadedByRole?: Prisma.EnumRoleNullableFilter<"ReportAttachment"> | $Enums.Role | null
   createdAt?: Prisma.DateTimeFilter<"ReportAttachment"> | Date | string
 }
 
@@ -525,6 +608,9 @@ export type ReportAttachmentCreateManyReportInput = {
   fileType: string
   fileName: string
   fileSize: number
+  purpose?: $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: string | null
+  uploadedByRole?: $Enums.Role | null
   createdAt?: Date | string
 }
 
@@ -533,6 +619,9 @@ export type ReportAttachmentUpdateWithoutReportInput = {
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  purpose?: Prisma.NullableEnumReportAttachmentPurposeFieldUpdateOperationsInput | $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  uploadedByRole?: Prisma.NullableEnumRoleFieldUpdateOperationsInput | $Enums.Role | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -542,6 +631,9 @@ export type ReportAttachmentUncheckedUpdateWithoutReportInput = {
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  purpose?: Prisma.NullableEnumReportAttachmentPurposeFieldUpdateOperationsInput | $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  uploadedByRole?: Prisma.NullableEnumRoleFieldUpdateOperationsInput | $Enums.Role | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -551,6 +643,9 @@ export type ReportAttachmentUncheckedUpdateManyWithoutReportInput = {
   fileType?: Prisma.StringFieldUpdateOperationsInput | string
   fileName?: Prisma.StringFieldUpdateOperationsInput | string
   fileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  purpose?: Prisma.NullableEnumReportAttachmentPurposeFieldUpdateOperationsInput | $Enums.ReportAttachmentPurpose | null
+  uploadedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  uploadedByRole?: Prisma.NullableEnumRoleFieldUpdateOperationsInput | $Enums.Role | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -563,6 +658,9 @@ export type ReportAttachmentSelect<ExtArgs extends runtime.Types.Extensions.Inte
   fileType?: boolean
   fileName?: boolean
   fileSize?: boolean
+  purpose?: boolean
+  uploadedByName?: boolean
+  uploadedByRole?: boolean
   createdAt?: boolean
   report?: boolean | Prisma.ReportDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["reportAttachment"]>
@@ -576,10 +674,13 @@ export type ReportAttachmentSelectScalar = {
   fileType?: boolean
   fileName?: boolean
   fileSize?: boolean
+  purpose?: boolean
+  uploadedByName?: boolean
+  uploadedByRole?: boolean
   createdAt?: boolean
 }
 
-export type ReportAttachmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reportId" | "url" | "fileType" | "fileName" | "fileSize" | "createdAt", ExtArgs["result"]["reportAttachment"]>
+export type ReportAttachmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reportId" | "url" | "fileType" | "fileName" | "fileSize" | "purpose" | "uploadedByName" | "uploadedByRole" | "createdAt", ExtArgs["result"]["reportAttachment"]>
 export type ReportAttachmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   report?: boolean | Prisma.ReportDefaultArgs<ExtArgs>
 }
@@ -596,6 +697,9 @@ export type $ReportAttachmentPayload<ExtArgs extends runtime.Types.Extensions.In
     fileType: string
     fileName: string
     fileSize: number
+    purpose: $Enums.ReportAttachmentPurpose | null
+    uploadedByName: string | null
+    uploadedByRole: $Enums.Role | null
     createdAt: Date
   }, ExtArgs["result"]["reportAttachment"]>
   composites: {}
@@ -973,6 +1077,9 @@ export interface ReportAttachmentFieldRefs {
   readonly fileType: Prisma.FieldRef<"ReportAttachment", 'String'>
   readonly fileName: Prisma.FieldRef<"ReportAttachment", 'String'>
   readonly fileSize: Prisma.FieldRef<"ReportAttachment", 'Int'>
+  readonly purpose: Prisma.FieldRef<"ReportAttachment", 'ReportAttachmentPurpose'>
+  readonly uploadedByName: Prisma.FieldRef<"ReportAttachment", 'String'>
+  readonly uploadedByRole: Prisma.FieldRef<"ReportAttachment", 'Role'>
   readonly createdAt: Prisma.FieldRef<"ReportAttachment", 'DateTime'>
 }
     

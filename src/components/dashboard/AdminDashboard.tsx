@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  AlertTriangle,
   CalendarDays,
   Database,
   Download,
@@ -23,11 +24,27 @@ import {
   type ReportStatus,
 } from "@/lib/report-helpers";
 import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
-import { getCategoryScopeLabel, getRoleLabel } from "@/src/lib/roles";
-import { canRoleDecide, getWorkflowMessage } from "@/src/lib/workflow";
+import {
+  canRoleUseWorkflowAction,
+  getCategoryScopeLabel,
+  getRoleLabel,
+  getWorkflowActionPresentation,
+  isWorkflowDescriptionRequired,
+  type WorkflowDecisionAction,
+} from "@/src/lib/roles";
+import {
+  canRoleDecide,
+  getWorkflowMessage,
+} from "@/src/lib/workflow";
 import { formatRupiah } from "@/src/lib/formatting";
 import { formatTicketFallback } from "@/src/lib/tickets";
 import { normalizeStoredItemCode } from "@/src/lib/item-code";
+import {
+  findAttachmentIdForReference,
+  formatAttachmentFileSize,
+  formatAttachmentPurpose,
+  getReportAttachmentUrl,
+} from "@/src/lib/report-attachment-urls";
 import NotificationBell from "@/src/components/notifications/NotificationBell";
 import {
   FeedbackBanner,
@@ -102,6 +119,10 @@ type ReportItem = {
     fileType: string;
     fileName: string;
     fileSize: number;
+    purpose?: "DAMAGE_EVIDENCE" | "COMPLETION_PROOF" | null;
+    uploadedByName?: string | null;
+    uploadedByRole?: AppRole | null;
+    createdAt?: string;
   }[];
   repairCost?: string | null;
   completionPhotoUrl?: string | null;
@@ -140,10 +161,6 @@ function getInitials(name: string) {
     .join("");
 }
 
-function isWaitingStatus(status: ReportStatus) {
-  return status.startsWith("MENUNGGU_ADMIN");
-}
-
 function getRejectingAdmin(report: ReportItem) {
   return [...(report.histories || [])]
     .reverse()
@@ -161,32 +178,80 @@ export default function AdminDashboard({
 }: AdminDashboardProps) {
   const router = useRouter();
   const handledInitialReportId = useRef<number | null>(null);
+  const reportRequestId = useRef(0);
 
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [decisionNote, setDecisionNote] = useState("");
+  const [pendingDescriptionlessDecision, setPendingDescriptionlessDecision] =
+    useState<WorkflowDecisionAction | null>(null);
   const [decisionRepairCost, setDecisionRepairCost] = useState("");
   const [completionProofs, setCompletionProofs] = useState<File[]>([]);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
-  const [visibleReportLimit, setVisibleReportLimit] = useState(REPORT_PAGE_SIZE);
+  const [reportTotal, setReportTotal] = useState(0);
+  const [hasMoreReports, setHasMoreReports] = useState(false);
+  const [loadingMoreReports, setLoadingMoreReports] = useState(false);
+  const [reportSummary, setReportSummary] = useState({
+    total: 0,
+    menunggu: 0,
+    final: 0,
+    ditolak: 0,
+  });
   const [statusFilter, setStatusFilter] = useState("SEMUA");
   const [categoryFilter, setCategoryFilter] = useState("SEMUA");
   const [subcategoryFilter, setSubcategoryFilter] = useState("SEMUA");
-  const [picFilter, setPicFilter] = useState("SEMUA");
+  const [picFilter, setPicFilter] = useState("");
+  const [debouncedPicFilter, setDebouncedPicFilter] = useState("");
   const [budgetFilter, setBudgetFilter] = useState("SEMUA");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [messageTemplates, setMessageTemplates] = useState(DEFAULT_MESSAGE_TEMPLATES);
-  const canCompleteReport =
-    currentUser.role === "ADMIN_1" || currentUser.role === "ADMIN_5";
+  const [subcategoryOptionsByCategory, setSubcategoryOptionsByCategory] =
+    useState<Record<string, string[]>>({});
+  const subcategoryOptions = Array.from(
+    new Set(
+      categoryFilter === "SEMUA"
+        ? Object.values(subcategoryOptionsByCategory).flat()
+        : subcategoryOptionsByCategory[categoryFilter] || [],
+    ),
+  ).sort((left, right) => left.localeCompare(right, "id"));
+  const canForwardReport = canRoleUseWorkflowAction(currentUser.role, "ACC");
+  const canCompleteReport = canRoleUseWorkflowAction(currentUser.role, "SELESAI");
+  const canRejectReport = canRoleUseWorkflowAction(currentUser.role, "TOLAK");
+  const workflowActions = getWorkflowActionPresentation(currentUser.role);
 
-  async function loadReports() {
+  async function loadReports(options?: { append?: boolean }) {
+    const append = options?.append === true;
+    const requestId = ++reportRequestId.current;
+
     try {
-      setLoading(true);
-      const res = await fetch("/api/reports/admin", { cache: "no-store" });
+      if (append) setLoadingMoreReports(true);
+      else setLoading(true);
+
+      const params = new URLSearchParams({
+        limit: String(REPORT_PAGE_SIZE),
+        offset: String(append ? reports.length : 0),
+      });
+      if (statusFilter !== "SEMUA") params.set("status", statusFilter);
+      if (categoryFilter !== "SEMUA") params.set("category", categoryFilter);
+      if (subcategoryFilter !== "SEMUA") {
+        params.set("subcategory", subcategoryFilter);
+      }
+      if (debouncedPicFilter.trim()) {
+        params.set("userQuery", debouncedPicFilter.trim());
+      }
+      if (budgetFilter !== "SEMUA") params.set("budget", budgetFilter);
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
+
+      const res = await fetch(`/api/reports/admin?${params.toString()}`, {
+        cache: "no-store",
+      });
       const data = await res.json();
+
+      if (requestId !== reportRequestId.current) return;
 
       if (!res.ok) {
         const text = data.message || "Gagal memuat laporan.";
@@ -195,21 +260,52 @@ export default function AdminDashboard({
         return;
       }
 
-      setReports(data.reports || []);
-      setVisibleReportLimit(REPORT_PAGE_SIZE);
+      const nextReports = Array.isArray(data.reports) ? data.reports : [];
+      setReports((current) => (append ? [...current, ...nextReports] : nextReports));
+      setReportTotal(Number(data.total || 0));
+      setHasMoreReports(data.hasMore === true);
+      if (data.summary) {
+        setReportSummary({
+          total: Number(data.summary.total || 0),
+          menunggu: Number(data.summary.menunggu || 0),
+          final: Number(data.summary.final || 0),
+          ditolak: Number(data.summary.ditolak || 0),
+        });
+      }
     } catch (error) {
       console.error("LOAD_ADMIN_REPORTS_ERROR:", error);
       const text = "Terjadi kesalahan saat memuat laporan.";
       setMessage(toFeedback(text, "error"));
       showError("Gagal memuat laporan", text);
     } finally {
-      setLoading(false);
+      if (requestId === reportRequestId.current) {
+        setLoading(false);
+        setLoadingMoreReports(false);
+      }
     }
   }
 
+  const loadReportsForEffect = useEffectEvent(loadReports);
+
   useEffect(() => {
-    void loadReports();
-  }, []);
+    const timer = window.setTimeout(() => {
+      setDebouncedPicFilter(picFilter);
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [picFilter]);
+
+  useEffect(() => {
+    void loadReportsForEffect();
+  }, [
+    statusFilter,
+    categoryFilter,
+    subcategoryFilter,
+    debouncedPicFilter,
+    budgetFilter,
+    dateFrom,
+    dateTo,
+  ]);
 
   useEffect(() => {
     if (
@@ -225,7 +321,11 @@ export default function AdminDashboard({
 
     if (report) {
       openReportDetail(report);
+    } else {
+      void openNotificationReport(initialReportId);
     }
+    // The notification opener intentionally reads the latest report list.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialReportId, loading, reports]);
 
   useEffect(() => {
@@ -241,6 +341,21 @@ export default function AdminDashboard({
             name: template.name,
             description: template.description,
           })),
+        );
+        setSubcategoryOptionsByCategory(
+          Object.fromEntries(
+            (data.categories || []).map(
+              (category: {
+                value: string;
+                subcategories?: { name: string }[];
+              }) => [
+                category.value,
+                (category.subcategories || [])
+                  .map((item) => item.name)
+                  .sort((left, right) => left.localeCompare(right, "id")),
+              ],
+            ),
+          ),
         );
       } catch (error) {
         console.error("LOAD_MESSAGE_TEMPLATES_ERROR:", error);
@@ -269,6 +384,7 @@ export default function AdminDashboard({
     setDecisionNote("");
     setDecisionRepairCost(report.repairCost || "");
     setCompletionProofs([]);
+    setPendingDescriptionlessDecision(null);
     setMessage(null);
   }
 
@@ -299,9 +415,31 @@ export default function AdminDashboard({
     setDecisionNote("");
     setDecisionRepairCost("");
     setCompletionProofs([]);
+    setPendingDescriptionlessDecision(null);
   }
 
-  async function submitDecision(action: "ACC" | "TOLAK" | "SELESAI") {
+  function getSelectedPrimaryAttachmentUrl(inline = false) {
+    if (!selectedReport) return "";
+
+    const reference = selectedReport.attachmentUrl || selectedReport.fotoUrl;
+    if (!reference) return "";
+
+    const attachmentId = findAttachmentIdForReference(
+      selectedReport.attachments,
+      reference,
+    );
+
+    return getReportAttachmentUrl(
+      selectedReport.id,
+      attachmentId || "legacy",
+      { inline },
+    );
+  }
+
+  async function submitDecision(
+    action: WorkflowDecisionAction,
+    options?: { confirmedWithoutDescription?: boolean },
+  ) {
     if (!selectedReport) return;
 
     if (action === "SELESAI" && !canCompleteReport) {
@@ -344,11 +482,11 @@ export default function AdminDashboard({
     }
 
     if (
-      action === "ACC" &&
+      action === "SELESAI" &&
       currentUser.role === "ADMIN_5" &&
       !decisionRepairCost.replace(/\D/g, "")
     ) {
-      const text = "Anggaran wajib diisi sebelum PP menerima laporan.";
+      const text = "Anggaran wajib diisi sebelum PP menyelesaikan laporan.";
       setMessage(toFeedback(text, "error"));
       showError("Anggaran wajib diisi", text);
       return;
@@ -381,6 +519,17 @@ export default function AdminDashboard({
       showError("Bukti terlalu besar", text);
       return;
     }
+
+    if (
+      !options?.confirmedWithoutDescription &&
+      !decisionNote.trim() &&
+      !isWorkflowDescriptionRequired(currentUser.role, action)
+    ) {
+      setPendingDescriptionlessDecision(action);
+      return;
+    }
+
+    setPendingDescriptionlessDecision(null);
 
     try {
       setSubmitLoading(true);
@@ -442,49 +591,13 @@ export default function AdminDashboard({
     }
   }
 
-  const summary = useMemo(
-    () => ({
-      total: reports.length,
-      menunggu: reports.filter((report) => isWaitingStatus(report.status)).length,
-      final: reports.filter((report) =>
-        ["MENUNGGU_KONFIRMASI", "TELAH_BERFUNGSI"].includes(report.status),
-      ).length,
-      ditolak: reports.filter((report) => report.status === "DITOLAK").length,
-    }),
-    [reports],
-  );
+  const summary = reportSummary;
 
   const selectedReportRejectingAdmin = selectedReport
     ? getRejectingAdmin(selectedReport)
     : null;
-  const filteredReports = useMemo(() => {
-    return reports.filter((report) => {
-      if (statusFilter !== "SEMUA" && report.status !== statusFilter) return false;
-      if (categoryFilter !== "SEMUA" && report.kategori !== categoryFilter) return false;
-      if (subcategoryFilter !== "SEMUA" && (report.subcategory || "-") !== subcategoryFilter) return false;
-      if (picFilter !== "SEMUA" && String(report.user.id) !== picFilter) return false;
-
-      const createdAt = new Date(report.createdAt);
-      if (dateFrom && createdAt < new Date(`${dateFrom}T00:00:00`)) return false;
-      if (dateTo && createdAt > new Date(`${dateTo}T23:59:59`)) return false;
-
-      const budget = Number(report.repairCost || 0);
-      if (budgetFilter === "BELOW_5" && !(budget < 5000000)) return false;
-      if (budgetFilter === "BETWEEN_5_10" && !(budget >= 5000000 && budget <= 10000000)) return false;
-      if (budgetFilter === "ABOVE_10" && !(budget > 10000000)) return false;
-
-      return true;
-    });
-  }, [budgetFilter, categoryFilter, dateFrom, dateTo, picFilter, reports, statusFilter, subcategoryFilter]);
-  const visibleReports = useMemo(
-    () => filteredReports.slice(0, visibleReportLimit),
-    [filteredReports, visibleReportLimit],
-  );
-  const hiddenReportCount = Math.max(filteredReports.length - visibleReports.length, 0);
-  const subcategoryOptions = Array.from(new Set(reports.map((report) => report.subcategory || "-")));
-  const picOptions = Array.from(
-    new Map(reports.map((report) => [report.user.id, report.user])).values(),
-  );
+  const visibleReports = reports;
+  const hiddenReportCount = Math.max(reportTotal - reports.length, 0);
   const isExecutive = currentUser.role === "EXECUTIVE";
 
   return (
@@ -645,7 +758,14 @@ export default function AdminDashboard({
                 <option key={status} value={status}>{formatStatus(status as ReportStatus)}</option>
               ))}
             </select>
-            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">
+            <select
+              value={categoryFilter}
+              onChange={(event) => {
+                setCategoryFilter(event.target.value);
+                setSubcategoryFilter("SEMUA");
+              }}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+            >
               <option value="SEMUA">Semua Kategori</option>
               <option value="FASILITAS_INVENTARIS">Inventaris</option>
               <option value="IT_ELEKTRONIK">IT & Elektronik</option>
@@ -657,12 +777,12 @@ export default function AdminDashboard({
                 <option key={subcategory} value={subcategory}>{subcategory}</option>
               ))}
             </select>
-            <select value={picFilter} onChange={(event) => setPicFilter(event.target.value)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">
-              <option value="SEMUA">Semua PJ</option>
-              {picOptions.map((user) => (
-                <option key={user.id} value={user.id}>{user.nama}</option>
-              ))}
-            </select>
+            <input
+              value={picFilter}
+              onChange={(event) => setPicFilter(event.target.value)}
+              placeholder="Cari nama/NIP pelapor"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+            />
             <select value={budgetFilter} onChange={(event) => setBudgetFilter(event.target.value)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">
               <option value="SEMUA">Semua Anggaran</option>
               <option value="BELOW_5">Di bawah Rp5.000.000</option>
@@ -777,15 +897,13 @@ export default function AdminDashboard({
                 <div className="border-t border-slate-100 bg-white p-4 text-center">
                   <button
                     type="button"
-                    onClick={() =>
-                      setVisibleReportLimit(
-                        (current) => current + REPORT_PAGE_SIZE,
-                      )
-                    }
+                    onClick={() => void loadReports({ append: true })}
+                    disabled={loadingMoreReports || !hasMoreReports}
                     className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
                   >
-                    Tampilkan {Math.min(REPORT_PAGE_SIZE, hiddenReportCount)}{" "}
-                    laporan lagi
+                    {loadingMoreReports
+                      ? "Memuat..."
+                      : `Tampilkan ${Math.min(REPORT_PAGE_SIZE, hiddenReportCount)} laporan lagi`}
                   </button>
                 </div>
               ) : null}
@@ -981,13 +1099,15 @@ export default function AdminDashboard({
 
                 <div className="space-y-6">
                   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="mb-3 text-sm text-slate-500">Lampiran</p>
+                    <p className="mb-3 text-sm text-slate-500">
+                      Lampiran dan Informasi Pengunggah
+                    </p>
                     {(selectedReport.attachmentUrl || selectedReport.fotoUrl) &&
                     (selectedReport.attachmentType?.startsWith("image/") ||
                       selectedReport.fotoUrl) ? (
                       <div className="overflow-hidden rounded-2xl border border-slate-200">
                         <Image
-                          src={selectedReport.attachmentUrl || selectedReport.fotoUrl || ""}
+                          src={getSelectedPrimaryAttachmentUrl(true)}
                           alt={selectedReport.namaBarang}
                           width={1200}
                           height={800}
@@ -997,7 +1117,7 @@ export default function AdminDashboard({
                       </div>
                     ) : selectedReport.attachmentUrl ? (
                       <a
-                        href={selectedReport.attachmentUrl}
+                        href={getSelectedPrimaryAttachmentUrl(true)}
                         target="_blank"
                         rel="noreferrer"
                         className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"
@@ -1014,17 +1134,53 @@ export default function AdminDashboard({
                       </div>
                     )}
                     {selectedReport.attachments?.length ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 grid gap-2">
                         {selectedReport.attachments.map((attachment) => (
-                          <a
+                          <div
                             key={attachment.id}
-                            href={`/api/reports/${selectedReport.id}/attachments/${attachment.id}/download`}
-                            download
-                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                            className="rounded-xl border border-slate-200 bg-slate-50 p-3"
                           >
-                            <Download className="h-3.5 w-3.5" />
-                            {attachment.fileName}
-                          </a>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+                              {formatAttachmentPurpose(attachment.purpose)}
+                            </p>
+                            <p className="mt-1 truncate text-sm font-semibold text-slate-900">
+                              {attachment.fileName}
+                            </p>
+                            <dl className="mt-3 grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-xs leading-5">
+                              <dt className="text-slate-500">Diunggah oleh</dt>
+                              <dd className="font-semibold text-slate-800">
+                                {attachment.uploadedByName || "Metadata lama tidak tersedia"}
+                              </dd>
+                              <dt className="text-slate-500">Peran</dt>
+                              <dd className="font-semibold text-slate-800">
+                                {attachment.uploadedByRole
+                                  ? getRoleLabel(attachment.uploadedByRole)
+                                  : "Tidak tersedia"}
+                              </dd>
+                              <dt className="text-slate-500">Waktu unggah</dt>
+                              <dd className="font-semibold text-slate-800">
+                                {attachment.createdAt
+                                  ? formatTanggal(attachment.createdAt)
+                                  : "Tidak tersedia"}
+                              </dd>
+                              <dt className="text-slate-500">Format</dt>
+                              <dd className="break-all font-semibold text-slate-800">
+                                {attachment.fileType || "Tidak tersedia"}
+                              </dd>
+                              <dt className="text-slate-500">Ukuran</dt>
+                              <dd className="font-semibold text-slate-800">
+                                {formatAttachmentFileSize(attachment.fileSize)}
+                              </dd>
+                            </dl>
+                            <a
+                              href={`/api/reports/${selectedReport.id}/attachments/${attachment.id}/download`}
+                              download
+                              className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-blue-700 transition hover:text-blue-600"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              Unduh lampiran
+                            </a>
+                          </div>
                         ))}
                       </div>
                     ) : null}
@@ -1037,7 +1193,11 @@ export default function AdminDashboard({
                       </p>
                       {isPdfUrl(selectedReport.completionPhotoUrl) ? (
                         <a
-                          href={selectedReport.completionPhotoUrl}
+                          href={getReportAttachmentUrl(
+                            selectedReport.id,
+                            "completion",
+                            { inline: true },
+                          )}
                           target="_blank"
                           rel="noreferrer"
                           className="flex min-h-32 flex-col items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-center text-emerald-700 transition hover:bg-emerald-100"
@@ -1050,7 +1210,11 @@ export default function AdminDashboard({
                       ) : (
                         <div className="overflow-hidden rounded-2xl border border-emerald-100">
                           <Image
-                            src={selectedReport.completionPhotoUrl}
+                            src={getReportAttachmentUrl(
+                              selectedReport.id,
+                              "completion",
+                              { inline: true },
+                            )}
                             alt="Bukti penyelesaian"
                             width={1200}
                             height={800}
@@ -1109,8 +1273,9 @@ export default function AdminDashboard({
 
                           {currentUser.role === "ADMIN_5" ? (
                             <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-base leading-7 text-blue-900">
-                              Jika PP memilih <strong>Selesai</strong>, deskripsi
-                              penyelesaian dan minimal satu bukti wajib diisi.
+                              Gunakan <strong>Kirim Bukti & Minta Konfirmasi Pelapor</strong>{" "}
+                              setelah pekerjaan selesai. Anggaran, deskripsi
+                              penyelesaian, dan minimal satu bukti wajib diisi.
                             </div>
                           ) : null}
 
@@ -1118,8 +1283,8 @@ export default function AdminDashboard({
                             <label className="grid gap-2 text-base font-semibold text-slate-700">
                               <span>Anggaran PP</span>
                               <span className="text-sm font-normal text-slate-500">
-                                Wajib diisi saat memilih Terima. Tidak wajib saat
-                                memilih Tolak.
+                                Wajib diisi saat menyelesaikan laporan dan meminta
+                                konfirmasi pelapor. Tidak wajib saat menolak.
                               </span>
                               <input
                                 value={
@@ -1187,42 +1352,43 @@ export default function AdminDashboard({
                           ) : null}
 
                           <div className="flex flex-wrap gap-3">
-                            <button
-                              type="button"
-                              onClick={() => void submitDecision("ACC")}
-                              disabled={submitLoading}
-                              className="rounded-2xl bg-emerald-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
-                            >
-                              {submitLoading
-                                ? "Memproses..."
-                                : currentUser.role === "ADMIN_1"
-                                  ? "Teruskan"
-                                  : "Terima"}
-                            </button>
+                            {canForwardReport ? (
+                              <button
+                                type="button"
+                                onClick={() => void submitDecision("ACC")}
+                                disabled={submitLoading}
+                                className={`rounded-2xl px-6 py-3 font-semibold text-white shadow-sm transition focus-visible:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${workflowActions.approveClassName}`}
+                              >
+                                {submitLoading
+                                  ? "Memproses..."
+                                  : workflowActions.approveLabel}
+                              </button>
+                            ) : null}
 
                             {canCompleteReport ? (
                               <button
                                 type="button"
                                 onClick={() => void submitDecision("SELESAI")}
                                 disabled={submitLoading}
-                                className="rounded-2xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:opacity-60"
+                                className={`rounded-2xl px-6 py-3 font-semibold text-white shadow-sm transition focus-visible:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${workflowActions.completeClassName || "bg-blue-700 hover:bg-blue-600 focus-visible:ring-blue-300"}`}
                               >
                                 {submitLoading
                                   ? "Memproses..."
-                                  : currentUser.role === "ADMIN_5"
-                                    ? "Selesai & Kirim Bukti"
-                                    : "Selesai"}
+                                  : workflowActions.completeLabel ||
+                                    "Nyatakan Pekerjaan Selesai"}
                               </button>
                             ) : null}
 
-                            {currentUser.role !== "ADMIN_1" ? (
+                            {canRejectReport ? (
                               <button
                                 type="button"
                                 onClick={() => void submitDecision("TOLAK")}
                                 disabled={submitLoading}
-                                className="rounded-2xl bg-rose-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-rose-400 disabled:opacity-60"
+                                className="rounded-2xl bg-rose-700 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-rose-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
                               >
-                                {submitLoading ? "Memproses..." : "Tolak"}
+                                {submitLoading
+                                  ? "Memproses..."
+                                  : workflowActions.rejectLabel}
                               </button>
                             ) : null}
                           </div>
@@ -1240,7 +1406,101 @@ export default function AdminDashboard({
             </div>
           </div>
         ) : null}
+
+        {selectedReport && pendingDescriptionlessDecision ? (
+          <EmptyDescriptionConfirmationModal
+            roleLabel={getRoleLabel(currentUser.role)}
+            actionLabel={
+              pendingDescriptionlessDecision === "ACC"
+                ? workflowActions.approveLabel
+                : pendingDescriptionlessDecision === "SELESAI"
+                  ? workflowActions.completeLabel ||
+                    "Nyatakan Pekerjaan Selesai"
+                  : workflowActions.rejectLabel
+            }
+            saving={submitLoading}
+            onCancel={() => setPendingDescriptionlessDecision(null)}
+            onConfirm={() => {
+              const action = pendingDescriptionlessDecision;
+              setPendingDescriptionlessDecision(null);
+              void submitDecision(action, {
+                confirmedWithoutDescription: true,
+              });
+            }}
+          />
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+function EmptyDescriptionConfirmationModal({
+  roleLabel,
+  actionLabel,
+  saving,
+  onCancel,
+  onConfirm,
+}: {
+  roleLabel: string;
+  actionLabel: string;
+  saving: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/65 p-4"
+      onClick={onCancel}
+    >
+      <section
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="empty-decision-description-title"
+        aria-describedby="empty-decision-description-message"
+        className="w-full max-w-lg rounded-3xl border border-amber-200 bg-white p-6 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start gap-4">
+          <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+            <AlertTriangle className="h-5 w-5" />
+          </span>
+          <div>
+            <h2
+              id="empty-decision-description-title"
+              className="text-xl font-bold text-slate-950"
+            >
+              Lanjut tanpa deskripsi?
+            </h2>
+            <p
+              id="empty-decision-description-message"
+              className="mt-2 text-sm leading-6 text-slate-600"
+            >
+              Deskripsi untuk tindakan <strong>{actionLabel}</strong> bersifat
+              opsional bagi {roleLabel}. Jika dilanjutkan, riwayat hanya akan
+              mencatat keputusan tanpa catatan tambahan.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+          >
+            Kembali Isi Deskripsi
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={saving}
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-amber-700 px-4 text-sm font-semibold text-white transition hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 disabled:opacity-60"
+          >
+            {saving ? "Memproses..." : "Ya, Lanjut Tanpa Deskripsi"}
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

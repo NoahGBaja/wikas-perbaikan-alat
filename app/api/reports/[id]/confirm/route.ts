@@ -6,6 +6,7 @@ import { findReportByIdRaw } from "@/src/lib/raw-data";
 import { formatTicketFallback } from "@/src/lib/tickets";
 import { findWorkflowRecipientIds, notifyUsers } from "@/src/lib/notifications";
 import { recordAuditLog } from "@/src/lib/audit";
+import { protectReportAttachmentReferences } from "@/src/lib/report-attachment-urls";
 
 function parseReportId(id: string) {
   const reportId = Number(id);
@@ -101,20 +102,40 @@ export async function POST(
       );
     }
 
-    const shouldReopen = finalStatus === "TIDAK_DAPAT_DIGUNAKAN";
-    const nextStatus = shouldReopen ? "MENUNGGU_ADMIN_1" : finalStatus;
-    const updated = await prisma.report.update({
-      where: { id: reportId },
+    const isStillUnusable = finalStatus === "TIDAK_DAPAT_DIGUNAKAN";
+    const nextStatus = finalStatus;
+    const updateResult = await prisma.report.updateMany({
+      where: {
+        id: reportId,
+        userId: authUser.id,
+        status: "MENUNGGU_KONFIRMASI",
+      },
       data: {
         status: nextStatus,
         reporterConfirmedAt: new Date(),
         reporterConfirmationStatus: finalStatus,
-        adminNotes: shouldReopen
+        adminNotes: isStillUnusable
           ? `Pelapor menyatakan barang masih tidak dapat digunakan: ${description}`
           : report.adminNotes,
-        finishedAt: shouldReopen ? null : new Date(),
+        finishedAt: new Date(),
       },
     });
+
+    if (updateResult.count !== 1) {
+      return NextResponse.json(
+        { message: "Status laporan sudah berubah. Muat ulang data." },
+        { status: 409 },
+      );
+    }
+
+    const updated = await findReportByIdRaw(reportId);
+
+    if (!updated) {
+      return NextResponse.json(
+        { message: "Laporan gagal dimuat setelah diperbarui." },
+        { status: 500 },
+      );
+    }
     const ticket = formatTicketFallback(report);
 
     try {
@@ -126,11 +147,11 @@ export async function POST(
       await notifyUsers({
         userIds: adminIds,
         reportId,
-        title: shouldReopen
-          ? "Laporan dibuka kembali oleh pelapor"
+        title: isStillUnusable
+          ? "Barang dikonfirmasi belum dapat digunakan"
           : "Pelapor mengonfirmasi laporan",
-        message: shouldReopen
-          ? `${ticket} masih tidak dapat digunakan dan perlu ditindaklanjuti kembali.`
+        message: isStillUnusable
+          ? `${ticket} dikonfirmasi masih tidak dapat digunakan. Pelapor dapat mengirim request baru dari laporan ini.`
           : `${ticket} dikonfirmasi dengan status Telah Berfungsi.`,
       });
     } catch (notificationError) {
@@ -142,9 +163,9 @@ export async function POST(
       reportId,
       entityType: "REPORT",
       entityId: reportId,
-      action: shouldReopen ? "REOPEN" : "FINAL_CONFIRM",
-      summary: shouldReopen
-        ? `${ticket} dibuka kembali oleh pelapor.`
+      action: "FINAL_CONFIRM",
+      summary: isStillUnusable
+        ? `${ticket} dikonfirmasi masih tidak dapat digunakan oleh pelapor.`
         : `${ticket} dikonfirmasi final oleh pelapor.`,
       metadata: {
         confirmed,
@@ -156,10 +177,10 @@ export async function POST(
     });
 
     return NextResponse.json({
-      message: shouldReopen
-        ? "Konfirmasi disimpan. Laporan dibuka kembali untuk ditindaklanjuti."
+      message: isStillUnusable
+        ? "Konfirmasi disimpan. Anda dapat mengirim ulang request dari laporan ini."
         : "Konfirmasi laporan berhasil disimpan.",
-      report: updated,
+      report: protectReportAttachmentReferences(updated),
     });
   } catch (error) {
     console.error("CONFIRM_REPORT_ERROR:", error);

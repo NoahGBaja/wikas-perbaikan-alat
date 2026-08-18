@@ -50,6 +50,7 @@ export async function GET(req: Request) {
 
     const users = await prisma.user.findMany({
       where: {
+        deletedAt: null,
         OR: [
           { nama: { contains: query } },
           { nip: { contains: query } },

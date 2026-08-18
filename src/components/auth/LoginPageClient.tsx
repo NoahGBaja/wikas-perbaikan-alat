@@ -120,6 +120,7 @@ export default function LoginPageClient() {
                 id="nip"
                 name="nip"
                 type="text"
+                autoComplete="username"
                 placeholder="Masukkan NIP"
                 required
                 className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#004282] focus:ring-2 focus:ring-[#004282]/15"
@@ -136,6 +137,7 @@ export default function LoginPageClient() {
               <PasswordInput
                 id="password"
                 name="password"
+                autoComplete="current-password"
                 placeholder="Masukkan kata sandi"
                 required
                 className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#004282] focus:ring-2 focus:ring-[#004282]/15"

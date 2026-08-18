@@ -247,6 +247,7 @@ export type MessageTemplateOrderByWithRelationInput = {
 
 export type MessageTemplateWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  type_title?: Prisma.MessageTemplateTypeTitleCompoundUniqueInput
   AND?: Prisma.MessageTemplateWhereInput | Prisma.MessageTemplateWhereInput[]
   OR?: Prisma.MessageTemplateWhereInput[]
   NOT?: Prisma.MessageTemplateWhereInput | Prisma.MessageTemplateWhereInput[]
@@ -256,7 +257,7 @@ export type MessageTemplateWhereUniqueInput = Prisma.AtLeast<{
   active?: Prisma.BoolFilter<"MessageTemplate"> | boolean
   createdAt?: Prisma.DateTimeFilter<"MessageTemplate"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MessageTemplate"> | Date | string
-}, "id">
+}, "id" | "type_title">
 
 export type MessageTemplateOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -357,6 +358,11 @@ export type MessageTemplateOrderByRelevanceInput = {
   fields: Prisma.MessageTemplateOrderByRelevanceFieldEnum | Prisma.MessageTemplateOrderByRelevanceFieldEnum[]
   sort: Prisma.SortOrder
   search: string
+}
+
+export type MessageTemplateTypeTitleCompoundUniqueInput = {
+  type: string
+  title: string
 }
 
 export type MessageTemplateCountOrderByAggregateInput = {

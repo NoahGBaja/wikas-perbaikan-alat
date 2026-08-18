@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getApiSessionUser } from "@/src/lib/session";
 import { findReportByIdRaw } from "@/src/lib/raw-data";
-import { getRoleLabel, hasAdminAccess } from "@/src/lib/roles";
+import {
+  canRoleUseWorkflowAction,
+  getRoleLabel,
+  hasAdminAccess,
+} from "@/src/lib/roles";
 import {
   canRoleDecide,
   getNextApprovedStatus,
@@ -26,6 +30,7 @@ import { formatTicketFallback } from "@/src/lib/tickets";
 import { parseRupiahInput } from "@/src/lib/formatting";
 import { recordAuditLog } from "@/src/lib/audit";
 import { formatStatus } from "@/lib/report-helpers";
+import { protectReportAttachmentReferences } from "@/src/lib/report-attachment-urls";
 
 type DecisionPayload = {
   action: ReportDecisionInput | "SELESAI";
@@ -33,6 +38,13 @@ type DecisionPayload = {
   proofFiles: File[];
   repairCost: string;
 };
+
+class ConcurrentReportUpdateError extends Error {
+  constructor() {
+    super("Status laporan sudah berubah. Muat ulang data sebelum mencoba lagi.");
+    this.name = "ConcurrentReportUpdateError";
+  }
+}
 
 function parseReportId(id: string) {
   const reportId = Number(id);
@@ -254,6 +266,15 @@ export async function POST(
       );
     }
 
+    if (!canRoleUseWorkflowAction(authUser.role, payload.action)) {
+      return NextResponse.json(
+        {
+          message: `Aksi ini tidak tersedia untuk ${getRoleLabel(authUser.role)}.`,
+        },
+        { status: 403 },
+      );
+    }
+
     if (
       payload.action === "SELESAI" &&
       authUser.role !== "ADMIN_1" &&
@@ -261,13 +282,6 @@ export async function POST(
     ) {
       return NextResponse.json(
         { message: "Hanya PJ dan PP yang dapat menyelesaikan laporan." },
-        { status: 403 },
-      );
-    }
-
-    if (payload.action === "TOLAK" && authUser.role === "ADMIN_1") {
-      return NextResponse.json(
-        { message: "PJ Ruangan hanya dapat Lanjut atau Selesai." },
         { status: 403 },
       );
     }
@@ -290,12 +304,12 @@ export async function POST(
     const repairCost =
       authUser.role === "ADMIN_5" ? parseRupiahInput(payload.repairCost) : null;
     if (
-      payload.action === "ACC" &&
+      payload.action === "SELESAI" &&
       authUser.role === "ADMIN_5" &&
       (!repairCost || repairCost <= 0)
     ) {
       return NextResponse.json(
-        { message: "Anggaran wajib diisi sebelum PP menerima laporan." },
+        { message: "Anggaran wajib diisi sebelum PP menyelesaikan laporan." },
         { status: 400 },
       );
     }
@@ -316,6 +330,9 @@ export async function POST(
       fileType: string;
       fileName: string;
       fileSize: number;
+      purpose: "COMPLETION_PROOF";
+      uploadedByName: string;
+      uploadedByRole: typeof authUser.role;
     }[] = [];
 
     if (isCompletion && payload.proofFiles.length > 0) {
@@ -339,6 +356,9 @@ export async function POST(
             fileType: proofFile.type,
             fileName: proofFile.name,
             fileSize: proofFile.size,
+            purpose: "COMPLETION_PROOF" as const,
+            uploadedByName: authUser.nama,
+            uploadedByRole: authUser.role,
           });
         }
 
@@ -378,8 +398,8 @@ export async function POST(
       await prisma.$transaction(async (tx) => {
         const finalDate = toStatus === "MENUNGGU_KONFIRMASI" ? new Date() : null;
 
-        await tx.report.update({
-          where: { id: reportId },
+        const updateResult = await tx.report.updateMany({
+          where: { id: reportId, status: fromStatus },
           data: {
             status: toStatus,
             alasanPenolakan: payload.action === "TOLAK" ? payload.note : null,
@@ -397,15 +417,21 @@ export async function POST(
             completionNotes: isCompletion ? payload.note : null,
             completionPhotoUrl: isCompletion ? completionProofUrl : null,
             ...(authUser.role === "ADMIN_5" ? { repairCost } : {}),
-            ...(isCompletion && savedCompletionAttachments.length > 0
-              ? {
-                  attachments: {
-                    create: savedCompletionAttachments,
-                  },
-                }
-              : {}),
           },
         });
+
+        if (updateResult.count !== 1) {
+          throw new ConcurrentReportUpdateError();
+        }
+
+        if (isCompletion && savedCompletionAttachments.length > 0) {
+          await tx.reportAttachment.createMany({
+            data: savedCompletionAttachments.map((attachment) => ({
+              reportId,
+              ...attachment,
+            })),
+          });
+        }
 
         await tx.reportApprovalHistory.create({
           data: {
@@ -424,14 +450,28 @@ export async function POST(
           deleteUploadedFileByUrl(attachment.url),
         ),
       );
+
+      if (error instanceof ConcurrentReportUpdateError) {
+        return NextResponse.json(
+          { message: error.message },
+          { status: 409 },
+        );
+      }
+
       throw error;
     }
 
     const updated = await findReportByIdRaw(reportId);
-    const ticket = updated ? formatTicketFallback(updated) : `LP-${reportId}`;
+    if (!updated) {
+      return NextResponse.json(
+        { message: "Laporan gagal dimuat setelah diperbarui." },
+        { status: 500 },
+      );
+    }
 
-    if (updated) {
-      try {
+    const ticket = formatTicketFallback(updated);
+
+    try {
         if (
           payload.action === "ACC" &&
           updated.status === "MENUNGGU_KONFIRMASI"
@@ -469,9 +509,8 @@ export async function POST(
                 : `${ticket} ditolak. Silakan cek detail laporan.`,
           });
         }
-      } catch (notificationError) {
-        console.error("DECIDE_REPORT_NOTIFICATION_ERROR:", notificationError);
-      }
+    } catch (notificationError) {
+      console.error("DECIDE_REPORT_NOTIFICATION_ERROR:", notificationError);
     }
 
     await recordAuditLog({
@@ -506,7 +545,7 @@ export async function POST(
           : payload.action === "ACC"
             ? `Laporan berhasil diterima dan diteruskan ke ${formatStatus(toStatus)}.`
             : "Laporan berhasil ditolak.",
-      report: updated,
+      report: protectReportAttachmentReferences(updated),
     });
   } catch (error) {
     console.error("DECIDE_REPORT_ERROR:", error);

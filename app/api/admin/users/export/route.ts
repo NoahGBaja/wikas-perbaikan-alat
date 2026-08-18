@@ -1,13 +1,21 @@
 import ExcelJS from "exceljs";
+import { randomUUID } from "node:crypto";
+import { createReadStream } from "node:fs";
+import { mkdir, unlink } from "node:fs/promises";
+import path from "node:path";
+import { Readable } from "node:stream";
 import { NextResponse } from "next/server";
 import { formatTanggal } from "@/lib/report-helpers";
-import { listUsersWithReportCountRaw } from "@/src/lib/raw-data";
+import { iterateUsersWithReportCountRaw } from "@/src/lib/raw-data";
 import { getApiSessionUser } from "@/src/lib/session";
 import {
   getCategoryScopeLabel,
   getRoleLabel,
   isSuperAdmin as hasSuperAdminAccess,
 } from "@/src/lib/roles";
+import { isRateLimited } from "@/src/lib/rate-limit";
+
+export const runtime = "nodejs";
 
 function createFileName() {
   const now = new Date();
@@ -17,6 +25,8 @@ function createFileName() {
 }
 
 export async function GET(req: Request) {
+  let temporaryFilePath: string | null = null;
+
   try {
     const authUser = await getApiSessionUser();
 
@@ -28,10 +38,29 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "Akses ditolak." }, { status: 403 });
     }
 
+    if (
+      await isRateLimited(`user-export:user:${authUser.id}`, {
+        limit: 5,
+        windowMs: 10 * 60 * 1000,
+      })
+    ) {
+      return NextResponse.json(
+        { message: "Terlalu banyak permintaan ekspor. Coba lagi beberapa menit." },
+        { status: 429 },
+      );
+    }
+
     const url = new URL(req.url);
     const search = (url.searchParams.get("q") || "").trim();
-    const { users } = await listUsersWithReportCountRaw({ search, take: 10000 });
-    const workbook = new ExcelJS.Workbook();
+    const exportDirectory = path.join(process.cwd(), ".data", "exports");
+    await mkdir(exportDirectory, { recursive: true });
+    temporaryFilePath = path.join(exportDirectory, `${randomUUID()}.xlsx`);
+
+    const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
+      filename: temporaryFilePath,
+      useStyles: true,
+      useSharedStrings: true,
+    });
     workbook.creator = "WIKAS Perbaikan Alat";
     workbook.created = new Date();
 
@@ -64,36 +93,46 @@ export async function GET(req: Request) {
       fgColor: { argb: "FFEFF6FF" },
     };
 
-    for (const user of users) {
-      worksheet.addRow({
-        id: user.id,
-        nama: user.nama,
-        nip: user.nip || "-",
-        role: getRoleLabel(user.role),
-        isSuperAdmin: user.isSuperAdmin ? "Ya" : "Tidak",
-        categoryScope: getCategoryScopeLabel(user.categoryScope),
-        totalReports: user._count.reports,
-        activeReports: user._count.activeReports,
-        createdAt: formatTanggal(user.createdAt),
-        updatedAt: formatTanggal(user.updatedAt),
-      });
+    for await (const users of iterateUsersWithReportCountRaw({
+      search,
+      batchSize: 500,
+    })) {
+      for (const user of users) {
+        const row = worksheet.addRow({
+          id: user.id,
+          nama: user.nama,
+          nip: user.nip || "-",
+          role: getRoleLabel(user.role),
+          isSuperAdmin: user.isSuperAdmin ? "Ya" : "Tidak",
+          categoryScope: getCategoryScopeLabel(user.categoryScope),
+          totalReports: user._count.reports,
+          activeReports: user._count.activeReports,
+          createdAt: formatTanggal(user.createdAt),
+          updatedAt: formatTanggal(user.updatedAt),
+        });
+        row.alignment = { vertical: "top", wrapText: true };
+        row.commit();
+      }
     }
-
-    worksheet.eachRow((row) => {
-      row.alignment = {
-        vertical: "top",
-        wrapText: true,
-      };
-    });
 
     worksheet.autoFilter = {
       from: "A1",
       to: "J1",
     };
 
-    const buffer = await workbook.xlsx.writeBuffer();
+    worksheet.commit();
+    await workbook.commit();
 
-    return new NextResponse(buffer, {
+    const completedFilePath = temporaryFilePath;
+    temporaryFilePath = null;
+    const nodeStream = createReadStream(completedFilePath);
+    nodeStream.once("close", () => {
+      void unlink(completedFilePath).catch((error) => {
+        console.error("USER_EXPORT_TEMP_FILE_CLEANUP_ERROR:", error);
+      });
+    });
+
+    return new Response(Readable.toWeb(nodeStream) as ReadableStream, {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -102,6 +141,9 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
+    if (temporaryFilePath) {
+      await unlink(temporaryFilePath).catch(() => undefined);
+    }
     console.error("EXPORT_ADMIN_USERS_ERROR:", error);
 
     return NextResponse.json(

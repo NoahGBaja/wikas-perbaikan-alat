@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import Image from "next/image";
 import { FileText, RefreshCcw, Send, Upload, X } from "lucide-react";
 import { showError } from "@/src/components/ui/feedback";
 import {
   CATEGORY_MASTER,
-  getUniqueSubcategories,
+  getSubcategoriesForCategory,
   ROOM_MASTER,
   type CategoryMaster,
   type RoomMaster,
@@ -161,6 +161,9 @@ export default function UserReportModal({
 }: UserReportModalProps) {
   const titleId = useId();
   const descriptionId = useId();
+  const fieldId = useId();
+  const submittingRef = useRef(false);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   const [kategori, setKategori] = useState<UserReportCategory>(defaultKategori);
   const [namaPelapor, setNamaPelapor] = useState(defaultNamaPelapor);
@@ -280,7 +283,10 @@ export default function UserReportModal({
     };
   }, [attachments]);
 
-  const subcategoryOptions = getUniqueSubcategories(masterData.categories);
+  const subcategoryOptions = getSubcategoriesForCategory(
+    masterData.categories,
+    kategori,
+  );
   if (!open) {
     return null;
   }
@@ -302,6 +308,9 @@ export default function UserReportModal({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (submittingRef.current) return;
+
     setSubmitError("");
 
     const nextErrors = validateForm(payload, attachmentRequired);
@@ -316,6 +325,7 @@ export default function UserReportModal({
     }
 
     try {
+      submittingRef.current = true;
       setSubmitting(true);
       await onSubmit?.({
         ...payload,
@@ -348,15 +358,16 @@ export default function UserReportModal({
           : "Terjadi kesalahan saat mengirim laporan.",
       );
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }
 
   function handleAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files || []);
-    setAttachments(files);
 
     if (files.length === 0) {
+      setAttachments([]);
       setErrors((current) => ({
         ...current,
         attachments: attachmentRequired
@@ -376,8 +387,13 @@ export default function UserReportModal({
     }));
 
     if (nextErrors.attachments) {
+      event.target.value = "";
       showError("Lampiran tidak valid", nextErrors.attachments);
+      return;
     }
+
+    setAttachments(files);
+    event.target.value = "";
   }
 
   function handleRoomNameChange(value: string) {
@@ -391,6 +407,14 @@ export default function UserReportModal({
 
   function handleCategoryChange(value: UserReportCategory) {
     setKategori(value);
+    const nextSubcategories = getSubcategoriesForCategory(
+      masterData.categories,
+      value,
+    );
+
+    if (!nextSubcategories.some((item) => item.name === subcategory)) {
+      setSubcategory("");
+    }
   }
 
   function handleSubcategoryChange(value: string) {
@@ -433,7 +457,11 @@ export default function UserReportModal({
         <form onSubmit={handleSubmit} noValidate className="px-6 py-5">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <Field label="Jenis Perbaikan" required className="md:col-span-2">
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div
+                className="grid grid-cols-1 gap-3 md:grid-cols-3"
+                role="group"
+                aria-label="Jenis Perbaikan"
+              >
                 {masterData.categories.map((option) => {
                   const active = kategori === option.value;
 
@@ -463,11 +491,13 @@ export default function UserReportModal({
 
             <Field
               label="Nama Pelapor"
+              controlId={`${fieldId}-reporter`}
               required
               error={errors.namaPelapor}
               className="md:col-span-2"
             >
               <input
+                id={`${fieldId}-reporter`}
                 value={namaPelapor}
                 onChange={(event) => setNamaPelapor(event.target.value)}
                 className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -476,8 +506,14 @@ export default function UserReportModal({
               />
             </Field>
 
-            <Field label="Nama Ruangan" required error={errors.nomorRuangan}>
+            <Field
+              label="Nama Ruangan"
+              controlId={`${fieldId}-room-name`}
+              required
+              error={errors.nomorRuangan}
+            >
               <input
+                id={`${fieldId}-room-name`}
                 value={namaRuangan}
                 list="room-master-list"
                 onChange={(event) => handleRoomNameChange(event.target.value)}
@@ -492,8 +528,14 @@ export default function UserReportModal({
               </datalist>
             </Field>
 
-            <Field label="Kode Ruangan" required error={errors.nomorRuangan}>
+            <Field
+              label="Kode Ruangan"
+              controlId={`${fieldId}-room-code`}
+              required
+              error={errors.nomorRuangan}
+            >
               <input
+                id={`${fieldId}-room-code`}
                 value={nomorRuangan}
                 readOnly
                 className="h-12 w-full rounded-md border border-slate-300 bg-slate-100 px-4 text-slate-700 outline-none"
@@ -502,8 +544,14 @@ export default function UserReportModal({
               />
             </Field>
 
-            <Field label="Nama Barang" required error={errors.namaBarang}>
+            <Field
+              label="Nama Barang"
+              controlId={`${fieldId}-item-name`}
+              required
+              error={errors.namaBarang}
+            >
               <input
+                id={`${fieldId}-item-name`}
                 value={namaBarang}
                 onChange={(event) => {
                   setNamaBarang(event.target.value);
@@ -515,8 +563,14 @@ export default function UserReportModal({
               />
             </Field>
 
-            <Field label="Subkategori" required error={errors.subcategory}>
+            <Field
+              label="Subkategori"
+              controlId={`${fieldId}-subcategory`}
+              required
+              error={errors.subcategory}
+            >
               <select
+                id={`${fieldId}-subcategory`}
                 value={subcategory}
                 onChange={(event) => handleSubcategoryChange(event.target.value)}
                 className="h-12 w-full rounded-md border border-slate-300 bg-white px-4 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -533,11 +587,13 @@ export default function UserReportModal({
 
             <Field
               label="Kode Barang"
+              controlId={`${fieldId}-item-code`}
               required
               error={errors.kode}
               className="md:col-span-2"
             >
               <input
+                id={`${fieldId}-item-code`}
                 value={kode}
                 onChange={(event) => {
                   const formattedCode = formatItemCodeInput(event.target.value);
@@ -558,11 +614,13 @@ export default function UserReportModal({
 
             <Field
               label="Deskripsi"
+              controlId={`${fieldId}-description`}
               required
               error={errors.deskripsi}
               className="md:col-span-2"
             >
               <textarea
+                id={`${fieldId}-description`}
                 value={deskripsi}
                 onChange={(event) => setDeskripsi(event.target.value)}
                 rows={5}
@@ -578,6 +636,7 @@ export default function UserReportModal({
 
             <Field
               label={attachmentRequired ? "Lampiran" : "Lampiran tambahan (opsional)"}
+              controlId={`${fieldId}-attachments`}
               required={attachmentRequired}
               error={errors.attachments}
               className="md:col-span-2"
@@ -591,6 +650,8 @@ export default function UserReportModal({
                   Maksimal 2 MB.
                 </span>
                 <input
+                  id={`${fieldId}-attachments`}
+                  ref={attachmentInputRef}
                   type="file"
                   accept="image/*,application/pdf"
                   multiple
@@ -606,18 +667,14 @@ export default function UserReportModal({
                     <p className="text-sm font-semibold text-slate-800">
                       {attachments.length} lampiran dipilih
                     </p>
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100">
+                    <button
+                      type="button"
+                      onClick={() => attachmentInputRef.current?.click()}
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                    >
                       <RefreshCcw className="h-3.5 w-3.5" />
                       Ganti Lampiran
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        multiple
-                        onChange={handleAttachmentChange}
-                        required={attachmentRequired}
-                        className="sr-only"
-                      />
-                    </label>
+                    </button>
                   </div>
 
                   <div className="space-y-2">
@@ -714,12 +771,14 @@ export default function UserReportModal({
 
 function Field({
   label,
+  controlId,
   required,
   error,
   className = "",
   children,
 }: {
   label: string;
+  controlId?: string;
   required?: boolean;
   error?: string;
   className?: string;
@@ -727,7 +786,10 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <label className="mb-2 block text-base font-semibold text-slate-800">
+      <label
+        htmlFor={controlId}
+        className="mb-2 block text-base font-semibold text-slate-800"
+      >
         {label}
         {required ? <RequiredMark /> : null}
       </label>

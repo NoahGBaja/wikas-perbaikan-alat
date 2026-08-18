@@ -48,6 +48,11 @@ enum ReportDecisionAction {
   TOLAK
 }
 
+enum ReportAttachmentPurpose {
+  DAMAGE_EVIDENCE
+  COMPLETION_PROOF
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   nama         String
@@ -55,6 +60,7 @@ model User {
   nip          String?
   activeNip    String?  @unique
   passwordHash String
+  sessionVersion Int     @default(0)
   role         Role     @default(USER)
   isSuperAdmin Boolean  @default(false)
   categoryScope ReportCategory?
@@ -66,11 +72,15 @@ model User {
   passwordResetTokens PasswordResetToken[]
   approvalHistories   ReportApprovalHistory[]
   notifications       Notification[]
+
+  @@index([deletedAt, role, nama])
 }
 
 model Report {
   id                 Int            @id @default(autoincrement())
   ticket             String?        @unique
+  idempotencyKey     String?        @unique @db.VarChar(64)
+  resubmittedFromId  Int?
   userId             Int
   namaPelapor        String?
   nomorRuangan       String?
@@ -86,16 +96,16 @@ model Report {
   deskripsi          String
   severity           ReportSeverity
   repairCost         Decimal?       @db.Decimal(14, 2)
-  fotoUrl            String?
-  attachmentUrl      String?
+  fotoUrl            String?         @db.VarChar(512)
+  attachmentUrl      String?         @db.VarChar(512)
   attachmentType     String?
-  attachmentName     String?
+  attachmentName     String?         @db.VarChar(512)
   status             ReportStatus   @default(MENUNGGU_ADMIN_1)
   alasanPenolakan    String?
   assignedTechnician String?
   adminNotes         String?
   completionNotes    String?
-  completionPhotoUrl String?
+  completionPhotoUrl String?         @db.VarChar(512)
   reporterConfirmed  Boolean        @default(false)
   reporterConfirmedAt DateTime?
   reporterConfirmationStatus String?
@@ -107,6 +117,8 @@ model Report {
   updatedAt          DateTime       @updatedAt
 
   user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resubmittedFrom Report?           @relation("ReportResubmissions", fields: [resubmittedFromId], references: [id], onDelete: SetNull)
+  resubmissions  Report[]           @relation("ReportResubmissions")
   histories      ReportApprovalHistory[]
   attachments    ReportAttachment[]
   notifications  Notification[]
@@ -116,16 +128,39 @@ model Report {
   @@index([status, createdAt])
   @@index([ticket])
   @@index([kategori, createdAt])
+  @@index([kategori, status, createdAt])
+  @@index([namaRuangan])
+  @@index([nomorRuangan])
+  @@index([kategori, subcategory])
+  @@index([resubmittedFromId])
+}
+
+model TicketSequence {
+  key          String   @id
+  currentValue Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+model RateLimitBucket {
+  key       String   @id @map("bucketKey")
+  count     Int      @default(1)
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
 }
 
 model ReportAttachment {
-  id        Int      @id @default(autoincrement())
-  reportId  Int
-  url       String
-  fileType  String
-  fileName  String
-  fileSize  Int
-  createdAt DateTime @default(now())
+  id             Int                      @id @default(autoincrement())
+  reportId       Int
+  url            String                   @db.VarChar(512)
+  fileType       String
+  fileName       String                   @db.VarChar(512)
+  fileSize       Int
+  purpose        ReportAttachmentPurpose?
+  uploadedByName String?
+  uploadedByRole Role?
+  createdAt      DateTime                 @default(now())
 
   report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
@@ -222,6 +257,7 @@ model MessageTemplate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([type, title])
   @@index([type, active])
 }
 

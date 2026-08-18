@@ -53,6 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Report: 'Report',
+  TicketSequence: 'TicketSequence',
+  RateLimitBucket: 'RateLimitBucket',
   ReportAttachment: 'ReportAttachment',
   ReportApprovalHistory: 'ReportApprovalHistory',
   PasswordResetToken: 'PasswordResetToken',
@@ -88,6 +90,7 @@ export const UserScalarFieldEnum = {
   nip: 'nip',
   activeNip: 'activeNip',
   passwordHash: 'passwordHash',
+  sessionVersion: 'sessionVersion',
   role: 'role',
   isSuperAdmin: 'isSuperAdmin',
   categoryScope: 'categoryScope',
@@ -102,6 +105,8 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export const ReportScalarFieldEnum = {
   id: 'id',
   ticket: 'ticket',
+  idempotencyKey: 'idempotencyKey',
+  resubmittedFromId: 'resubmittedFromId',
   userId: 'userId',
   namaPelapor: 'namaPelapor',
   nomorRuangan: 'nomorRuangan',
@@ -141,6 +146,25 @@ export const ReportScalarFieldEnum = {
 export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]
 
 
+export const TicketSequenceScalarFieldEnum = {
+  key: 'key',
+  currentValue: 'currentValue',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TicketSequenceScalarFieldEnum = (typeof TicketSequenceScalarFieldEnum)[keyof typeof TicketSequenceScalarFieldEnum]
+
+
+export const RateLimitBucketScalarFieldEnum = {
+  key: 'key',
+  count: 'count',
+  resetAt: 'resetAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RateLimitBucketScalarFieldEnum = (typeof RateLimitBucketScalarFieldEnum)[keyof typeof RateLimitBucketScalarFieldEnum]
+
+
 export const ReportAttachmentScalarFieldEnum = {
   id: 'id',
   reportId: 'reportId',
@@ -148,6 +172,9 @@ export const ReportAttachmentScalarFieldEnum = {
   fileType: 'fileType',
   fileName: 'fileName',
   fileSize: 'fileSize',
+  purpose: 'purpose',
+  uploadedByName: 'uploadedByName',
+  uploadedByRole: 'uploadedByRole',
   createdAt: 'createdAt'
 } as const
 
@@ -300,6 +327,7 @@ export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnu
 
 export const ReportOrderByRelevanceFieldEnum = {
   ticket: 'ticket',
+  idempotencyKey: 'idempotencyKey',
   namaPelapor: 'namaPelapor',
   nomorRuangan: 'nomorRuangan',
   namaRuangan: 'namaRuangan',
@@ -326,10 +354,25 @@ export const ReportOrderByRelevanceFieldEnum = {
 export type ReportOrderByRelevanceFieldEnum = (typeof ReportOrderByRelevanceFieldEnum)[keyof typeof ReportOrderByRelevanceFieldEnum]
 
 
+export const TicketSequenceOrderByRelevanceFieldEnum = {
+  key: 'key'
+} as const
+
+export type TicketSequenceOrderByRelevanceFieldEnum = (typeof TicketSequenceOrderByRelevanceFieldEnum)[keyof typeof TicketSequenceOrderByRelevanceFieldEnum]
+
+
+export const RateLimitBucketOrderByRelevanceFieldEnum = {
+  key: 'key'
+} as const
+
+export type RateLimitBucketOrderByRelevanceFieldEnum = (typeof RateLimitBucketOrderByRelevanceFieldEnum)[keyof typeof RateLimitBucketOrderByRelevanceFieldEnum]
+
+
 export const ReportAttachmentOrderByRelevanceFieldEnum = {
   url: 'url',
   fileType: 'fileType',
-  fileName: 'fileName'
+  fileName: 'fileName',
+  uploadedByName: 'uploadedByName'
 } as const
 
 export type ReportAttachmentOrderByRelevanceFieldEnum = (typeof ReportAttachmentOrderByRelevanceFieldEnum)[keyof typeof ReportAttachmentOrderByRelevanceFieldEnum]

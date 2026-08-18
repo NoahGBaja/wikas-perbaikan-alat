@@ -37,6 +37,7 @@ export type SessionUserRow = {
   role: AppRole;
   isSuperAdmin: boolean;
   categoryScope: AppCategoryScope | null;
+  sessionVersion: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -69,6 +70,7 @@ export type ReportRow = {
   id: number;
   ticket: string | null;
   userId: number;
+  resubmittedFromId: number | null;
   namaPelapor: string | null;
   nomorRuangan: string | null;
   namaRuangan: string | null;
@@ -122,6 +124,9 @@ export type ReportRow = {
     fileType: string;
     fileName: string;
     fileSize: number;
+    purpose: "DAMAGE_EVIDENCE" | "COMPLETION_PROOF" | null;
+    uploadedByName: string | null;
+    uploadedByRole: AppRole | null;
     createdAt: Date;
   }[];
 };
@@ -181,6 +186,7 @@ function normalizeReportRow(row: ReportWithUser): ReportRow {
     id: row.id,
     ticket: row.ticket,
     userId: row.userId,
+    resubmittedFromId: row.resubmittedFromId,
     namaPelapor: row.namaPelapor,
     nomorRuangan: row.nomorRuangan,
     namaRuangan: row.namaRuangan,
@@ -252,6 +258,9 @@ function normalizeReportRow(row: ReportWithUser): ReportRow {
       fileType: attachment.fileType,
       fileName: attachment.fileName,
       fileSize: attachment.fileSize,
+      purpose: attachment.purpose,
+      uploadedByName: attachment.uploadedByName,
+      uploadedByRole: attachment.uploadedByRole,
       createdAt: attachment.createdAt,
     })),
   };
@@ -270,8 +279,8 @@ export async function findUserByIdRaw(
   includePassword = false
 ): Promise<SessionUserRow | SessionUserWithPasswordRow | null> {
   if (includePassword) {
-    return prisma.user.findUnique({
-      where: { id },
+    return prisma.user.findFirst({
+      where: { id, deletedAt: null },
       select: {
         id: true,
         nama: true,
@@ -280,6 +289,7 @@ export async function findUserByIdRaw(
         role: true,
         isSuperAdmin: true,
         categoryScope: true,
+        sessionVersion: true,
         passwordHash: true,
         createdAt: true,
         updatedAt: true,
@@ -287,8 +297,8 @@ export async function findUserByIdRaw(
     });
   }
 
-  return prisma.user.findUnique({
-    where: { id },
+  return prisma.user.findFirst({
+    where: { id, deletedAt: null },
     select: {
       id: true,
       nama: true,
@@ -297,6 +307,7 @@ export async function findUserByIdRaw(
       role: true,
       isSuperAdmin: true,
       categoryScope: true,
+      sessionVersion: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -317,7 +328,7 @@ export async function findUserByNipRaw(
 ): Promise<SessionUserRow | SessionUserWithPasswordRow | null> {
   if (includePassword) {
     return prisma.user.findFirst({
-      where: { nip },
+      where: { activeNip: nip, deletedAt: null },
       select: {
         id: true,
         nama: true,
@@ -326,6 +337,7 @@ export async function findUserByNipRaw(
         role: true,
         isSuperAdmin: true,
         categoryScope: true,
+        sessionVersion: true,
         passwordHash: true,
         createdAt: true,
         updatedAt: true,
@@ -334,7 +346,7 @@ export async function findUserByNipRaw(
   }
 
   return prisma.user.findFirst({
-    where: { nip },
+    where: { activeNip: nip, deletedAt: null },
     select: {
       id: true,
       nama: true,
@@ -343,27 +355,24 @@ export async function findUserByNipRaw(
       role: true,
       isSuperAdmin: true,
       categoryScope: true,
+      sessionVersion: true,
       createdAt: true,
       updatedAt: true,
     },
   });
 }
 
-export async function listUsersWithReportCountRaw(options: {
-  search?: string;
-  take?: number;
-  skip?: number;
-} = {}) {
-  const search = options.search?.trim() || "";
-  const take = Math.min(Math.max(options.take || 12, 1), 10000);
-  const skip = Math.max(options.skip || 0, 0);
+function buildUserSearchWhere(searchValue?: string): Prisma.UserWhereInput {
+  const search = searchValue?.trim() || "";
   const normalizedSearch = search.toUpperCase();
   const roleSearch = USER_SEARCH_ROLES.find((role) => role === normalizedSearch);
   const categorySearch = USER_SEARCH_CATEGORY_SCOPES.find(
     (category) => category === normalizedSearch,
   );
-  const where: Prisma.UserWhereInput | undefined = search
-    ? {
+  return {
+    deletedAt: null,
+    ...(search
+      ? {
         OR: [
           { nama: { contains: search } },
           { jabatan: { contains: search } },
@@ -371,28 +380,66 @@ export async function listUsersWithReportCountRaw(options: {
           ...(roleSearch ? [{ role: roleSearch }] : []),
           ...(categorySearch ? [{ categoryScope: categorySearch }] : []),
         ],
-      }
-    : undefined;
+        }
+      : {}),
+  };
+}
+
+const userListSelect = {
+  id: true,
+  nama: true,
+  jabatan: true,
+  nip: true,
+  role: true,
+  isSuperAdmin: true,
+  categoryScope: true,
+  createdAt: true,
+  updatedAt: true,
+  _count: { select: { reports: true } },
+} as const;
+
+async function addActiveReportCounts<
+  T extends { id: number; _count: { reports: number } },
+>(users: T[]) {
+  const userIds = users.map((user) => user.id);
+  const activeReportCounts = userIds.length
+    ? await prisma.report.groupBy({
+        by: ["userId"],
+        where: {
+          userId: { in: userIds },
+          status: {
+            notIn: ["TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN", "DITOLAK"],
+          },
+        },
+        _count: { _all: true },
+      })
+    : [];
+  const countByUser = new Map(
+    activeReportCounts.map((item) => [item.userId, item._count._all]),
+  );
+
+  return users.map((user) => ({
+    ...user,
+    _count: {
+      ...user._count,
+      activeReports: countByUser.get(user.id) || 0,
+    },
+  }));
+}
+
+export async function listUsersWithReportCountRaw(options: {
+  search?: string;
+  take?: number;
+  skip?: number;
+} = {}) {
+  const take = Math.min(Math.max(options.take || 12, 1), 10000);
+  const skip = Math.max(options.skip || 0, 0);
+  const where = buildUserSearchWhere(options.search);
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({
       where,
-      select: {
-        id: true,
-        nama: true,
-        jabatan: true,
-        nip: true,
-        role: true,
-        isSuperAdmin: true,
-        categoryScope: true,
-        createdAt: true,
-        updatedAt: true,
-        _count: {
-          select: {
-            reports: true,
-          },
-        },
-      },
+      select: userListSelect,
       orderBy: [{ role: "asc" }, { nama: "asc" }],
       skip,
       take,
@@ -400,50 +447,42 @@ export async function listUsersWithReportCountRaw(options: {
     prisma.user.count({ where }),
   ]);
 
-  const userIds = users.map((user) => user.id);
-  const activeReportCounts = userIds.length
-    ? await prisma.report.groupBy({
-        by: ["userId"],
-        where: {
-          userId: {
-            in: userIds,
-          },
-          status: {
-            notIn: ["TELAH_BERFUNGSI", "TIDAK_DAPAT_DIGUNAKAN", "DITOLAK"],
-          },
-        },
-        _count: {
-          _all: true,
-        },
-      })
-    : [];
-
-  const activeReportCountByUser = new Map(
-    activeReportCounts.map((item) => [item.userId, item._count._all])
-  );
-
   return {
-    users: users.map((user) => ({
-      ...user,
-      _count: {
-        ...user._count,
-        activeReports: activeReportCountByUser.get(user.id) || 0,
-      },
-    })),
+    users: await addActiveReportCounts(users),
     total,
     limit: take,
     offset: skip,
   };
 }
 
+export async function* iterateUsersWithReportCountRaw(options: {
+  search?: string;
+  batchSize?: number;
+} = {}) {
+  const batchSize = Math.min(Math.max(options.batchSize || 500, 1), 1_000);
+  const where = buildUserSearchWhere(options.search);
+  let cursorId: number | undefined;
+
+  while (true) {
+    const users = await prisma.user.findMany({
+      where,
+      select: userListSelect,
+      orderBy: { id: "asc" },
+      take: batchSize,
+      ...(cursorId ? { cursor: { id: cursorId }, skip: 1 } : {}),
+    });
+
+    if (users.length === 0) return;
+
+    yield await addActiveReportCounts(users);
+    cursorId = users.at(-1)?.id;
+
+    if (users.length < batchSize || !cursorId) return;
+  }
+}
+
 export async function listReportsRaw(userId?: number) {
   const where = userId ? { userId } : undefined;
-  const reportCount = await prisma.report.count({ where });
-
-  if (reportCount === 0) {
-    return [];
-  }
-
   const rows = await prisma.report.findMany({
     where,
     include: reportInclude,
@@ -499,4 +538,204 @@ export async function markPasswordResetTokenUsedRaw(id: number) {
       usedAt: new Date(),
     },
   });
+}
+
+export async function* iterateReportsRaw(options: {
+  filters?: ReportPageFilters;
+  batchSize?: number;
+} = {}) {
+  const batchSize = Math.min(Math.max(options.batchSize || 250, 1), 1_000);
+  const where = buildReportWhere(options.filters);
+  let cursorId: number | undefined;
+
+  while (true) {
+    const rows = await prisma.report.findMany({
+      where,
+      include: reportInclude,
+      orderBy: { id: "desc" },
+      take: batchSize,
+      ...(cursorId ? { cursor: { id: cursorId }, skip: 1 } : {}),
+    });
+
+    if (rows.length === 0) return;
+
+    yield rows.map((row) => normalizeReportRow(row));
+    cursorId = rows.at(-1)?.id;
+
+    if (rows.length < batchSize || !cursorId) return;
+  }
+}
+
+const TERMINAL_REPORT_STATUSES: ReportStatus[] = [
+  "TELAH_BERFUNGSI",
+  "TIDAK_DAPAT_DIGUNAKAN",
+  "DITOLAK",
+];
+
+export const IN_PROGRESS_REPORT_STATUSES: ReportStatus[] = [
+  "MENUNGGU_ADMIN_1",
+  "MENUNGGU_ADMIN_2",
+  "MENUNGGU_ADMIN_3",
+  "MENUNGGU_ADMIN_4",
+  "MENUNGGU_ADMIN_5",
+  "MENUNGGU_KONFIRMASI",
+];
+
+export type ReportPageFilters = {
+  userId?: number;
+  accessCategory?: ReportKategori;
+  category?: ReportKategori;
+  status?: ReportStatus;
+  inProgress?: boolean;
+  subcategory?: string;
+  search?: string;
+  userQuery?: string;
+  rejectedByRole?: AppRole;
+  dateFrom?: Date;
+  dateTo?: Date;
+  budget?: "BELOW_5" | "BETWEEN_5_10" | "ABOVE_10";
+};
+
+export function buildReportWhere(
+  filters: ReportPageFilters = {},
+): Prisma.ReportWhereInput {
+  const search = filters.search?.trim();
+  const userQuery = filters.userQuery?.trim();
+  const parsedId = search ? Number(search) : null;
+  const where: Prisma.ReportWhereInput = {};
+
+  if (filters.userId) where.userId = filters.userId;
+  if (
+    filters.accessCategory &&
+    filters.category &&
+    filters.accessCategory !== filters.category
+  ) {
+    where.AND = [
+      { kategori: filters.accessCategory },
+      { kategori: filters.category },
+    ];
+  } else if (filters.accessCategory || filters.category) {
+    where.kategori = filters.accessCategory || filters.category;
+  }
+  if (filters.status) where.status = filters.status;
+  if (filters.inProgress) where.status = { in: IN_PROGRESS_REPORT_STATUSES };
+  if (filters.subcategory) where.subcategory = filters.subcategory;
+
+  if (filters.dateFrom || filters.dateTo) {
+    where.createdAt = {
+      ...(filters.dateFrom ? { gte: filters.dateFrom } : {}),
+      ...(filters.dateTo ? { lte: filters.dateTo } : {}),
+    };
+  }
+
+  if (filters.budget === "BELOW_5") where.repairCost = { lt: 5_000_000 };
+  if (filters.budget === "BETWEEN_5_10") {
+    where.repairCost = { gte: 5_000_000, lte: 10_000_000 };
+  }
+  if (filters.budget === "ABOVE_10") where.repairCost = { gt: 10_000_000 };
+
+  if (filters.rejectedByRole) {
+    where.histories = {
+      some: {
+        action: "TOLAK",
+        admin: { role: filters.rejectedByRole },
+      },
+    };
+  }
+
+  if (userQuery) {
+    where.user = {
+      is: {
+        OR: [
+          { nama: { contains: userQuery } },
+          { nip: { contains: userQuery } },
+        ],
+      },
+    };
+  }
+
+  if (search) {
+    where.OR = [
+      ...(Number.isInteger(parsedId) && Number(parsedId) > 0
+        ? [{ id: Number(parsedId) }]
+        : []),
+      { ticket: { contains: search } },
+      { namaBarang: { contains: search } },
+      { namaPelapor: { contains: search } },
+      { nomorRuangan: { contains: search } },
+      { kodeUakpb: { contains: search } },
+      { kode: { contains: search } },
+      { nup: { contains: search } },
+      { subcategory: { contains: search } },
+      { lokasi: { contains: search } },
+      { user: { is: { nama: { contains: search } } } },
+      { user: { is: { nip: { contains: search } } } },
+    ];
+  }
+
+  return where;
+}
+
+export async function listReportsPageRaw(options: {
+  filters?: ReportPageFilters;
+  take?: number;
+  skip?: number;
+} = {}) {
+  const take = Math.min(Math.max(options.take || 12, 1), 100);
+  const skip = Math.max(options.skip || 0, 0);
+  const where = buildReportWhere(options.filters);
+
+  const [rows, total] = await Promise.all([
+    prisma.report.findMany({
+      where,
+      include: reportInclude,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip,
+      take,
+    }),
+    prisma.report.count({ where }),
+  ]);
+
+  return {
+    reports: rows.map((row) => normalizeReportRow(row)),
+    total,
+    limit: take,
+    offset: skip,
+    hasMore: skip + rows.length < total,
+  };
+}
+
+export async function getReportSummaryRaw(
+  filters: Pick<ReportPageFilters, "userId" | "accessCategory"> = {},
+) {
+  const where = buildReportWhere(filters);
+  const counts = await prisma.report.groupBy({
+    by: ["status"],
+    where,
+    _count: { _all: true },
+  });
+  const countByStatus = new Map(
+    counts.map((item) => [item.status as ReportStatus, item._count._all]),
+  );
+  const countStatuses = (statuses: ReportStatus[]) =>
+    statuses.reduce((sum, status) => sum + (countByStatus.get(status) || 0), 0);
+
+  return {
+    total: countStatuses([
+      ...IN_PROGRESS_REPORT_STATUSES,
+      "DISETUJUI_FINAL",
+      ...TERMINAL_REPORT_STATUSES,
+    ]),
+    menunggu: countStatuses(IN_PROGRESS_REPORT_STATUSES),
+    final: countStatuses([
+      "DISETUJUI_FINAL",
+      "MENUNGGU_KONFIRMASI",
+      "TELAH_BERFUNGSI",
+      "TIDAK_DAPAT_DIGUNAKAN",
+    ]),
+    ditolak: countByStatus.get("DITOLAK") || 0,
+    approvedFinal: countByStatus.get("DISETUJUI_FINAL") || 0,
+    ongoing: countStatuses(IN_PROGRESS_REPORT_STATUSES),
+    telahBerfungsi: countByStatus.get("TELAH_BERFUNGSI") || 0,
+  };
 }

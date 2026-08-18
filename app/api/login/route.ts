@@ -15,6 +15,11 @@ import {
 } from "@/src/lib/rate-limit";
 import { validateMutationRequest } from "@/src/lib/request-security";
 
+// A fixed-cost placeholder keeps unknown and known NIPs on the same password
+// verification path, preventing account discovery through response timing.
+const DUMMY_PASSWORD_HASH =
+  "$2b$12$7AHmwXhG6Ssikw3SqC0rg.G8nv73dmgd3UvZ5/HCT0YRDan7iDiPG";
+
 async function parseLoginBody(req: Request) {
   const contentType = req.headers.get("content-type") || "";
 
@@ -90,20 +95,12 @@ export async function POST(req: Request) {
 
     const user = await findUserByNipRaw(nip, true);
 
-    if (!user || !user.passwordHash) {
-      if (isFormPost) {
-        return redirectLoginError(req);
-      }
+    const isMatch = await verifyPassword(
+      password,
+      user?.passwordHash || DUMMY_PASSWORD_HASH,
+    );
 
-      return NextResponse.json(
-        { message: "NIP atau password salah" },
-        { status: 401 }
-      );
-    }
-
-    const isMatch = await verifyPassword(password, user.passwordHash);
-
-    if (!isMatch) {
+    if (!user || !user.passwordHash || !isMatch) {
       if (isFormPost) {
         return redirectLoginError(req);
       }
@@ -124,6 +121,7 @@ export async function POST(req: Request) {
       nama: user.nama,
       role: user.role,
       isSuperAdmin: user.isSuperAdmin,
+      sessionVersion: user.sessionVersion,
       sessionTag: createAuthSessionTag({
         passwordHash: user.passwordHash,
         role: user.role,

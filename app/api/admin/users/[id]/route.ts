@@ -127,7 +127,7 @@ export async function PATCH(
     }
 
     const existingUserByNip = await prisma.user.findFirst({
-      where: { nip },
+      where: { activeNip: nip, deletedAt: null },
       select: {
         id: true,
       },
@@ -141,11 +141,12 @@ export async function PATCH(
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { id: userId, deletedAt: null },
       data: {
         nama,
         jabatan: jabatan || null,
         nip,
+        activeNip: nip,
         role,
         isSuperAdmin,
         categoryScope: isCategoryScopedRole(role) ? categoryScope : null,
@@ -169,6 +170,18 @@ export async function PATCH(
     });
   } catch (error) {
     console.error("UPDATE_ADMIN_USER_ERROR:", error);
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { message: "NIP sudah digunakan." },
+        { status: 409 },
+      );
+    }
 
     return NextResponse.json(
       { message: "Terjadi kesalahan pada server." },
@@ -211,8 +224,8 @@ export async function DELETE(
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    const user = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
       select: {
         id: true,
         role: true,
@@ -239,22 +252,16 @@ export async function DELETE(
       );
     }
 
-    if (user._count.reports > 0) {
-      return NextResponse.json(
-        {
-          message:
-            "Pengguna yang sudah memiliki laporan tidak bisa dihapus. Nonaktifkan pengguna secara operasional bila perlu.",
-        },
-        { status: 400 }
-      );
-    }
-
-    await prisma.user.delete({
-      where: { id: userId },
+    await prisma.user.update({
+      where: { id: userId, deletedAt: null },
+      data: {
+        activeNip: null,
+        deletedAt: new Date(),
+      },
     });
 
     return NextResponse.json({
-      message: "Pengguna berhasil dihapus.",
+      message: "Pengguna berhasil dinonaktifkan tanpa menghapus riwayatnya.",
     });
   } catch (error) {
     console.error("DELETE_ADMIN_USER_ERROR:", error);

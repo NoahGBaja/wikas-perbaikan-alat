@@ -170,3 +170,14 @@ export function getUniqueSubcategories(categories: CategoryMaster[]) {
     left.name.localeCompare(right.name, "id-ID"),
   );
 }
+
+export function getSubcategoriesForCategory(
+  categories: CategoryMaster[],
+  category: AppCategoryScope,
+) {
+  return (
+    categories.find((item) => item.value === category)?.subcategories || []
+  ).slice().sort((left, right) =>
+    left.name.localeCompare(right.name, "id-ID"),
+  );
+}

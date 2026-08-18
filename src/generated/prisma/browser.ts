@@ -28,6 +28,16 @@ export type User = Prisma.UserModel
  */
 export type Report = Prisma.ReportModel
 /**
+ * Model TicketSequence
+ * 
+ */
+export type TicketSequence = Prisma.TicketSequenceModel
+/**
+ * Model RateLimitBucket
+ * 
+ */
+export type RateLimitBucket = Prisma.RateLimitBucketModel
+/**
  * Model ReportAttachment
  * 
  */

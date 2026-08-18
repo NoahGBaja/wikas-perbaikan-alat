@@ -2,6 +2,7 @@ import type { AppCategoryScope, AppRole } from "@/src/lib/roles";
 import {
   getCategoryScopeLabel,
   getRoleLabel,
+  getWorkflowActionPresentation,
   isCategoryScopedRole,
 } from "@/src/lib/roles";
 
@@ -161,12 +162,13 @@ export function getWorkflowMessage(
   }
 
   if (role === "ADMIN_1") {
-    return "Giliran Anda untuk melanjutkan atau menyelesaikan laporan.";
+    return "Tinjau laporan sebagai PJ Perbaikan. Kirim ke K.TU untuk melanjutkan alur, selesaikan untuk meminta konfirmasi pelapor, atau tolak untuk menghentikan proses.";
   }
 
   if (role === "ADMIN_5") {
-    return "Giliran PP untuk menerima, menolak, atau menyelesaikan laporan. Bukti wajib diunggah jika memilih Selesai.";
+    return "Tinjau laporan sebagai PP. Setelah pekerjaan selesai, isi anggaran dan deskripsi, unggah bukti, lalu minta konfirmasi pelapor; atau tolak untuk menghentikan proses.";
   }
 
-  return "Giliran Anda untuk melakukan Terima atau Tolak.";
+  const action = getWorkflowActionPresentation(role);
+  return `Tinjau laporan sebagai ${getRoleLabel(role)}. Pilih “${action.approveLabel}” untuk melanjutkan, atau “${action.rejectLabel}” untuk menghentikan proses.`;
 }

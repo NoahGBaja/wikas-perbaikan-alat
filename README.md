@@ -28,6 +28,9 @@ Copy `.env.example` to `.env` and fill the values:
 DATABASE_URL="mysql://user:password@localhost:3306/wikas_perbaikan_alat"
 AUTH_SECRET="replace-with-at-least-32-random-bytes"
 APP_ORIGIN="http://localhost:3000"
+DATABASE_CONNECTION_LIMIT="10"
+STORAGE_DRIVER="local"
+STORAGE_LOCAL_ROOT=".data/storage"
 SEED_PASSWORD=""
 ```
 
@@ -36,6 +39,8 @@ Required variables:
 - `DATABASE_URL`: MariaDB connection string.
 - `AUTH_SECRET`: long random secret, at least 32 characters in production.
 - `APP_ORIGIN`: allowed origin for same-origin mutation requests. Use your deployed HTTPS URL in production.
+- `DATABASE_CONNECTION_LIMIT`: maximum MariaDB connections per app instance. Account for the number of replicas.
+- `STORAGE_DRIVER`: `local` for one persistent server, or `s3` for multi-instance/serverless deployments.
 - `SEED_PASSWORD`: only needed when running `scripts/seed.ts` manually.
 
 ## Install
@@ -66,6 +71,10 @@ npm run db:generate
 ```
 
 Production deploys should run Prisma migrations before starting the app. The current schema includes `RateLimitBucket`, used for login rate limiting.
+
+```bash
+npm run db:deploy
+```
 
 ## Development
 
@@ -177,23 +186,22 @@ Use seed data carefully. It creates several admin/user accounts with the same se
 
 ## Uploads
 
-Uploaded images are stored under:
+Uploads are private and are served only after an authorization check. Local development stores them under:
 
 ```text
-public/uploads
+.data/storage
 ```
 
 Image validation allows JPG, PNG, and WEBP, checks file size, and verifies image signatures.
 
-Production warning: `public/uploads` must be backed by persistent storage if deploying to multiple instances, Docker with ephemeral filesystems, or serverless environments.
+For production with multiple instances, set `STORAGE_DRIVER=s3` and configure the `S3_*` variables from `.env.example`. Existing legacy files under `public/uploads` remain readable through the protected download endpoint, but direct public access is blocked.
 
 ## Admin Safety Rules
 
 - Admins cannot delete their own active account.
 - Admins cannot demote their own active account.
 - The system prevents demoting the last active admin.
-- Users with active reports cannot be deleted.
-- Deleted users are soft-deleted so report history remains available.
+- Users are soft-deleted, including users with reports, so report history remains available and their NIP can safely be reused.
 
 ## Testing
 
@@ -216,7 +224,7 @@ Add broader tests before public or high-risk deployment, especially for auth, ad
 - Set a strong production `AUTH_SECRET`.
 - Set `APP_ORIGIN` to the exact production HTTPS origin.
 - Run all Prisma migrations.
-- Ensure `public/uploads` is persistent and backed up.
+- Configure S3-compatible private storage for multi-instance deployments, or persist and back up `.data/storage` for a single instance.
 - Run `npm test`.
 - Run `npm run build`.
 - Confirm at least one active admin account exists.

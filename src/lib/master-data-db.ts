@@ -51,37 +51,88 @@ function findStaticCategory(category: string) {
 }
 
 export async function getRoomCodeByNameFromMaster(roomName: string) {
+  return (await findActiveRoomByNameFromMaster(roomName))?.code || "";
+}
+
+export async function findActiveRoomByNameFromMaster(roomName: string) {
   const normalized = roomName.trim().toLowerCase();
 
-  if (!normalized) return "";
+  if (!normalized) return null;
 
   try {
-    const room = await prisma.masterRoom.findFirst({
-      where: {
-        active: true,
-        name: {
-          equals: roomName.trim(),
+    const [room, storedRoomCount] = await Promise.all([
+      prisma.masterRoom.findFirst({
+        where: {
+          active: true,
+          name: {
+            equals: roomName.trim(),
+          },
         },
-      },
-      select: {
-        code: true,
-      },
-    });
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      }),
+      prisma.masterRoom.count(),
+    ]);
 
-    if (room?.code) return room.code;
+    if (room) return room;
+    if (storedRoomCount > 0) return null;
   } catch {
     // Fallback below keeps report creation usable if the local DB has not been repaired yet.
   }
 
+  return ROOM_MASTER.find((room) => room.name.toLowerCase() === normalized) || null;
+}
+
+export async function findActiveSubcategoryForCategory(
+  category: AppCategoryScope,
+  subcategoryName: string,
+) {
+  const normalized = subcategoryName.trim();
+
+  if (!normalized) return null;
+
+  try {
+    const [subcategory, storedCategoryCount] = await Promise.all([
+      prisma.masterSubcategory.findFirst({
+        where: {
+          active: true,
+          name: { equals: normalized },
+          category: {
+            active: true,
+            code: category,
+          },
+        },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      }),
+      prisma.masterCategory.count(),
+    ]);
+
+    if (subcategory) return subcategory;
+    if (storedCategoryCount > 0) return null;
+  } catch {
+    // Static fallback below is only used before the master-data migration exists.
+  }
+
   return (
-    ROOM_MASTER.find((room) => room.name.toLowerCase() === normalized)?.code || ""
+    CATEGORY_MASTER.find((item) => item.value === category)?.subcategories.find(
+      (item) => item.name.toLowerCase() === normalized.toLowerCase(),
+    ) || null
   );
 }
 
 export async function getMasterData(): Promise<MasterDataPayload> {
   const categories = cloneCategories();
-  const rooms: RoomMaster[] = [...ROOM_MASTER];
-  const messageTemplates: MasterMessageTemplate[] = [];
+  let rooms: RoomMaster[] = [...ROOM_MASTER];
+  let messageTemplates: MasterMessageTemplate[] = MESSAGE_TEMPLATE_MASTER.map(
+    (template) => ({ ...template }),
+  );
 
   try {
     const [dbCategories, dbRooms, dbTemplates] = await Promise.all([
@@ -107,166 +158,44 @@ export async function getMasterData(): Promise<MasterDataPayload> {
       }),
     ]);
 
-    const inactiveTemplateKeys = new Set(
-      dbTemplates
-        .filter((template) => !template.active)
-        .map((template) => `${template.type}:${template.title.toLowerCase()}`),
-    );
-
-    for (const dbCategory of dbCategories) {
-      const target = categories.find(
-        (category) =>
-          category.value === dbCategory.code || category.code === dbCategory.code,
+    for (const target of categories) {
+      const dbCategory = dbCategories.find(
+        (category) => category.code === target.value,
       );
 
-      if (!target) continue;
+      if (!dbCategory) continue;
 
-      const inactiveSubcategoryKeys = new Set(
-        dbCategory.subcategories
-          .filter((subcategory) => !subcategory.active)
-          .flatMap((subcategory) => [
-            `code:${subcategory.code}`,
-            `name:${subcategory.name.toLowerCase()}`,
-          ]),
-      );
-
-      target.subcategories = target.subcategories.filter(
-        (subcategory) =>
-          !inactiveSubcategoryKeys.has(`code:${subcategory.code}`) &&
-          !inactiveSubcategoryKeys.has(`name:${subcategory.name.toLowerCase()}`),
-      );
-
-      for (const dbSubcategory of dbCategory.subcategories.filter(
-        (subcategory) => subcategory.active,
-      )) {
-        let targetSubcategory = target.subcategories.find(
-          (subcategory) =>
-            subcategory.code === dbSubcategory.code ||
-            subcategory.name.toLowerCase() === dbSubcategory.name.toLowerCase(),
-        );
-
-        if (!targetSubcategory) {
-          targetSubcategory = {
-            id: dbSubcategory.id,
-            code: dbSubcategory.code,
-            name: dbSubcategory.name,
-            itemTypes: [],
-          };
-          target.subcategories.push(targetSubcategory);
-        } else {
-          targetSubcategory.id = dbSubcategory.id;
-          targetSubcategory.name = dbSubcategory.name;
-        }
-
-        const inactiveItemTypeKeys = new Set(
-          dbSubcategory.itemTypes
-            .filter((itemType) => !itemType.active)
-            .flatMap((itemType) => [
-              `code:${itemType.code}`,
-              `name:${itemType.name.toLowerCase()}`,
-            ]),
-        );
-
-        targetSubcategory.itemTypes = targetSubcategory.itemTypes.filter(
-          (itemType) =>
-            !inactiveItemTypeKeys.has(`code:${itemType.code}`) &&
-            !inactiveItemTypeKeys.has(`name:${itemType.name.toLowerCase()}`),
-        );
-
-        for (const dbItemType of dbSubcategory.itemTypes.filter(
-          (itemType) => itemType.active,
-        )) {
-          const exists = targetSubcategory.itemTypes.some(
-            (itemType) =>
-              itemType.code === dbItemType.code ||
-              itemType.name.toLowerCase() === dbItemType.name.toLowerCase(),
-          );
-
-          if (!exists) {
-            targetSubcategory.itemTypes.push({
-              id: dbItemType.id,
-              code: dbItemType.code,
-              name: dbItemType.name,
-            });
-          }
-        }
-      }
+      target.subcategories = dbCategory.subcategories
+        .filter((subcategory) => subcategory.active)
+        .map((subcategory) => ({
+          id: subcategory.id,
+          code: subcategory.code,
+          name: subcategory.name,
+          itemTypes: subcategory.itemTypes
+            .filter((itemType) => itemType.active)
+            .map((itemType) => ({
+              id: itemType.id,
+              code: itemType.code,
+              name: itemType.name,
+            })),
+        }));
     }
 
-    const inactiveRoomKeys = new Set(
-      dbRooms
-        .filter((room) => !room.active)
-        .flatMap((room) => [
-          `code:${room.code}`,
-          `name:${room.name.toLowerCase()}`,
-        ]),
-    );
-
-    for (let index = rooms.length - 1; index >= 0; index -= 1) {
-      const room = rooms[index];
-
-      if (
-        inactiveRoomKeys.has(`code:${room.code}`) ||
-        inactiveRoomKeys.has(`name:${room.name.toLowerCase()}`)
-      ) {
-        rooms.splice(index, 1);
-      }
+    if (dbRooms.length > 0) {
+      rooms = dbRooms
+        .filter((room) => room.active)
+        .map((room) => ({ id: room.id, code: room.code, name: room.name }));
     }
 
-    for (const dbRoom of dbRooms.filter((room) => room.active)) {
-      const index = rooms.findIndex(
-        (room) =>
-          room.code === dbRoom.code ||
-          room.name.toLowerCase() === dbRoom.name.toLowerCase(),
-      );
-
-      if (index >= 0) {
-        rooms[index] = {
-          id: dbRoom.id,
-          code: dbRoom.code,
-          name: dbRoom.name,
-        };
-      } else {
-        rooms.push({
-          id: dbRoom.id,
-          code: dbRoom.code,
-          name: dbRoom.name,
-        });
-      }
-    }
-
-    for (const dbTemplate of dbTemplates.filter((template) => template.active)) {
-      const key = `${dbTemplate.type}:${dbTemplate.title.toLowerCase()}`;
-
-      if (inactiveTemplateKeys.has(key)) continue;
-
-      const exists = messageTemplates.some(
-        (template) =>
-          template.type === dbTemplate.type &&
-          template.name.toLowerCase() === dbTemplate.title.toLowerCase(),
-      );
-
-      if (!exists) {
-        messageTemplates.push({
-          id: dbTemplate.id,
-          type: dbTemplate.type,
-          name: dbTemplate.title,
-          description: dbTemplate.body,
-        });
-      }
-    }
-
-    for (const template of MESSAGE_TEMPLATE_MASTER) {
-      const key = `${template.type}:${template.name.toLowerCase()}`;
-      const exists = messageTemplates.some(
-        (existingTemplate) =>
-          existingTemplate.type === template.type &&
-          existingTemplate.name.toLowerCase() === template.name.toLowerCase(),
-      );
-
-      if (!inactiveTemplateKeys.has(key) && !exists) {
-        messageTemplates.push({ ...template });
-      }
+    if (dbTemplates.length > 0) {
+      messageTemplates = dbTemplates
+        .filter((template) => template.active)
+        .map((template) => ({
+          id: template.id,
+          type: template.type,
+          name: template.title,
+          description: template.body,
+        }));
     }
   } catch {
     return {

@@ -197,6 +197,7 @@ export async function POST(req: Request) {
         nama,
         jabatan: jabatan || null,
         nip,
+        activeNip: nip,
         passwordHash,
         role,
         isSuperAdmin,
@@ -221,6 +222,18 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("CREATE_ADMIN_USER_ERROR:", error);
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { message: "NIP sudah digunakan." },
+        { status: 409 },
+      );
+    }
 
     return NextResponse.json(
       { message: "Terjadi kesalahan pada server." },

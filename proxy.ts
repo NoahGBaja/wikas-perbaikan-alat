@@ -14,6 +14,10 @@ function getAuthPayload(request: NextRequest) {
 }
 
 function getDefaultDashboard(auth: { role: AppRole; isSuperAdmin?: boolean }) {
+  if (auth.role === "EXECUTIVE") {
+    return "/dashboard/admin/statistik";
+  }
+
   return auth.isSuperAdmin || isAdminRole(auth.role)
     ? "/dashboard/admin"
     : "/dashboard/user";
@@ -21,6 +25,14 @@ function getDefaultDashboard(auth: { role: AppRole; isSuperAdmin?: boolean }) {
 
 export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  if (pathname.startsWith("/uploads/")) {
+    return new NextResponse(null, {
+      status: 404,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+
   const auth = getAuthPayload(request);
   const hasAuthCookie = request.cookies.has(AUTH_COOKIE_NAME);
 
@@ -65,6 +77,27 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(defaultDashboard, request.url));
   }
 
+  if (auth.role === "EXECUTIVE" && pathname === "/dashboard/admin") {
+    return NextResponse.redirect(
+      new URL("/dashboard/admin/statistik", request.url),
+    );
+  }
+
+  if (
+    pathname.startsWith("/dashboard/admin/statistik") &&
+    auth.role !== "EXECUTIVE"
+  ) {
+    return NextResponse.redirect(new URL(defaultDashboard, request.url));
+  }
+
+  if (
+    pathname.startsWith("/dashboard/admin/users") &&
+    !auth.isSuperAdmin &&
+    auth.role !== "SUPER_ADMIN"
+  ) {
+    return NextResponse.redirect(new URL("/dashboard/admin", request.url));
+  }
+
   if (
     pathname.startsWith("/dashboard/admin") &&
     !auth.isSuperAdmin &&
@@ -86,5 +119,6 @@ export const config = {
     "/forgot-password",
     "/reset-password/:path*",
     "/dashboard/:path*",
+    "/uploads/:path*",
   ],
 };

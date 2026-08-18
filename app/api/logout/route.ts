@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import {
   AUTH_COOKIE_NAME,
   getAuthCookieOptions,
-  revokeAuthToken,
+  verifyAuthToken,
 } from "@/src/lib/auth";
+import { prisma } from "@/src/lib/prisma";
 import { validateMutationRequest } from "@/src/lib/request-security";
 
 export async function POST(req: Request) {
@@ -21,10 +22,20 @@ export async function POST(req: Request) {
     ?.slice(AUTH_COOKIE_NAME.length + 1);
 
   if (token) {
+    let decodedToken = token;
+
     try {
-      revokeAuthToken(decodeURIComponent(token));
+      decodedToken = decodeURIComponent(token);
     } catch {
-      revokeAuthToken(token);
+      // Nilai cookie yang tidak dapat didekode akan dianggap token tidak valid.
+    }
+
+    const payload = verifyAuthToken(decodedToken);
+    if (payload) {
+      await prisma.user.updateMany({
+        where: { id: payload.userId, deletedAt: null },
+        data: { sessionVersion: { increment: 1 } },
+      });
     }
   }
 

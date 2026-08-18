@@ -7,6 +7,12 @@ import {
 } from "@/src/lib/passwords";
 import { prisma } from "@/src/lib/prisma";
 import { validateMutationRequest } from "@/src/lib/request-security";
+import {
+  AUTH_COOKIE_NAME,
+  createAuthSessionTag,
+  getAuthCookieOptions,
+  signAuthToken,
+} from "@/src/lib/auth";
 
 export async function POST(req: Request) {
   try {
@@ -83,16 +89,35 @@ export async function POST(req: Request) {
 
     const newPasswordHash = await hashPassword(newPassword);
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: authUser.id },
       data: {
         passwordHash: newPasswordHash,
       },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: "Kata sandi berhasil diperbarui.",
     });
+
+    response.cookies.set(
+      AUTH_COOKIE_NAME,
+      signAuthToken({
+        userId: authUser.id,
+        nama: authUser.nama,
+        role: authUser.role,
+        isSuperAdmin: authUser.isSuperAdmin,
+        sessionVersion: authUser.sessionVersion,
+        sessionTag: createAuthSessionTag({
+          passwordHash: updatedUser.passwordHash,
+          role: authUser.role,
+          isSuperAdmin: authUser.isSuperAdmin,
+        }),
+      }),
+      getAuthCookieOptions(),
+    );
+
+    return response;
   } catch (error) {
     console.error("UPDATE_ACCOUNT_PASSWORD_ERROR:", error);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   Download,
@@ -115,6 +115,7 @@ export default function AdminUsersPage({
   const [totalUsers, setTotalUsers] = useState(0);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
+  const loadMoreInFlightRef = useRef(false);
   const [newUser, setNewUser] = useState({
     nama: "",
     jabatan: "",
@@ -133,6 +134,10 @@ export default function AdminUsersPage({
     const append = options.append === true;
     const search = options.search ?? "";
     const offset = options.offset ?? 0;
+
+    if (append && loadMoreInFlightRef.current) return;
+
+    if (append) loadMoreInFlightRef.current = true;
 
     try {
       if (append) {
@@ -165,7 +170,15 @@ export default function AdminUsersPage({
       }
 
       const loadedUsers = data.users || [];
-      setUsers((current) => (append ? [...current, ...loadedUsers] : loadedUsers));
+      setUsers((current) => {
+        if (!append) return loadedUsers;
+
+        const uniqueUsers = new Map(
+          [...current, ...loadedUsers].map((user) => [user.id, user]),
+        );
+
+        return Array.from(uniqueUsers.values());
+      });
       setTotalUsers(Number(data.total || 0));
 
       if (!append) {
@@ -182,6 +195,7 @@ export default function AdminUsersPage({
     } finally {
       setLoading(false);
       setLoadingMore(false);
+      if (append) loadMoreInFlightRef.current = false;
     }
   }, []);
 
