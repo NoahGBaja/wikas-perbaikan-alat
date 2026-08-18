@@ -1,17 +1,11 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
 import PasswordInput from "@/src/components/ui/PasswordInput";
 import { showError, showSuccess } from "@/src/components/ui/feedback";
-
-const ParticlesBackground = dynamic(
-  () => import("@/components/particleBackground"),
-  { ssr: false },
-);
 
 export default function LoginPageClient() {
   const router = useRouter();
@@ -78,10 +72,16 @@ export default function LoginPageClient() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#004282] px-4 py-10">
-      <div className="absolute inset-0 z-0 bg-[#004282]" />
-      <ParticlesBackground className="z-10 opacity-100" />
-      <div className="absolute inset-0 z-10 bg-[#004282]/20" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-10">
+      <Image
+        src="/gedung-bbpom.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="z-0 object-cover object-center"
+      />
+      <div className="absolute inset-0 z-10 bg-gradient-to-b from-slate-950/45 via-[#00386f]/45 to-slate-950/60" />
 
       <section className="relative z-20 w-full max-w-sm rounded-3xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]">
         <div className="flex flex-col items-center px-6 pt-8 pb-4 text-center">
