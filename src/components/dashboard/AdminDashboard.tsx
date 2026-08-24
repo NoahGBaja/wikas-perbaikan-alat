@@ -913,19 +913,25 @@ export default function AdminDashboard({
 
         {selectedReport ? (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+            className="fixed inset-0 z-50 flex items-stretch justify-center bg-slate-950/60 sm:items-center sm:p-4"
             onClick={closeReportDetail}
           >
-            <div
-              className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl"
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="admin-report-detail-title"
+              className="flex h-dvh min-h-0 w-full min-w-0 flex-col overflow-hidden bg-white text-slate-900 shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:max-w-6xl sm:rounded-3xl sm:border sm:border-slate-200"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-bold text-slate-900">
+              <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 bg-white px-4 py-4 sm:px-6 sm:py-5">
+                <div className="min-w-0">
+                  <h3
+                    id="admin-report-detail-title"
+                    className="text-xl font-bold text-slate-900 sm:text-2xl"
+                  >
                     Detail Laporan
                   </h3>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 break-words text-sm leading-6 text-slate-500">
                     {getWorkflowMessage(
                       currentUser.role,
                       selectedReport.status,
@@ -938,22 +944,25 @@ export default function AdminDashboard({
                 <button
                   type="button"
                   onClick={closeReportDetail}
-                  className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 shadow-sm transition hover:bg-slate-50"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
+                  aria-label="Tutup detail laporan"
+                  title="Tutup"
                 >
                   <X className="h-5 w-5" />
                 </button>
-              </div>
+              </header>
 
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.9fr]">
-                <div className="space-y-6">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
+                <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] xl:gap-6">
+                <div className="min-w-0 space-y-6">
                   <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-bold tracking-wide text-blue-700">
+                      <span className="inline-flex max-w-full break-words rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-bold tracking-wide text-blue-700">
                         {formatTicketFallback(selectedReport)}
                       </span>
 
                       <span
-                        className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-bold tracking-[0.16em] ${getStatusClass(
+                        className={`inline-flex max-w-full items-center rounded-full px-4 py-2 text-center text-xs font-bold tracking-[0.12em] ${getStatusClass(
                           selectedReport.status,
                         )}`}
                       >
@@ -961,7 +970,7 @@ export default function AdminDashboard({
                       </span>
                     </div>
 
-                    <h4 className="mt-4 text-2xl font-bold text-slate-900">
+                    <h4 className="mt-4 break-words text-xl font-bold text-slate-900 sm:text-2xl">
                       {selectedReport.namaBarang}
                     </h4>
 
@@ -1097,21 +1106,21 @@ export default function AdminDashboard({
                   </div>
                 </div>
 
-                <div className="space-y-6">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="min-w-0 space-y-6">
+                  <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <p className="mb-3 text-sm text-slate-500">
                       Lampiran dan Informasi Pengunggah
                     </p>
                     {(selectedReport.attachmentUrl || selectedReport.fotoUrl) &&
                     (selectedReport.attachmentType?.startsWith("image/") ||
                       selectedReport.fotoUrl) ? (
-                      <div className="overflow-hidden rounded-2xl border border-slate-200">
+                      <div className="flex max-h-[28rem] min-h-48 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                         <Image
                           src={getSelectedPrimaryAttachmentUrl(true)}
                           alt={selectedReport.namaBarang}
                           width={1200}
                           height={800}
-                          className="w-full object-cover"
+                          className="h-auto max-h-[28rem] w-full max-w-full object-contain"
                           unoptimized
                         />
                       </div>
@@ -1143,10 +1152,10 @@ export default function AdminDashboard({
                             <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
                               {formatAttachmentPurpose(attachment.purpose)}
                             </p>
-                            <p className="mt-1 truncate text-sm font-semibold text-slate-900">
+                            <p className="mt-1 break-all text-sm font-semibold text-slate-900">
                               {attachment.fileName}
                             </p>
-                            <dl className="mt-3 grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-xs leading-5">
+                            <dl className="mt-3 grid grid-cols-1 gap-y-1.5 text-xs leading-5 sm:grid-cols-[110px_minmax(0,1fr)] sm:gap-x-3">
                               <dt className="text-slate-500">Diunggah oleh</dt>
                               <dd className="font-semibold text-slate-800">
                                 {attachment.uploadedByName || "Metadata lama tidak tersedia"}
@@ -1208,7 +1217,7 @@ export default function AdminDashboard({
                           </span>
                         </a>
                       ) : (
-                        <div className="overflow-hidden rounded-2xl border border-emerald-100">
+                        <div className="flex max-h-[28rem] min-h-40 items-center justify-center overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-50">
                           <Image
                             src={getReportAttachmentUrl(
                               selectedReport.id,
@@ -1218,7 +1227,7 @@ export default function AdminDashboard({
                             alt="Bukti penyelesaian"
                             width={1200}
                             height={800}
-                            className="w-full object-cover"
+                            className="h-auto max-h-[28rem] w-full max-w-full object-contain"
                             unoptimized
                           />
                         </div>
@@ -1246,7 +1255,7 @@ export default function AdminDashboard({
                         currentUser.categoryScope,
                       ) ? (
                         <>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                             {messageTemplates.map((template) => (
                               <button
                                 key={template.name}
@@ -1351,13 +1360,13 @@ export default function AdminDashboard({
                             </label>
                           ) : null}
 
-                          <div className="flex flex-wrap gap-3">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                             {canForwardReport ? (
                               <button
                                 type="button"
                                 onClick={() => void submitDecision("ACC")}
                                 disabled={submitLoading}
-                                className={`rounded-2xl px-6 py-3 font-semibold text-white shadow-sm transition focus-visible:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${workflowActions.approveClassName}`}
+                                className={`w-full rounded-2xl px-6 py-3 font-semibold text-white shadow-sm transition focus-visible:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${workflowActions.approveClassName}`}
                               >
                                 {submitLoading
                                   ? "Memproses..."
@@ -1370,7 +1379,7 @@ export default function AdminDashboard({
                                 type="button"
                                 onClick={() => void submitDecision("SELESAI")}
                                 disabled={submitLoading}
-                                className={`rounded-2xl px-6 py-3 font-semibold text-white shadow-sm transition focus-visible:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-60 ${workflowActions.completeClassName || "bg-blue-700 hover:bg-blue-600 focus-visible:ring-blue-300"}`}
+                                className={`w-full rounded-2xl px-6 py-3 font-semibold text-white shadow-sm transition focus-visible:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${workflowActions.completeClassName || "bg-blue-700 hover:bg-blue-600 focus-visible:ring-blue-300"}`}
                               >
                                 {submitLoading
                                   ? "Memproses..."
@@ -1384,7 +1393,7 @@ export default function AdminDashboard({
                                 type="button"
                                 onClick={() => void submitDecision("TOLAK")}
                                 disabled={submitLoading}
-                                className="rounded-2xl bg-rose-700 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-rose-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="w-full rounded-2xl bg-rose-700 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-rose-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                               >
                                 {submitLoading
                                   ? "Memproses..."
@@ -1403,7 +1412,8 @@ export default function AdminDashboard({
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
+            </section>
           </div>
         ) : null}
 
@@ -1513,9 +1523,9 @@ function InfoBox({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+    <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <p className="text-base text-slate-500">{label}</p>
-      <div className="mt-1 text-base font-semibold text-slate-900">{children}</div>
+      <div className="mt-1 break-words text-base font-semibold text-slate-900">{children}</div>
     </div>
   );
 }

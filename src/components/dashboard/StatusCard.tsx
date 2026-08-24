@@ -230,14 +230,14 @@ export default function StatusCard({
   return (
     <article
       id={`report-${report.id}`}
-      className={`scroll-mt-8 overflow-hidden rounded-[28px] border bg-white/90 shadow-sm transition ${
+      className={`min-w-0 scroll-mt-8 overflow-hidden rounded-2xl border bg-white/90 shadow-sm transition sm:rounded-[28px] ${
         highlighted
           ? "border-blue-400 ring-4 ring-blue-100"
           : "border-slate-200"
       }`}
     >
       <div className="grid grid-cols-1 gap-0 lg:grid-cols-[340px_minmax(0,1fr)]">
-        <div className="border-b border-slate-200 bg-slate-50 p-4 lg:border-b-0 lg:border-r">
+        <div className="min-w-0 border-b border-slate-200 bg-slate-50 p-4 lg:border-b-0 lg:border-r">
           {protectedDisplayAttachmentUrl && isImageAttachment ? (
             <div className="overflow-hidden rounded-2xl border border-slate-200">
               <Image
@@ -245,7 +245,7 @@ export default function StatusCard({
                 alt={report.namaBarang}
                 width={1200}
                 height={900}
-                className="h-full max-h-[320px] w-full object-cover"
+                className="h-auto max-h-[320px] w-full max-w-full object-contain"
                 unoptimized
               />
             </div>
@@ -269,13 +269,13 @@ export default function StatusCard({
           )}
         </div>
 
-        <div className="p-5 md:p-6">
+        <div className="min-w-0 p-4 sm:p-5 md:p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
+            <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-blue-600">
                 Tiket {ticket}
               </p>
-              <h3 className="mt-2 text-2xl font-bold text-slate-950">
+              <h3 className="mt-2 break-words text-xl font-bold text-slate-950 sm:text-2xl">
                 {report.namaBarang}
               </h3>
               <p className="mt-2 text-sm text-slate-500">
@@ -488,10 +488,10 @@ export default function StatusCard({
                     <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
                       {formatAttachmentPurpose(attachment.purpose)}
                     </p>
-                    <p className="mt-1 truncate text-sm font-semibold text-slate-900">
+                    <p className="mt-1 break-all text-sm font-semibold text-slate-900">
                       {attachment.fileName || `Lampiran ${index + 1}`}
                     </p>
-                    <dl className="mt-3 grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-xs leading-5">
+                    <dl className="mt-3 grid grid-cols-1 gap-y-1.5 text-xs leading-5 sm:grid-cols-[110px_minmax(0,1fr)] sm:gap-x-3">
                       <dt className="text-slate-500">Diunggah oleh</dt>
                       <dd className="font-semibold text-slate-800">
                         {attachment.uploadedByName || "Metadata lama tidak tersedia"}
@@ -555,7 +555,7 @@ export default function StatusCard({
                     alt="Bukti penyelesaian"
                     width={1200}
                     height={900}
-                    className="max-h-[320px] w-full object-cover"
+                    className="h-auto max-h-[320px] w-full max-w-full object-contain"
                     unoptimized
                   />
                 </div>

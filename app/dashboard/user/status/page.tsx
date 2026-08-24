@@ -399,24 +399,24 @@ export default function UserStatusPage() {
 
       {notificationModalOpen && focusedReport ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4"
+          className="fixed inset-0 z-50 flex items-stretch justify-center bg-slate-950/60 sm:items-center sm:p-4"
           onClick={closeNotificationModal}
         >
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="notification-report-title"
-            className="max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl"
+            className="flex h-dvh min-h-0 w-full min-w-0 flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:max-w-6xl sm:rounded-3xl sm:border sm:border-slate-200"
             onClick={(event) => event.stopPropagation()}
           >
-            <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
-              <div>
+            <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 bg-white px-4 py-4 sm:px-6 sm:py-5">
+              <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase text-blue-600">
                   Detail Laporan
                 </p>
                 <h2
                   id="notification-report-title"
-                  className="mt-1 text-xl font-bold text-slate-950"
+                  className="mt-1 break-words text-xl font-bold text-slate-950"
                 >
                   {focusedReport.namaBarang}
                 </h2>
@@ -432,7 +432,7 @@ export default function UserStatusPage() {
               </button>
             </header>
 
-            <div className="p-4">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
               <StatusCard
                 report={focusedReport}
                 highlighted
